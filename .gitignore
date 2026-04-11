@@ -1,11 +1,4 @@
-# Project plan — local only
-PROJECT_PLAN.md
-
-# Raw data — local Parquet files
-data/
-
-# DuckDB database file
-*.duckdb
+# DuckDB
 *.duckdb.wal
 
 # Python
@@ -25,10 +18,6 @@ build/
 transform/dbt_project/target/
 transform/dbt_project/dbt_packages/
 transform/dbt_project/logs/
-
-# Dagster
-$DAGSTER_HOME/
-.dagster/
 
 # Streamlit
 .streamlit/secrets.toml
