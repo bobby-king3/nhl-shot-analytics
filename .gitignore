@@ -1,0 +1,46 @@
+# Project plan — local only
+PROJECT_PLAN.md
+
+# Raw data — local Parquet files
+data/
+
+# DuckDB database file
+*.duckdb
+*.duckdb.wal
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# DBT
+transform/dbt_project/target/
+transform/dbt_project/dbt_packages/
+transform/dbt_project/logs/
+
+# Dagster
+$DAGSTER_HOME/
+.dagster/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Environment
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp

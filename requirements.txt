@@ -1,0 +1,6 @@
+streamlit>=1.32.0
+plotly>=5.20.0
+pandas>=2.0.0
+numpy>=1.26.0
+hockey_rink>=0.0.6
+matplotlib>=3.8.0
