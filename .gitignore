@@ -1,4 +1,5 @@
 # DuckDB
+*.duckdb
 *.duckdb.wal
 
 # Python
