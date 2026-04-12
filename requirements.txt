@@ -21,5 +21,8 @@ dbt-duckdb>=1.8.0
 # Data quality
 dbt-expectations>=0.10.0
 
+# Modeling
+scikit-learn>=1.4.0
+
 # Dev
 pytest>=8.0.0
