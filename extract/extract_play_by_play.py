@@ -10,7 +10,7 @@ DB_PATH = "data/nhl.duckdb"
 SHOT_EVENT_TYPES = {"shot-on-goal", "goal", "missed-shot", "blocked-shot"}
 
 # Initial load date used
-INITIAL_START_DATE = date(2024, 10, 4)
+INITIAL_START_DATE = date(2023, 10, 10)
 
 
 def get_start_date(con):
