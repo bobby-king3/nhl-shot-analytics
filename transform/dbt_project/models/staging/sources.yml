@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: nhl
+    description: Raw tables loaded by the extract scripts
+    schema: main
+    tables:
+      - name: raw_play_by_play
+        description: Shot events from the NHL public API, one row per shot attempt
+      - name: raw_moneypuck_shots
+        description: Shot data from MoneyPuck including xGoal, rush, and rebound flags
