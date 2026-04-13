@@ -1,5 +1,5 @@
 with source as (
-    select * from raw_play_by_play
+    select * from {{ source('nhl', 'raw_play_by_play') }}
 )
 
 select
