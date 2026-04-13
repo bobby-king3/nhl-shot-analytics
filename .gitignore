@@ -22,6 +22,7 @@ build/
 transform/dbt_project/target/
 transform/dbt_project/dbt_packages/
 transform/dbt_project/logs/
+logs/
 
 # Streamlit
 .streamlit/secrets.toml
