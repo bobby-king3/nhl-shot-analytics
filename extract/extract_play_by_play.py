@@ -3,7 +3,7 @@ sys.path.append(".")
 
 import json
 import duckdb
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from extract.nhl_client.nhl_api import get, get_play_by_play
 
 DB_PATH = "data/nhl.duckdb"
@@ -77,6 +77,7 @@ def create_table(con):
             home_score            INTEGER,
             highlight_clip_url    VARCHAR,
             raw                   VARCHAR,
+            ingested_at           TIMESTAMP,
             PRIMARY KEY (game_id, event_id)
         )
     """)
@@ -113,11 +114,12 @@ def extract_game(con, game_id, season):
             details.get("homeScore"),
             details.get("highlightClipSharingUrl"),
             json.dumps(play),
+            datetime.utcnow(),
         ))
 
     if rows:
         con.executemany("""
-            INSERT OR IGNORE INTO raw_play_by_play VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            INSERT OR IGNORE INTO raw_play_by_play VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, rows)
 
     return len(rows)
