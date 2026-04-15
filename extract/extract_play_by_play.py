@@ -3,7 +3,7 @@ sys.path.append(".")
 
 import json
 import duckdb
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from extract.nhl_client.nhl_api import get, get_play_by_play
 
 DB_PATH = "data/nhl.duckdb"
@@ -114,7 +114,7 @@ def extract_game(con, game_id, season):
             details.get("homeScore"),
             details.get("highlightClipSharingUrl"),
             json.dumps(play),
-            datetime.utcnow(),
+            datetime.now(timezone.utc),
         ))
 
     if rows:
