@@ -9,3 +9,5 @@ sources:
         description: Shot events from the NHL public API, one row per shot attempt
       - name: raw_moneypuck_shots
         description: Shot data from MoneyPuck including xGoal, rush, and rebound flags
+      - name: raw_players
+        description: Player metadata fetched from the NHL API including name, position, headshot URL, and current team

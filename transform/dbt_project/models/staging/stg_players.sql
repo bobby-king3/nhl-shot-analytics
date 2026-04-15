@@ -1,0 +1,21 @@
+with source as (
+    select * from {{ source('nhl', 'raw_players') }}
+)
+
+select
+    player_id,
+    first_name,
+    last_name,
+    first_name || ' ' || last_name as full_name,
+    position,
+    headshot_url,
+    team_id,
+    team_abbrev,
+    case
+        when team_abbrev is not null
+        then 'https://assets.nhle.com/logos/nhl/svg/' || team_abbrev || '_dark.svg'
+    end as team_logo_url,
+    is_active,
+    ingested_at
+
+from source
