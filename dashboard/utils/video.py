@@ -1,15 +1,21 @@
 import os
+from pathlib import Path
 import httpx
 import streamlit as st
 
-ACCOUNT_ID = os.environ.get("ACCOUNT_ID", "")
-POLICY_KEY = os.environ.get("POLICY_KEY", "")
-PLAYBACK_API = f"https://edge.api.brightcove.com/playback/v1/accounts/{ACCOUNT_ID}/videos"
-
+_env_file = Path(__file__).parent.parent.parent / ".env"
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        if "=" in _line and not _line.startswith("#"):
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
 
 @st.cache_data(ttl=300, show_spinner=False)
 def get_mp4_url(sharing_url: str) -> str | None:
-    if not POLICY_KEY:
+    account_id = os.environ.get("ACCOUNT_ID", "")
+    policy_key = os.environ.get("POLICY_KEY", "")
+
+    if not policy_key:
         return None
 
     try:
@@ -17,10 +23,12 @@ def get_mp4_url(sharing_url: str) -> str | None:
     except Exception:
         return None
 
+    playback_api = f"https://edge.api.brightcove.com/playback/v1/accounts/{account_id}/videos"
+
     try:
         r = httpx.get(
-            f"{PLAYBACK_API}/{content_id}",
-            headers={"BCOV-Policy": POLICY_KEY},
+            f"{playback_api}/{content_id}",
+            headers={"BCOV-Policy": policy_key},
             timeout=8,
         )
         r.raise_for_status()
