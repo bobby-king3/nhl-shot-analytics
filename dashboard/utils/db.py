@@ -90,6 +90,7 @@ def get_player_shots(player_id: int, season: int):
     df = conn.execute("""
         select
             event_type,
+            shot_type,
             x_coord,
             y_coord,
             shot_distance,

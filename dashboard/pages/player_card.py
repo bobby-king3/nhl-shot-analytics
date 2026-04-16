@@ -221,18 +221,40 @@ filtered_shots.loc[mask, "y_coord"] = -filtered_shots.loc[mask, "y_coord"]
 goals_df    = filtered_shots[filtered_shots["event_type"] == "goal"]
 nongoals_df = filtered_shots[filtered_shots["event_type"] != "goal"]
 
+_type_sel = st.session_state.get("shot_type_chart", {}).get("selection", {}).get("points", [])
+_widget_type = _type_sel[0].get("y") if _type_sel else None
+_prev_type = st.session_state.get("_shot_type_prev")
+
+if _widget_type != _prev_type:
+    st.session_state["_shot_type_prev"] = _widget_type
+    if _widget_type is not None:
+        if _widget_type == st.session_state.get("selected_shot_type"):
+            st.session_state["selected_shot_type"] = None
+        else:
+            st.session_state["selected_shot_type"] = _widget_type
+
+selected_shot_type = st.session_state.get("selected_shot_type")
+
+if selected_shot_type:
+    map_goals_df    = goals_df[goals_df["shot_type"] == selected_shot_type]
+    map_nongoals_df = nongoals_df[nongoals_df["shot_type"] == selected_shot_type]
+else:
+    map_goals_df    = goals_df
+    map_nongoals_df = nongoals_df
+
 map_col, wheel_col = st.columns([2, 2])
 
 with map_col:
-    st.markdown(f'<div class="chart-card"><div class="section-header">Shot Map — {len(filtered_shots):,} shots · {len(goals_df)} goals</div>', unsafe_allow_html=True)
+    header_suffix = f" · {selected_shot_type} only" if selected_shot_type else ""
+    st.markdown(f'<div class="chart-card"><div class="section-header">Shot Map — {len(filtered_shots):,} shots · {len(goals_df)} goals{header_suffix}</div>', unsafe_allow_html=True)
 
     fig_rink = make_rink_figure(height=520)
-    xg_vals = nongoals_df["x_goal"].fillna(0).clip(0, 0.5)
+    xg_vals = map_nongoals_df["x_goal"].fillna(0).clip(0, 0.5)
 
-    if len(nongoals_df) > 0:
+    if len(map_nongoals_df) > 0:
         fig_rink.add_trace(go.Scatter(
-            x=nongoals_df["x_coord"],
-            y=nongoals_df["y_coord"],
+            x=map_nongoals_df["x_coord"],
+            y=map_nongoals_df["y_coord"],
             mode="markers",
             marker=dict(
                 color=xg_vals,
@@ -248,13 +270,13 @@ with map_col:
                 line=dict(width=0),
             ),
             customdata=np.column_stack([
-                nongoals_df["event_type"],
-                nongoals_df["shot_distance"].round(1),
-                nongoals_df["shot_angle"].round(1),
-                nongoals_df["x_goal"].round(3),
-                nongoals_df["strength"],
-                nongoals_df["period"],
-                nongoals_df["highlight_clip_url"].fillna(""),
+                map_nongoals_df["event_type"],
+                map_nongoals_df["shot_distance"].round(1),
+                map_nongoals_df["shot_angle"].round(1),
+                map_nongoals_df["x_goal"].round(3),
+                map_nongoals_df["strength"],
+                map_nongoals_df["period"],
+                map_nongoals_df["highlight_clip_url"].fillna(""),
             ]),
             hovertemplate=(
                 "<b>%{customdata[0]}</b><br>"
@@ -269,10 +291,10 @@ with map_col:
             showlegend=False,
         ))
 
-    if len(goals_df) > 0:
+    if len(map_goals_df) > 0:
         fig_rink.add_trace(go.Scatter(
-            x=goals_df["x_coord"],
-            y=goals_df["y_coord"],
+            x=map_goals_df["x_coord"],
+            y=map_goals_df["y_coord"],
             mode="markers",
             marker=dict(
                 symbol="star",
@@ -282,12 +304,12 @@ with map_col:
                 line=dict(color="white", width=1.5),
             ),
             customdata=np.column_stack([
-                goals_df["shot_distance"].round(1),
-                goals_df["shot_angle"].round(1),
-                goals_df["x_goal"].round(3),
-                goals_df["strength"],
-                goals_df["period"],
-                goals_df["highlight_clip_url"].fillna(""),
+                map_goals_df["shot_distance"].round(1),
+                map_goals_df["shot_angle"].round(1),
+                map_goals_df["x_goal"].round(3),
+                map_goals_df["strength"],
+                map_goals_df["period"],
+                map_goals_df["highlight_clip_url"].fillna(""),
             ]),
             hovertemplate=(
                 "<b>GOAL ⭐</b><br>"
@@ -409,6 +431,92 @@ with wheel_col:
             f"</div>",
             unsafe_allow_html=True
         )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ── Shot type breakdown ───────────────────────────────────────────────────────
+st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+shot_col, _ = st.columns([2, 2])
+
+with shot_col:
+    st.markdown('<div class="chart-card"><div class="section-header">Shot Type Breakdown</div>', unsafe_allow_html=True)
+
+    type_df = (
+        filtered_shots[filtered_shots["shot_type"].notna()]
+        .groupby("shot_type")
+        .agg(shots=("event_type", "count"), goals=("event_type", lambda x: (x == "goal").sum()))
+        .reset_index()
+        .assign(sh_pct=lambda d: (d["goals"] / d["shots"] * 100).round(1))
+        .sort_values("shots", ascending=True)
+    )
+
+    def sh_pct_color(v):
+        if v >= 15:   return "#FFD700"
+        elif v >= 8:  return "#F08030"
+        else:         return "#4a90d9"
+
+    dot_colors = [sh_pct_color(v) for v in type_df["sh_pct"]]
+
+    bar_fill_colors = [
+        f"rgba({r},{g},{b},0.7)" if t == selected_shot_type else f"rgba({r},{g},{b},0.3)"
+        for t in type_df["shot_type"]
+    ]
+    bar_line_colors = [
+        f"rgba({r},{g},{b},1.0)" if t == selected_shot_type else f"rgba({r},{g},{b},0.6)"
+        for t in type_df["shot_type"]
+    ]
+
+    fig_types = go.Figure()
+
+    fig_types.add_trace(go.Bar(
+        x=type_df["shots"],
+        y=type_df["shot_type"],
+        orientation="h",
+        marker=dict(
+            color=bar_fill_colors,
+            line=dict(color=bar_line_colors, width=1),
+        ),
+        text=type_df["shots"],
+        textposition="outside",
+        textfont=dict(color="rgba(255,255,255,0.6)", size=11),
+        hovertemplate="<b>%{y}</b><br>Shots: %{x}<extra></extra>",
+        showlegend=False,
+    ))
+
+    fig_types.add_trace(go.Scatter(
+        x=type_df["shots"],
+        y=type_df["shot_type"],
+        mode="markers+text",
+        marker=dict(color=dot_colors, size=10, line=dict(color="white", width=1.5)),
+        text=[f"{v}%" for v in type_df["sh_pct"]],
+        textposition="middle right",
+        textfont=dict(color="rgba(255,255,255,0.75)", size=10),
+        hovertemplate="<b>%{y}</b><br>Sh%: %{text}<extra></extra>",
+        showlegend=False,
+    ))
+
+    fig_types.update_xaxes(showgrid=False, zeroline=False, showticklabels=False, fixedrange=True)
+    fig_types.update_yaxes(showgrid=False, zeroline=False, fixedrange=True,
+                            tickfont=dict(color="rgba(255,255,255,0.75)", size=12))
+    fig_types.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=0, r=60, t=10, b=10),
+        height=280,
+        bargap=0.3,
+    )
+
+    st.plotly_chart(fig_types, use_container_width=True, on_select="rerun", key="shot_type_chart")
+
+    st.markdown(
+        "<div style='font-size:11px; color:rgba(255,255,255,0.35); margin-top:-8px'>"
+        "Dot color: Sh% — "
+        "<span style='color:#FFD700'>●</span> ≥15%  "
+        "<span style='color:#F08030'>●</span> ≥8%  "
+        "<span style='color:#4a90d9'>●</span> &lt;8%  · "
+        "Click a bar to filter the shot map"
+        "</div>",
+        unsafe_allow_html=True
+    )
     st.markdown('</div>', unsafe_allow_html=True)
 
 active_video_sharing_url = st.session_state.get("active_video")
