@@ -89,6 +89,7 @@ def get_player_shots(player_id: int, season: int):
     conn = duckdb.connect(DB_PATH, read_only=True)
     df = conn.execute("""
         select
+            game_id,
             event_type,
             shot_type,
             x_coord,
@@ -104,6 +105,49 @@ def get_player_shots(player_id: int, season: int):
         from main.mart_shot_events
         where shooter_id = ? and season = ?
           and x_coord is not null and y_coord is not null
+    """, [player_id, season]).df()
+    conn.close()
+    return df
+
+
+@st.cache_data(ttl=3600)
+def get_player_game_log(player_id: int, season: int):
+    conn = duckdb.connect(DB_PATH, read_only=True)
+    df = conn.execute("""
+        with player_games as (
+            select
+                game_id,
+                team_id as player_team_id,
+                count(*)                                                  as shots,
+                sum(case when event_type = 'goal' then 1 else 0 end)     as goals,
+                round(sum(coalesce(x_goal, 0)), 3)                       as xg
+            from main.mart_shot_events
+            where shooter_id = ? and season = ?
+            group by game_id, team_id
+        ),
+        opponent_teams as (
+            select s.game_id, s.team_id as opp_team_id
+            from main.mart_shot_events s
+            join player_games pg on s.game_id = pg.game_id
+            where s.team_id != pg.player_team_id
+            group by s.game_id, s.team_id
+        ),
+        opp_abbrevs as (
+            select ot.game_id, any_value(p.team_abbrev) as opponent
+            from opponent_teams ot
+            join main.stg_players p on p.team_id = ot.opp_team_id
+            group by ot.game_id
+        )
+        select
+            pg.game_id,
+            row_number() over (order by pg.game_id)  as game_num,
+            pg.shots,
+            pg.goals,
+            pg.xg,
+            coalesce(oa.opponent, '???')              as opponent
+        from player_games pg
+        left join opp_abbrevs oa on oa.game_id = pg.game_id
+        order by pg.game_id
     """, [player_id, season]).df()
     conn.close()
     return df
