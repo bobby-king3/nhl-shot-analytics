@@ -183,6 +183,10 @@ st.markdown(f"""
     background: linear-gradient(180deg, rgba({r},{g},{b},0.15) 0%, #0E1117 60%);
     border-right: 1px solid rgba({r},{g},{b},0.3);
   }}
+  [data-testid="stSidebar"] [data-baseweb="tag"] {{
+    background-color: rgba({r},{g},{b},0.35) !important;
+    border: 1px solid rgba({r},{g},{b},0.7) !important;
+  }}
 </style>
 """, unsafe_allow_html=True)
 
