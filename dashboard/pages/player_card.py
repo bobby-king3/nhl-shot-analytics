@@ -118,6 +118,8 @@ selected_player_id = st.sidebar.selectbox(
 if selected_player_id != st.session_state.get("_prev_player_id"):
     st.session_state["_prev_player_id"] = selected_player_id
     st.session_state.pop("pc_games", None)
+    st.session_state["active_video"] = None
+    st.session_state["game_log_game_id"] = None
 
 stats = get_player_stats(selected_player_id, selected_season)
 shots_df = get_player_shots(selected_player_id, selected_season)
