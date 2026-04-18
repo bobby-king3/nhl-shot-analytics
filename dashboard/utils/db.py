@@ -90,6 +90,7 @@ def get_player_shots(player_id: int, season: int):
     df = conn.execute("""
         select
             game_id,
+            game_date,
             event_type,
             shot_type,
             x_coord,
@@ -99,6 +100,7 @@ def get_player_shots(player_id: int, season: int):
             x_goal,
             strength,
             period,
+            time_in_period,
             is_rush,
             is_rebound,
             highlight_clip_url

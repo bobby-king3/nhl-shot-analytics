@@ -640,7 +640,7 @@ with highlight_col:
     color:rgba(255,255,255,0.3); font-size:13px; text-align:center; gap:8px;
 ">
   <div style="font-size:28px;">▶</div>
-  <div>Click a goal ⭐ on the shot map or game log to load highlight</div>
+  <div>Click a goal on the shot map or game log to load highlight</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -650,18 +650,19 @@ with highlight_col:
             shots_df["highlight_clip_url"].notna() &
             (shots_df["highlight_clip_url"] != "")
         ]
-        .drop_duplicates(subset="game_id")
         .merge(game_log_df[["game_id", "game_num", "opponent"]], on="game_id", how="left")
-        .sort_values("game_num")
+        .sort_values(["game_num", "period", "time_in_period"])
+        .reset_index(drop=True)
     )
 
     if len(goal_clips) > 0:
         st.markdown("<div style='margin-top:4px'></div>", unsafe_allow_html=True)
         with st.container(height=180, border=False):
-            for _, row in goal_clips.iterrows():
+            for i, row in goal_clips.iterrows():
                 xg_val = f"{round(row['x_goal'], 2)}" if row['x_goal'] else "—"
-                label = f"⭐  G{int(row['game_num'])} vs {row['opponent']}  ·  {xg_val} xG"
-                if st.button(label, key=f"goal_btn_{row['game_id']}", use_container_width=True):
+                date_str = row['game_date'].strftime("%b %d") if row['game_date'] is not None else "—"
+                label = f"{date_str}  vs {row['opponent']}  ·  P{int(row['period'])} {row['time_in_period']}  ·  {xg_val} xG"
+                if st.button(label, key=f"goal_btn_{i}", use_container_width=True):
                     st.session_state["active_video"] = row["highlight_clip_url"]
 
     st.markdown('</div>', unsafe_allow_html=True)
