@@ -402,7 +402,7 @@ with map_col:
             mode="markers",
             marker=dict(
                 color=xg_vals,
-                colorscale="Plasma",
+                colorscale="RdBu_r",
                 cmin=0, cmax=0.5,
                 size=8,
                 opacity=0.75,
