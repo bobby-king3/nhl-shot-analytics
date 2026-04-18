@@ -592,18 +592,20 @@ with wheel_col:
     )
     st.plotly_chart(wheel, use_container_width=True)
 
-    for cat, val in zip(categories, values):
+    bar_cols = st.columns(3)
+    for i, (cat, val) in enumerate(zip(categories, values)):
         filled = round(val / 10)
         bar = "█" * filled + "░" * (10 - filled)
         color = pctile_color(val)
-        st.markdown(
-            f"<div style='font-size:12px; margin-bottom:5px; font-family:monospace;'>"
-            f"<span style='display:inline-block;width:105px;color:rgba(255,255,255,0.5)'>{cat}</span>"
-            f"<span style='color:{color}'>{bar}</span>"
-            f"<span style='color:{color}; font-weight:700; margin-left:6px'>{val}</span>"
-            f"</div>",
-            unsafe_allow_html=True
-        )
+        with bar_cols[i % 3]:
+            st.markdown(
+                f"<div style='font-size:11px; margin-bottom:8px; font-family:monospace;'>"
+                f"<div style='color:rgba(255,255,255,0.5); margin-bottom:2px;'>{cat}</div>"
+                f"<span style='color:{color}'>{bar}</span>"
+                f"<span style='color:{color}; font-weight:700; margin-left:4px'>{val}</span>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ── Goal Highlight + Shot Type Breakdown ─────────────────────────────────────
