@@ -8,7 +8,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from dashboard.components.rink import make_rink_figure
 from dashboard.utils.db import (
-    get_player_stats, get_player_shots, get_all_players, get_available_seasons, get_teams
+    get_player_stats, get_player_shots, get_player_game_log,
+    get_all_players, get_available_seasons, get_teams
 )
 from dashboard.utils.video import get_mp4_url
 
@@ -116,10 +117,52 @@ selected_player_id = st.sidebar.selectbox(
 
 stats = get_player_stats(selected_player_id, selected_season)
 shots_df = get_player_shots(selected_player_id, selected_season)
+game_log_df = get_player_game_log(selected_player_id, selected_season)
 
 if stats is None:
     st.warning("No data found for this player in the selected season.")
     st.stop()
+
+total_games = len(game_log_df)
+if total_games > 1:
+    st.sidebar.markdown("---")
+    game_options = {
+        row.game_id: f"G{row.game_num} vs {row.opponent}  —  {'⭐ ' if row.goals > 0 else ''}{row.goals}G  {row.xg} xG"
+        for row in game_log_df.itertuples()
+    }
+    selected_game_ids_list = st.sidebar.multiselect(
+        "Games", options=list(game_options.keys()),
+        format_func=lambda gid: game_options[gid],
+        default=list(game_options.keys()), key="pc_games"
+    )
+    selected_game_ids = set(selected_game_ids_list) if selected_game_ids_list else set(game_log_df["game_id"])
+    game_filter_active = len(selected_game_ids_list) > 0 and len(selected_game_ids_list) < total_games
+else:
+    selected_game_ids = set(game_log_df["game_id"])
+    game_filter_active = False
+
+_log_pts  = st.session_state.get("game_log_chart", {}).get("selection", {}).get("points", [])
+_log_x    = int(_log_pts[0].get("x", -1)) if _log_pts else None
+_prev_log_x = st.session_state.get("_prev_log_x")
+
+if _log_x != _prev_log_x:
+    st.session_state["_prev_log_x"] = _log_x
+    if _log_x is not None:
+        _grow = game_log_df[game_log_df["game_num"] == _log_x]
+        if len(_grow) > 0:
+            _gid = int(_grow.iloc[0]["game_id"])
+            st.session_state["game_log_game_id"] = _gid
+            if int(_grow.iloc[0]["goals"]) > 0:
+                _clips = shots_df[
+                    (shots_df["game_id"] == _gid) &
+                    (shots_df["event_type"] == "goal") &
+                    shots_df["highlight_clip_url"].notna() &
+                    (shots_df["highlight_clip_url"] != "")
+                ]["highlight_clip_url"]
+                if len(_clips) > 0:
+                    st.session_state["active_video"] = str(_clips.iloc[0])
+    else:
+        st.session_state["game_log_game_id"] = None
 
 (full_name, position, team_abbrev, headshot_url, team_logo_url,
  games_played, goals, shots_on_goal, sh_pct, total_xg, xg_per_game,
@@ -198,6 +241,25 @@ for col, label, value in [
 
 st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 
+game_log_game_id = st.session_state.get("game_log_game_id")
+if game_log_game_id:
+    shots_df = shots_df[shots_df["game_id"] == game_log_game_id].copy()
+    _opp = game_log_df[game_log_df["game_id"] == game_log_game_id]["opponent"].values
+    _opp_label = f" vs {_opp[0]}" if len(_opp) > 0 else ""
+    st.markdown(
+        f"<div style='font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:8px;'>"
+        f"Showing selected game{_opp_label} · stat cards reflect full season</div>",
+        unsafe_allow_html=True
+    )
+elif game_filter_active:
+    shots_df = shots_df[shots_df["game_id"].isin(selected_game_ids)].copy()
+    st.markdown(
+        f"<div style='font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:8px;'>"
+        f"Showing {len(selected_game_ids)} of {total_games} games · "
+        f"stat cards reflect full season</div>",
+        unsafe_allow_html=True
+    )
+
 with st.expander("Filters", expanded=False):
     f1, f2, f3 = st.columns(3)
     strength_opts = sorted(shots_df["strength"].dropna().unique())
@@ -219,7 +281,8 @@ filtered_shots.loc[mask, "x_coord"] = -filtered_shots.loc[mask, "x_coord"]
 filtered_shots.loc[mask, "y_coord"] = -filtered_shots.loc[mask, "y_coord"]
 
 goals_df    = filtered_shots[filtered_shots["event_type"] == "goal"]
-nongoals_df = filtered_shots[filtered_shots["event_type"] != "goal"]
+blocked_df  = filtered_shots[filtered_shots["event_type"] == "blocked-shot"]
+nongoals_df = filtered_shots[~filtered_shots["event_type"].isin(["goal", "blocked-shot"])]
 
 _type_sel = st.session_state.get("shot_type_chart", {}).get("selection", {}).get("points", [])
 _widget_type = _type_sel[0].get("y") if _type_sel else None
@@ -238,9 +301,11 @@ selected_shot_type = st.session_state.get("selected_shot_type")
 if selected_shot_type:
     map_goals_df    = goals_df[goals_df["shot_type"] == selected_shot_type]
     map_nongoals_df = nongoals_df[nongoals_df["shot_type"] == selected_shot_type]
+    map_blocked_df  = blocked_df[blocked_df["shot_type"] == selected_shot_type]
 else:
     map_goals_df    = goals_df
     map_nongoals_df = nongoals_df
+    map_blocked_df  = blocked_df
 
 map_col, wheel_col = st.columns([2, 2])
 
@@ -288,6 +353,35 @@ with map_col:
                 "<extra></extra>"
             ),
             name="Shots",
+            showlegend=False,
+        ))
+
+    if len(map_blocked_df) > 0:
+        fig_rink.add_trace(go.Scatter(
+            x=map_blocked_df["x_coord"],
+            y=map_blocked_df["y_coord"],
+            mode="markers",
+            marker=dict(
+                symbol="x",
+                color="rgba(255,255,255,0.25)",
+                size=6,
+                line=dict(width=1, color="rgba(255,255,255,0.25)"),
+            ),
+            customdata=np.column_stack([
+                map_blocked_df["shot_distance"].round(1),
+                map_blocked_df["shot_angle"].round(1),
+                map_blocked_df["strength"],
+                map_blocked_df["period"],
+            ]),
+            hovertemplate=(
+                "<b>Blocked Shot</b><br>"
+                "Distance: %{customdata[0]} ft<br>"
+                "Angle: %{customdata[1]}°<br>"
+                "Strength: %{customdata[2]}<br>"
+                "Period: %{customdata[3]}"
+                "<extra></extra>"
+            ),
+            name="Blocked",
             showlegend=False,
         ))
 
@@ -445,7 +539,11 @@ with shot_col:
         .groupby("shot_type")
         .agg(shots=("event_type", "count"), goals=("event_type", lambda x: (x == "goal").sum()))
         .reset_index()
-        .assign(sh_pct=lambda d: (d["goals"] / d["shots"] * 100).round(1))
+        .assign(
+            shots=lambda d: d["shots"].astype(int),
+            goals=lambda d: d["goals"].astype(int),
+            sh_pct=lambda d: (d["goals"].astype(float) / d["shots"].astype(float) * 100).round(1)
+        )
         .sort_values("shots", ascending=True)
     )
 
@@ -518,6 +616,84 @@ with shot_col:
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+st.markdown('<div class="chart-card"><div class="section-header">Game Log</div>', unsafe_allow_html=True)
+
+rolling_avg = game_log_df["xg"].rolling(5, min_periods=1).mean()
+goal_games  = game_log_df[game_log_df["goals"] > 0]
+
+bar_colors = [
+    f"rgba({r},{g},{b},0.75)" if game_filter_active and gid in selected_game_ids
+    else f"rgba({r},{g},{b},0.35)" if game_filter_active
+    else f"rgba({r},{g},{b},0.55)"
+    for gid in game_log_df["game_id"]
+]
+
+fig_log = go.Figure()
+
+fig_log.add_trace(go.Bar(
+    x=game_log_df["game_num"],
+    y=game_log_df["xg"],
+    marker=dict(color=bar_colors, line=dict(width=0)),
+    hovertemplate="Game %{x} vs %{customdata}<br>xG: %{y:.3f}<extra></extra>",
+    customdata=game_log_df["opponent"],
+    showlegend=False,
+))
+
+fig_log.add_trace(go.Scatter(
+    x=game_log_df["game_num"],
+    y=rolling_avg,
+    mode="lines",
+    line=dict(color="rgba(255,255,255,0.5)", width=2, dash="dot"),
+    hovertemplate="Game %{x}<br>5-game avg: %{y:.3f}<extra></extra>",
+    showlegend=False,
+))
+
+if len(goal_games) > 0:
+    fig_log.add_trace(go.Scatter(
+        x=goal_games["game_num"],
+        y=goal_games["xg"],
+        mode="markers",
+        marker=dict(symbol="star", color=primary, size=14,
+                    line=dict(color="white", width=1.5)),
+        hovertemplate="Game %{x}<br>GOAL — xG: %{y:.3f}<extra></extra>",
+        showlegend=False,
+    ))
+
+if game_filter_active:
+    selected_nums = game_log_df[game_log_df["game_id"].isin(selected_game_ids)]["game_num"].tolist()
+    for gnum in selected_nums:
+        fig_log.add_vrect(
+            x0=gnum - 0.5, x1=gnum + 0.5,
+            fillcolor=f"rgba({r},{g},{b},0.15)",
+            line=dict(width=0),
+            layer="below",
+        )
+
+fig_log.update_xaxes(
+    showgrid=False, zeroline=False,
+    tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
+    title=dict(text="Game", font=dict(color="rgba(255,255,255,0.4)", size=11)),
+    fixedrange=True,
+)
+fig_log.update_yaxes(
+    showgrid=True, gridcolor="rgba(255,255,255,0.06)",
+    zeroline=False, tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
+    title=dict(text="xG", font=dict(color="rgba(255,255,255,0.4)", size=11)),
+    fixedrange=True,
+)
+fig_log.update_layout(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    margin=dict(l=40, r=20, t=10, b=30),
+    height=220,
+    bargap=0.15,
+)
+
+st.plotly_chart(fig_log, use_container_width=True, on_select="rerun", key="game_log_chart")
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 active_video_sharing_url = st.session_state.get("active_video")
 if active_video_sharing_url:

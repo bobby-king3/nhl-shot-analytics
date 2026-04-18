@@ -105,6 +105,7 @@ def get_player_shots(player_id: int, season: int):
         from main.mart_shot_events
         where shooter_id = ? and season = ?
           and x_coord is not null and y_coord is not null
+          and period < 5
     """, [player_id, season]).df()
     conn.close()
     return df
@@ -118,11 +119,12 @@ def get_player_game_log(player_id: int, season: int):
             select
                 game_id,
                 team_id as player_team_id,
-                count(*)                                                  as shots,
-                sum(case when event_type = 'goal' then 1 else 0 end)     as goals,
-                round(sum(coalesce(x_goal, 0)), 3)                       as xg
+                count(*)                                                              as shots,
+                sum(case when event_type = 'goal' then 1 else 0 end)                 as goals,
+                round(sum(case when event_type != 'blocked-shot' then coalesce(x_goal, 0) else 0 end), 3) as xg
             from main.mart_shot_events
             where shooter_id = ? and season = ?
+              and period < 5
             group by game_id, team_id
         ),
         opponent_teams as (
