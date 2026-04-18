@@ -115,6 +115,10 @@ selected_player_id = st.sidebar.selectbox(
     index=default_idx, key="pc_player"
 )
 
+if selected_player_id != st.session_state.get("_prev_player_id"):
+    st.session_state["_prev_player_id"] = selected_player_id
+    st.session_state.pop("pc_games", None)
+
 stats = get_player_stats(selected_player_id, selected_season)
 shots_df = get_player_shots(selected_player_id, selected_season)
 game_log_df = get_player_game_log(selected_player_id, selected_season)
