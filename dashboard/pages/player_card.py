@@ -271,7 +271,9 @@ with st.expander("Filters", expanded=False):
     event_opts    = sorted(shots_df["event_type"].dropna().unique())
 
     strength_sel = f1.multiselect("Strength",   strength_opts, default=strength_opts)
-    period_sel   = f2.multiselect("Period",     period_opts,   default=period_opts)
+    period_label = {1: "P1", 2: "P2", 3: "P3", 4: "OT"}
+    period_sel   = f2.multiselect("Period", period_opts, default=period_opts,
+                                  format_func=lambda p: period_label.get(int(p), str(int(p))))
     event_sel    = f3.multiselect("Event Type", event_opts,    default=event_opts)
 
 filtered_shots = shots_df[
