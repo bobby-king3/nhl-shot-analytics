@@ -219,7 +219,7 @@ st.markdown(f"""
               border:1px solid rgba(255,255,255,0.12);
               border-radius:12px; padding:12px 18px;
               display:flex; align-items:center; justify-content:center;">
-    <img src="{team_logo_url}" style="height:72px; width:auto; object-fit:contain;" />
+    <img src="{team_logo_url}" style="height:90px; width:auto; object-fit:contain; image-rendering:high-quality;" />
   </div>
 </div>
 """, unsafe_allow_html=True)

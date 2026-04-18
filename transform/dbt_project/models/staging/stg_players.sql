@@ -13,7 +13,7 @@ select
     team_abbrev,
     case
         when team_abbrev is not null
-        then 'https://assets.nhle.com/logos/nhl/svg/' || team_abbrev || '_dark.svg'
+        then 'https://assets.nhle.com/logos/nhl/svg/' || team_abbrev || '_light.svg'
     end as team_logo_url,
     is_active,
     ingested_at
