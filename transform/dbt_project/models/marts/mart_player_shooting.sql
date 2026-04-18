@@ -7,6 +7,7 @@
 with shots as (
     select * from {{ ref('mart_shot_events') }}
     where shooter_id is not null
+    and period < 5
 ),
 
 player_season as (
