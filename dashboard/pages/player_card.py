@@ -307,6 +307,85 @@ else:
     map_nongoals_df = nongoals_df
     map_blocked_df  = blocked_df
 
+st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+st.markdown('<div class="chart-card"><div class="section-header">Game Log</div>', unsafe_allow_html=True)
+
+rolling_avg = game_log_df["xg"].rolling(5, min_periods=1).mean()
+goal_games  = game_log_df[game_log_df["goals"] > 0]
+
+bar_colors = [
+    f"rgba({r},{g},{b},0.75)" if game_filter_active and gid in selected_game_ids
+    else f"rgba({r},{g},{b},0.35)" if game_filter_active
+    else f"rgba({r},{g},{b},0.55)"
+    for gid in game_log_df["game_id"]
+]
+
+fig_log = go.Figure()
+
+fig_log.add_trace(go.Bar(
+    x=game_log_df["game_num"],
+    y=game_log_df["xg"],
+    marker=dict(color=bar_colors, line=dict(width=0)),
+    hovertemplate="Game %{x} vs %{customdata}<br>xG: %{y:.3f}<extra></extra>",
+    customdata=game_log_df["opponent"],
+    showlegend=False,
+))
+
+fig_log.add_trace(go.Scatter(
+    x=game_log_df["game_num"],
+    y=rolling_avg,
+    mode="lines",
+    line=dict(color="rgba(255,255,255,0.5)", width=2, dash="dot"),
+    hovertemplate="Game %{x}<br>5-game avg: %{y:.3f}<extra></extra>",
+    showlegend=False,
+))
+
+if len(goal_games) > 0:
+    fig_log.add_trace(go.Scatter(
+        x=goal_games["game_num"],
+        y=goal_games["xg"],
+        mode="markers",
+        marker=dict(symbol="star", color=primary, size=14,
+                    line=dict(color="white", width=1.5)),
+        hovertemplate="Game %{x}<br>GOAL — xG: %{y:.3f}<extra></extra>",
+        showlegend=False,
+    ))
+
+if game_filter_active:
+    selected_nums = game_log_df[game_log_df["game_id"].isin(selected_game_ids)]["game_num"].tolist()
+    for gnum in selected_nums:
+        fig_log.add_vrect(
+            x0=gnum - 0.5, x1=gnum + 0.5,
+            fillcolor=f"rgba({r},{g},{b},0.15)",
+            line=dict(width=0),
+            layer="below",
+        )
+
+fig_log.update_xaxes(
+    showgrid=False, zeroline=False,
+    tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
+    title=dict(text="Game", font=dict(color="rgba(255,255,255,0.4)", size=11)),
+    fixedrange=True,
+)
+fig_log.update_yaxes(
+    showgrid=True, gridcolor="rgba(255,255,255,0.06)",
+    zeroline=False, tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
+    title=dict(text="xG", font=dict(color="rgba(255,255,255,0.4)", size=11)),
+    fixedrange=True,
+)
+fig_log.update_layout(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    margin=dict(l=40, r=20, t=10, b=30),
+    height=220,
+    bargap=0.15,
+)
+
+st.plotly_chart(fig_log, use_container_width=True, on_select="rerun", key="game_log_chart")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
 map_col, wheel_col = st.columns([2, 2])
 
 with map_col:
@@ -670,81 +749,3 @@ with shot_col:
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
-st.markdown('<div class="chart-card"><div class="section-header">Game Log</div>', unsafe_allow_html=True)
-
-rolling_avg = game_log_df["xg"].rolling(5, min_periods=1).mean()
-goal_games  = game_log_df[game_log_df["goals"] > 0]
-
-bar_colors = [
-    f"rgba({r},{g},{b},0.75)" if game_filter_active and gid in selected_game_ids
-    else f"rgba({r},{g},{b},0.35)" if game_filter_active
-    else f"rgba({r},{g},{b},0.55)"
-    for gid in game_log_df["game_id"]
-]
-
-fig_log = go.Figure()
-
-fig_log.add_trace(go.Bar(
-    x=game_log_df["game_num"],
-    y=game_log_df["xg"],
-    marker=dict(color=bar_colors, line=dict(width=0)),
-    hovertemplate="Game %{x} vs %{customdata}<br>xG: %{y:.3f}<extra></extra>",
-    customdata=game_log_df["opponent"],
-    showlegend=False,
-))
-
-fig_log.add_trace(go.Scatter(
-    x=game_log_df["game_num"],
-    y=rolling_avg,
-    mode="lines",
-    line=dict(color="rgba(255,255,255,0.5)", width=2, dash="dot"),
-    hovertemplate="Game %{x}<br>5-game avg: %{y:.3f}<extra></extra>",
-    showlegend=False,
-))
-
-if len(goal_games) > 0:
-    fig_log.add_trace(go.Scatter(
-        x=goal_games["game_num"],
-        y=goal_games["xg"],
-        mode="markers",
-        marker=dict(symbol="star", color=primary, size=14,
-                    line=dict(color="white", width=1.5)),
-        hovertemplate="Game %{x}<br>GOAL — xG: %{y:.3f}<extra></extra>",
-        showlegend=False,
-    ))
-
-if game_filter_active:
-    selected_nums = game_log_df[game_log_df["game_id"].isin(selected_game_ids)]["game_num"].tolist()
-    for gnum in selected_nums:
-        fig_log.add_vrect(
-            x0=gnum - 0.5, x1=gnum + 0.5,
-            fillcolor=f"rgba({r},{g},{b},0.15)",
-            line=dict(width=0),
-            layer="below",
-        )
-
-fig_log.update_xaxes(
-    showgrid=False, zeroline=False,
-    tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
-    title=dict(text="Game", font=dict(color="rgba(255,255,255,0.4)", size=11)),
-    fixedrange=True,
-)
-fig_log.update_yaxes(
-    showgrid=True, gridcolor="rgba(255,255,255,0.06)",
-    zeroline=False, tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
-    title=dict(text="xG", font=dict(color="rgba(255,255,255,0.4)", size=11)),
-    fixedrange=True,
-)
-fig_log.update_layout(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=40, r=20, t=10, b=30),
-    height=220,
-    bargap=0.15,
-)
-
-st.plotly_chart(fig_log, use_container_width=True, on_select="rerun", key="game_log_chart")
-
-st.markdown('</div>', unsafe_allow_html=True)
