@@ -167,7 +167,7 @@ if _log_x != _prev_log_x:
 (full_name, position, team_abbrev, headshot_url, team_logo_url,
  games_played, goals, shots_on_goal, sh_pct, total_xg, xg_per_game,
  goals_pctile, sh_pctile, avg_xg_pctile, xg_pg_pctile,
- rush_pctile, dist_pctile) = stats
+ rebound_pctile, dist_pctile) = stats
 
 primary, secondary = team_colors(team_abbrev)
 r, g, b = int(primary[1:3], 16), int(primary[3:5], 16), int(primary[5:7], 16)
@@ -444,14 +444,14 @@ with wheel_col:
     st.markdown('<div class="chart-card"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
     st.caption("Min. 50 shot attempts · Per-game rates (no TOI available)")
 
-    categories = ["Goals/GP", "Sh%", "Avg xG/Shot", "xG/GP", "Rush Shot%", "Shot Distance"]
+    categories = ["Goals/GP", "Sh%", "Avg xG/Shot", "xG/GP", "Rebound Shot%", "Shot Distance"]
     values = [
-        round((goals_pctile  or 0) * 100),
-        round((sh_pctile     or 0) * 100),
-        round((avg_xg_pctile or 0) * 100),
-        round((xg_pg_pctile  or 0) * 100),
-        round((rush_pctile   or 0) * 100),
-        round((dist_pctile   or 0) * 100),
+        round((goals_pctile   or 0) * 100),
+        round((sh_pctile      or 0) * 100),
+        round((avg_xg_pctile  or 0) * 100),
+        round((xg_pg_pctile   or 0) * 100),
+        round((rebound_pctile or 0) * 100),
+        round((dist_pctile    or 0) * 100),
     ]
 
     def pctile_color(v):

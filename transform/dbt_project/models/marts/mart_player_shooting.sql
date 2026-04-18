@@ -68,12 +68,11 @@ with_percentiles as (
         *,
 
         -- percentile ranks (0-1 scale, higher = better)
-        round(percent_rank() over (partition by season order by goals_per_game),   3)  as goals_per_game_pctile,
-        round(percent_rank() over (partition by season order by sh_pct),           3)  as sh_pct_pctile,
-        round(percent_rank() over (partition by season order by avg_xg_per_shot),  3)  as avg_xg_per_shot_pctile,
-        round(percent_rank() over (partition by season order by xg_per_game),      3)  as xg_per_game_pctile,
-        round(percent_rank() over (partition by season order by rush_shot_pct),    3)  as rush_shot_pct_pctile,
-        -- lower distance = better (driving to the net)
+        round(percent_rank() over (partition by season order by goals_per_game),        3)  as goals_per_game_pctile,
+        round(percent_rank() over (partition by season order by sh_pct),               3)  as sh_pct_pctile,
+        round(percent_rank() over (partition by season order by avg_xg_per_shot),      3)  as avg_xg_per_shot_pctile,
+        round(percent_rank() over (partition by season order by xg_per_game),          3)  as xg_per_game_pctile,
+        round(percent_rank() over (partition by season order by rebound_shot_pct),     3)  as rebound_shot_pct_pctile,
         round(percent_rank() over (partition by season order by avg_shot_distance desc), 3) as shot_distance_pctile
 
     from qualified
