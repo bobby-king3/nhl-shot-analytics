@@ -606,7 +606,11 @@ with wheel_col:
         )
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+# ── Goal Highlight + Shot Type Breakdown ─────────────────────────────────────
+st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+highlight_col, breakdown_col = st.columns([2, 2])
+
+with highlight_col:
     st.markdown('<div class="chart-card"><div class="section-header">Goal Highlight</div>', unsafe_allow_html=True)
 
     active_video_sharing_url = st.session_state.get("active_video")
@@ -660,11 +664,7 @@ with wheel_col:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ── Shot type breakdown ───────────────────────────────────────────────────────
-st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
-shot_col, _ = st.columns([2, 2])
-
-with shot_col:
+with breakdown_col:
     st.markdown('<div class="chart-card"><div class="section-header">Shot Type Breakdown</div>', unsafe_allow_html=True)
 
     type_df = (
