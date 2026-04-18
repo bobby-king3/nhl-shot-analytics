@@ -533,7 +533,7 @@ with map_col:
 
 with wheel_col:
     st.markdown('<div class="chart-card"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
-    st.caption("Min. 50 shot attempts · Per-game rates (no TOI available)")
+    st.caption("Min. 50 shot attempts")
 
     categories = ["Goals/GP", "Sh%", "Avg xG/Shot", "xG/GP", "Rebound Shot%", "Shot Distance"]
     values = [
