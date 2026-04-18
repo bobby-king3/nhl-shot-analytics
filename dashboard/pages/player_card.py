@@ -527,6 +527,60 @@ with wheel_col:
         )
     st.markdown('</div>', unsafe_allow_html=True)
 
+    st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+    st.markdown('<div class="chart-card"><div class="section-header">Goal Highlight</div>', unsafe_allow_html=True)
+
+    active_video_sharing_url = st.session_state.get("active_video")
+    if active_video_sharing_url:
+        with st.spinner("Loading clip..."):
+            mp4_url = get_mp4_url(active_video_sharing_url)
+        if mp4_url:
+            st.video(mp4_url)
+        else:
+            content_id = active_video_sharing_url.rstrip("/").split("-")[-1]
+            brightcove_url = f"https://players.brightcove.net/6415718365001/default_default/index.html?videoId={content_id}"
+            st.markdown(f"""
+<div style="position:relative; padding-bottom:56.25%; height:0; border-radius:8px; overflow:hidden;">
+  <iframe src="{brightcove_url}"
+    style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;"
+    allowfullscreen></iframe>
+</div>
+""", unsafe_allow_html=True)
+    else:
+        st.markdown("""
+<div style="
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 32px 16px; border-radius:8px;
+    background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.12);
+    color:rgba(255,255,255,0.3); font-size:13px; text-align:center; gap:8px;
+">
+  <div style="font-size:28px;">▶</div>
+  <div>Click a goal ⭐ on the shot map or game log to load highlight</div>
+</div>
+""", unsafe_allow_html=True)
+
+    goal_clips = (
+        shots_df[
+            (shots_df["event_type"] == "goal") &
+            shots_df["highlight_clip_url"].notna() &
+            (shots_df["highlight_clip_url"] != "")
+        ]
+        .drop_duplicates(subset="game_id")
+        .merge(game_log_df[["game_id", "game_num", "opponent"]], on="game_id", how="left")
+        .sort_values("game_num")
+    )
+
+    if len(goal_clips) > 0:
+        st.markdown("<div style='margin-top:4px'></div>", unsafe_allow_html=True)
+        with st.container(height=180, border=False):
+            for _, row in goal_clips.iterrows():
+                xg_val = f"{round(row['x_goal'], 2)}" if row['x_goal'] else "—"
+                label = f"⭐  G{int(row['game_num'])} vs {row['opponent']}  ·  {xg_val} xG"
+                if st.button(label, key=f"goal_btn_{row['game_id']}", use_container_width=True):
+                    st.session_state["active_video"] = row["highlight_clip_url"]
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # ── Shot type breakdown ───────────────────────────────────────────────────────
 st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
 shot_col, _ = st.columns([2, 2])
@@ -694,33 +748,3 @@ fig_log.update_layout(
 st.plotly_chart(fig_log, use_container_width=True, on_select="rerun", key="game_log_chart")
 
 st.markdown('</div>', unsafe_allow_html=True)
-
-active_video_sharing_url = st.session_state.get("active_video")
-if active_video_sharing_url:
-    st.markdown(f"""
-    <div style="
-        background: linear-gradient(135deg, {secondary}44 0%, #0A0E1A 100%);
-        border: 1px solid {primary}44;
-        border-radius: 12px;
-        padding: 16px 20px;
-        margin-top: 8px;
-    ">
-      <div class="section-header" style="margin-bottom:12px;">Goal Highlight</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    with st.spinner("Loading clip..."):
-        mp4_url = get_mp4_url(active_video_sharing_url)
-
-    if mp4_url:
-        st.video(mp4_url)
-    else:
-        content_id = active_video_sharing_url.rstrip("/").split("-")[-1]
-        brightcove_url = f"https://players.brightcove.net/6415718365001/default_default/index.html?videoId={content_id}"
-        st.markdown(f"""
-        <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:8px; overflow:hidden;">
-          <iframe src="{brightcove_url}"
-            style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;"
-            allowfullscreen></iframe>
-        </div>
-        """, unsafe_allow_html=True)
