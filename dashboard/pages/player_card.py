@@ -13,6 +13,8 @@ from dashboard.utils.db import (
     get_all_players, get_available_seasons, get_teams
 )
 from dashboard.utils.video import get_mp4_url
+from dashboard.utils.styling import hex_to_rgb, get_performance_color
+from dashboard.utils.plotly_config import get_dark_layout, get_dark_xaxes, get_dark_yaxes, generate_bar_colors_for_selection
 
 TEAM_COLORS = {
     "ANA": ("#FC4C02", "#B09862"), "BOS": ("#FFB81C", "#000000"),
@@ -251,7 +253,7 @@ if _log_x != _prev_log_x:
  goals_above_expected, gax_pctile) = stats
 
 primary, secondary = team_colors(team_abbrev)
-r, g, b = int(primary[1:3], 16), int(primary[3:5], 16), int(primary[5:7], 16)
+r, g, b = hex_to_rgb(primary)
 
 st.markdown(f"""
 <style>
@@ -372,13 +374,11 @@ filtered_shots.loc[mask, "y_coord"] = -filtered_shots.loc[mask, "y_coord"]
 filtered_shots = filtered_shots.merge(
     game_log_df[["game_id", "opponent", "is_home"]], on="game_id", how="left"
 )
-filtered_shots["date_str"] = filtered_shots["game_date"].apply(
-    lambda d: d.strftime("%b %d") if d is not None else "—"
-)
-filtered_shots["opp_label"] = filtered_shots.apply(
-    lambda r: f"{'vs' if r['is_home'] else 'at'} {r['opponent']}" if pd.notna(r.get("opponent")) else "—",
-    axis=1
-)
+filtered_shots["date_str"] = filtered_shots["game_date"].dt.strftime("%b %d").fillna("—")
+
+opp = filtered_shots["opponent"].fillna("—")
+prefix = np.where(filtered_shots["is_home"], "vs ", "at ")
+filtered_shots["opp_label"] = prefix + opp
 
 goals_df    = filtered_shots[filtered_shots["event_type"] == "goal"]
 blocked_df  = filtered_shots[filtered_shots["event_type"] == "blocked-shot"]
@@ -413,12 +413,12 @@ st.markdown('<div class="chart-card"><div class="section-header">Game Log</div>'
 rolling_avg = game_log_df["xg"].rolling(5, min_periods=1).mean()
 goal_games  = game_log_df[game_log_df["goals"] > 0]
 
-bar_colors = [
-    f"rgba({r},{g},{b},0.75)" if game_filter_active and gid in selected_game_ids
-    else f"rgba({r},{g},{b},0.35)" if game_filter_active
-    else f"rgba({r},{g},{b},0.55)"
-    for gid in game_log_df["game_id"]
-]
+bar_colors = generate_bar_colors_for_selection(
+    game_log_df["game_id"],
+    r, g, b,
+    selected_value=None,
+    selected_active=game_filter_active,
+)
 
 fig_log = go.Figure()
 
@@ -461,25 +461,12 @@ if game_filter_active:
             layer="below",
         )
 
-fig_log.update_xaxes(
-    showgrid=False, zeroline=False,
-    tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
-    title=dict(text="Game", font=dict(color="rgba(255,255,255,0.4)", size=11)),
-    fixedrange=True,
-)
-fig_log.update_yaxes(
-    showgrid=True, gridcolor="rgba(255,255,255,0.06)",
-    zeroline=False, tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
-    title=dict(text="xG", font=dict(color="rgba(255,255,255,0.4)", size=11)),
-    fixedrange=True,
-)
-fig_log.update_layout(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=40, r=20, t=10, b=30),
-    height=220,
-    bargap=0.15,
-)
+fig_log.update_xaxes(**get_dark_xaxes(title="Game"))
+fig_log.update_yaxes(**get_dark_yaxes(title="xG"))
+
+layout = get_dark_layout(height=220, margin_l=40, margin_r=20, margin_t=10, margin_b=30)
+layout["bargap"] = 0.15
+fig_log.update_layout(**layout)
 
 st.plotly_chart(fig_log, use_container_width=True, on_select="rerun", key="game_log_chart")
 
@@ -624,10 +611,15 @@ with map_col:
         if _map_pts:
             point = _map_pts[0]
             cd = point.get("customdata", [])
+
+            # Extract clip URL from customdata, with fallback to alternate index
             clip_url = str(cd[5]) if len(cd) > 5 else ""
-            if not clip_url or clip_url in ("", "nan", "None") and len(cd) > 6:
+            is_invalid = clip_url in ("", "nan", "None")
+            if is_invalid and len(cd) > 6:
                 clip_url = str(cd[6])
-            clip_url = clip_url if clip_url not in ("", "nan", "None") else ""
+
+            # Validate final URL and set session state
+            clip_url = "" if clip_url in ("", "nan", "None") else clip_url
             if clip_url:
                 st.session_state["active_video"] = clip_url
             else:
@@ -649,12 +641,10 @@ with wheel_col:
         round((gax_pctile     or 0) * 100),
     ]
 
-    def pctile_color(v):
-        if v >= 67:   return "#FFD700"
-        elif v >= 34: return "#F08030"
-        else:         return "#4a90d9"
-
-    bar_colors = [pctile_color(v) for v in values]
+    bar_colors = [
+        get_performance_color(v, {"high": 67, "medium": 34})
+        for v in values
+    ]
 
     wheel = go.Figure()
 
@@ -712,7 +702,7 @@ with wheel_col:
     for i, (cat, val) in enumerate(zip(categories, values)):
         filled = round(val / 10)
         bar = "█" * filled + "░" * (10 - filled)
-        color = pctile_color(val)
+        color = get_performance_color(val, {"high": 67, "medium": 34})
         with bar_cols[i % 3]:
             st.markdown(
                 f"<div style='font-size:11px; margin-bottom:8px; font-family:monospace;'>"
@@ -822,21 +812,20 @@ with breakdown_col:
         .sort_values("shots", ascending=True)
     )
 
-    def sh_pct_color(v):
-        if v >= 15:   return "#FFD700"
-        elif v >= 8:  return "#F08030"
-        else:         return "#4a90d9"
-
-    dot_colors = [sh_pct_color(v) for v in type_df["sh_pct"]]
-
-    bar_fill_colors = [
-        f"rgba({r},{g},{b},0.7)" if t == selected_shot_type else f"rgba({r},{g},{b},0.3)"
-        for t in type_df["shot_type"]
+    dot_colors = [
+        get_performance_color(v, {"high": 15, "medium": 8})
+        for v in type_df["sh_pct"]
     ]
-    bar_line_colors = [
-        f"rgba({r},{g},{b},1.0)" if t == selected_shot_type else f"rgba({r},{g},{b},0.6)"
-        for t in type_df["shot_type"]
-    ]
+
+    # Generate bar colors based on selection state
+    bar_fill_colors = []
+    bar_line_colors = []
+    for shot_type in type_df["shot_type"]:
+        is_selected = shot_type == selected_shot_type
+        fill = f"rgba({r},{g},{b},0.7)" if is_selected else f"rgba({r},{g},{b},0.3)"
+        line = f"rgba({r},{g},{b},1.0)" if is_selected else f"rgba({r},{g},{b},0.6)"
+        bar_fill_colors.append(fill)
+        bar_line_colors.append(line)
 
     fig_types = go.Figure()
 
@@ -867,13 +856,10 @@ with breakdown_col:
     fig_types.update_xaxes(showgrid=False, zeroline=False, showticklabels=False, fixedrange=True)
     fig_types.update_yaxes(showgrid=False, zeroline=False, fixedrange=True,
                             tickfont=dict(color="rgba(255,255,255,0.75)", size=12))
-    fig_types.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=0, r=60, t=10, b=10),
-        height=280,
-        bargap=0.3,
-    )
+
+    layout = get_dark_layout(height=280, margin_l=0, margin_r=60, margin_t=10, margin_b=10)
+    layout["bargap"] = 0.3
+    fig_types.update_layout(**layout)
 
     st.plotly_chart(fig_types, use_container_width=True, on_select="rerun", key="shot_type_chart")
 
