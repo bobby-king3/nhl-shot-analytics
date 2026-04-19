@@ -69,6 +69,28 @@ st.markdown("""
     font-weight: 700;
     color: #FAFAFA;
   }
+  .stat-card::before {
+    content: "i";
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+    font-size: 9px;
+    font-weight: 700;
+    font-style: italic;
+    font-family: serif;
+    line-height: 14px;
+    text-align: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .stat-card:hover::before {
+    background: var(--team-primary, #C8102E);
+    color: white;
+  }
   .stat-card::after {
     content: attr(data-tooltip);
     position: absolute;
