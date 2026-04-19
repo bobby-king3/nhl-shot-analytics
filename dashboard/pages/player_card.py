@@ -807,7 +807,8 @@ with breakdown_col:
         .assign(
             shots=lambda d: d["shots"].astype(int),
             goals=lambda d: d["goals"].astype(int),
-            sh_pct=lambda d: (d["goals"].astype(float) / d["shots"].astype(float) * 100).round(1)
+            sh_pct=lambda d: (d["goals"].astype(float) / d["shots"].astype(float) * 100).round(1),
+            volume_pct=lambda d: (d["shots"].astype(float) / d["shots"].sum() * 100).round(1)
         )
         .sort_values("shots", ascending=True)
     )
@@ -837,19 +838,20 @@ with breakdown_col:
             color=bar_fill_colors,
             line=dict(color=bar_line_colors, width=1),
         ),
-        hovertemplate="<b>%{y}</b><br>Shots: %{x}<extra></extra>",
+        text=[f"{v}%" for v in type_df["volume_pct"]],
+        textposition="outside",
+        textfont=dict(color="rgba(255,255,255,0.6)", size=11),
+        hovertemplate="<b>%{y}</b><br>Shots: %{x}<br>Volume: %{text}<extra></extra>",
         showlegend=False,
     ))
 
     fig_types.add_trace(go.Scatter(
         x=type_df["shots"],
         y=type_df["shot_type"],
-        mode="markers+text",
+        mode="markers",
         marker=dict(color=dot_colors, size=10, line=dict(color="white", width=1.5)),
-        text=[f"{v}%" for v in type_df["sh_pct"]],
-        textposition="middle right",
-        textfont=dict(color="rgba(255,255,255,0.75)", size=10),
-        hovertemplate="<b>%{y}</b><br>Sh%: %{text}<extra></extra>",
+        customdata=type_df["sh_pct"],
+        hovertemplate="<b>%{y}</b><br>Sh%: %{customdata}%<extra></extra>",
         showlegend=False,
     ))
 
@@ -865,6 +867,7 @@ with breakdown_col:
 
     st.markdown(
         "<div style='font-size:11px; color:rgba(255,255,255,0.35); margin-top:-8px'>"
+        "Bar: % of shots · "
         "Dot color: Sh% — "
         "<span style='color:#FFD700'>●</span> ≥15%  "
         "<span style='color:#F08030'>●</span> ≥8%  "
