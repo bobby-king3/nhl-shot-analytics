@@ -83,6 +83,32 @@ st.markdown("""
     border-radius: 12px;
     padding: 16px;
   }
+  /* Goal list radio — hide circles, style as clean rows */
+  div[data-testid="stRadio"] > div { gap: 1px !important; }
+  div[data-testid="stRadio"] label {
+    padding: 5px 8px !important;
+    border-radius: 6px !important;
+    transition: background 0.12s !important;
+    cursor: pointer !important;
+  }
+  div[data-testid="stRadio"] label:hover {
+    background: rgba(255,255,255,0.07) !important;
+  }
+  div[data-testid="stRadio"] label > div:first-child { display: none !important; }
+  div[data-testid="stRadio"] label > div:last-child p {
+    font-family: monospace !important;
+    font-size: 12px !important;
+    color: rgba(255,255,255,0.6) !important;
+    margin: 0 !important;
+  }
+  div[data-testid="stRadio"] label:has(input:checked) {
+    background: var(--team-primary-faint, rgba(200,16,46,0.12)) !important;
+    border-left: 2px solid var(--team-primary, #C8102E) !important;
+  }
+  div[data-testid="stRadio"] label:has(input:checked) > div:last-child p {
+    color: rgba(255,255,255,0.95) !important;
+    font-weight: 600 !important;
+  }
 </style>
 """, unsafe_allow_html=True)
 
@@ -518,18 +544,24 @@ with map_col:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    if clicked and clicked.get("selection", {}).get("points"):
-        point = clicked["selection"]["points"][0]
-        cd = point.get("customdata", [])
-        clip_url = str(cd[5]) if len(cd) > 5 else ""
-        if not clip_url or clip_url in ("", "nan", "None") and len(cd) > 6:
-            clip_url = str(cd[6])
-        clip_url = clip_url if clip_url not in ("", "nan", "None") else ""
-        if clip_url:
-            st.session_state["active_video"] = clip_url
-        else:
-            st.session_state["active_video"] = None
-            st.caption("No video available for this shot.")
+    _map_pts = (clicked or {}).get("selection", {}).get("points", [])
+    _map_key = str(_map_pts[0].get("point_index", _map_pts[0])) if _map_pts else None
+    _prev_map_key = st.session_state.get("_prev_map_key")
+
+    if _map_key != _prev_map_key:
+        st.session_state["_prev_map_key"] = _map_key
+        if _map_pts:
+            point = _map_pts[0]
+            cd = point.get("customdata", [])
+            clip_url = str(cd[5]) if len(cd) > 5 else ""
+            if not clip_url or clip_url in ("", "nan", "None") and len(cd) > 6:
+                clip_url = str(cd[6])
+            clip_url = clip_url if clip_url not in ("", "nan", "None") else ""
+            if clip_url:
+                st.session_state["active_video"] = clip_url
+            else:
+                st.session_state["active_video"] = None
+                st.caption("No video available for this shot.")
 
 with wheel_col:
     st.markdown('<div class="chart-card"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
@@ -627,6 +659,39 @@ highlight_col, breakdown_col = st.columns([2, 2])
 with highlight_col:
     st.markdown('<div class="chart-card"><div class="section-header">Goal Highlight</div>', unsafe_allow_html=True)
 
+    # Build goal list first so on_change callback can update active_video
+    # before the video player renders on the next rerun
+    goal_clips = (
+        shots_df[
+            (shots_df["event_type"] == "goal") &
+            shots_df["highlight_clip_url"].notna() &
+            (shots_df["highlight_clip_url"] != "")
+        ]
+        .merge(game_log_df[["game_id", "game_num", "opponent", "is_home"]], on="game_id", how="left")
+        .sort_values(["game_num", "period", "time_in_period"])
+        .reset_index(drop=True)
+    )
+
+    if len(goal_clips) > 0:
+        goal_labels = []
+        goal_url_map = {}
+        for _, row in goal_clips.iterrows():
+            xg_val = f"{round(row['x_goal'], 2)}" if row['x_goal'] else "—"
+            date_str = row['game_date'].strftime("%b %d") if row['game_date'] is not None else "—"
+            home_away = "vs" if row.get("is_home") else "at"
+            label = f"{date_str}  {home_away} {row['opponent']}  ·  P{int(row['period'])} {row['time_in_period']}  ·  {xg_val} xG"
+            goal_labels.append(label)
+            goal_url_map[label] = row["highlight_clip_url"]
+
+        st.session_state["_goal_url_map"] = goal_url_map
+
+        def _on_goal_select():
+            selected = st.session_state.get("goal_radio")
+            url_map = st.session_state.get("_goal_url_map", {})
+            if selected and selected in url_map:
+                st.session_state["active_video"] = url_map[selected]
+
+    # Video player — active_video already updated by on_change before this runs
     active_video_sharing_url = st.session_state.get("active_video")
     if active_video_sharing_url:
         with st.spinner("Loading clip..."):
@@ -656,27 +721,16 @@ with highlight_col:
 </div>
 """, unsafe_allow_html=True)
 
-    goal_clips = (
-        shots_df[
-            (shots_df["event_type"] == "goal") &
-            shots_df["highlight_clip_url"].notna() &
-            (shots_df["highlight_clip_url"] != "")
-        ]
-        .merge(game_log_df[["game_id", "game_num", "opponent", "is_home"]], on="game_id", how="left")
-        .sort_values(["game_num", "period", "time_in_period"])
-        .reset_index(drop=True)
-    )
-
     if len(goal_clips) > 0:
         st.markdown("<div style='margin-top:4px'></div>", unsafe_allow_html=True)
         with st.container(height=180, border=False):
-            for i, row in goal_clips.iterrows():
-                xg_val = f"{round(row['x_goal'], 2)}" if row['x_goal'] else "—"
-                date_str = row['game_date'].strftime("%b %d") if row['game_date'] is not None else "—"
-                home_away = "vs" if row.get("is_home") else "at"
-                label = f"{date_str}  {home_away} {row['opponent']}  ·  P{int(row['period'])} {row['time_in_period']}  ·  {xg_val} xG"
-                if st.button(label, key=f"goal_btn_{i}", use_container_width=True):
-                    st.session_state["active_video"] = row["highlight_clip_url"]
+            st.radio(
+                "goals", goal_labels,
+                key="goal_radio",
+                index=None,
+                label_visibility="collapsed",
+                on_change=_on_goal_select,
+            )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
