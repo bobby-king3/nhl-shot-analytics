@@ -187,7 +187,7 @@ selected_player_id = st.sidebar.selectbox(
     index=default_idx, key="pc_player"
 )
 
-if detect_change("_prev_player_id", selected_player_id):
+if detect_change("prev_player_id", selected_player_id):
     st.session_state.pop("pc_games", None)
     st.session_state["active_video"] = None
     st.session_state["game_log_game_id"] = None
@@ -303,32 +303,32 @@ else:
     selected_game_ids = set(game_log_df["game_id"])
     game_filter_active = False
 
-_log_pts = st.session_state.get("game_log_chart", {}).get("selection", {}).get("points", [])
-_log_x = int(_log_pts[0].get("x", -1)) if _log_pts else None
+log_pts = st.session_state.get("game_log_chart", {}).get("selection", {}).get("points", [])
+log_x = int(log_pts[0].get("x", -1)) if log_pts else None
 
-if detect_change("_prev_log_x", _log_x):
-    if _log_x is not None:
-        _grow = game_log_df[game_log_df["game_num"] == _log_x]
-        if len(_grow) > 0:
-            _gid = int(_grow.iloc[0]["game_id"])
-            st.session_state["game_log_game_id"] = _gid
-            if int(_grow.iloc[0]["goals"]) > 0:
-                _clips = shots_df[
-                    (shots_df["game_id"] == _gid) &
+if detect_change("prev_log_x", log_x):
+    if log_x is not None:
+        game_row = game_log_df[game_log_df["game_num"] == log_x]
+        if len(game_row) > 0:
+            clicked_game_id = int(game_row.iloc[0]["game_id"])
+            st.session_state["game_log_game_id"] = clicked_game_id
+            if int(game_row.iloc[0]["goals"]) > 0:
+                clips = shots_df[
+                    (shots_df["game_id"] == clicked_game_id) &
                     (shots_df["event_type"] == "goal") &
                     shots_df["highlight_clip_url"].notna() &
                     (shots_df["highlight_clip_url"] != "")
                 ]["highlight_clip_url"]
-                if len(_clips) > 0:
-                    st.session_state["active_video"] = str(_clips.iloc[0])
+                if len(clips) > 0:
+                    st.session_state["active_video"] = str(clips.iloc[0])
     else:
         st.session_state["game_log_game_id"] = None
 
 game_log_game_id = st.session_state.get("game_log_game_id")
 if game_log_game_id:
     shots_df = shots_df[shots_df["game_id"] == game_log_game_id].copy()
-    _opp = game_log_df[game_log_df["game_id"] == game_log_game_id]["opponent"].values
-    opp_label = f" vs {_opp[0]}" if len(_opp) > 0 else ""
+    opp_values = game_log_df[game_log_df["game_id"] == game_log_game_id]["opponent"].values
+    opp_label = f" vs {opp_values[0]}" if len(opp_values) > 0 else ""
     st.markdown(f"<div style='font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:8px;'>Showing selected game{opp_label} · stat cards reflect full season</div>", unsafe_allow_html=True)
 elif game_filter_active:
     shots_df = shots_df[shots_df["game_id"].isin(selected_game_ids)].copy()
@@ -348,15 +348,15 @@ with st.expander("Filters", expanded=False):
 filtered_shots = prepare_filtered_shots(shots_df, game_log_df, strength_sel, period_sel, event_sel)
 goals_df, blocked_df, nongoals_df = split_shots_by_type(filtered_shots)
 
-_type_sel = st.session_state.get("shot_type_chart", {}).get("selection", {}).get("points", [])
-_widget_type = _type_sel[0].get("y") if _type_sel else None
+type_sel = st.session_state.get("shot_type_chart", {}).get("selection", {}).get("points", [])
+widget_type = type_sel[0].get("y") if type_sel else None
 
-if detect_change("_shot_type_prev", _widget_type):
+if detect_change("shot_type_prev", widget_type):
     if _widget_type is not None:
-        if _widget_type == st.session_state.get("selected_shot_type"):
+        if widget_type == st.session_state.get("selected_shot_type"):
             st.session_state["selected_shot_type"] = None
         else:
-            st.session_state["selected_shot_type"] = _widget_type
+            st.session_state["selected_shot_type"] = widget_type
 
 selected_shot_type = st.session_state.get("selected_shot_type")
 map_goals_df, map_blocked_df, map_nongoals_df = apply_shot_type_filter(goals_df, blocked_df, nongoals_df, selected_shot_type)
@@ -381,12 +381,12 @@ with map_col:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    _map_pts = (clicked or {}).get("selection", {}).get("points", [])
-    _map_key = str(_map_pts[0].get("point_index", _map_pts[0])) if _map_pts else None
+    map_pts = (clicked or {}).get("selection", {}).get("points", [])
+    map_key = str(map_pts[0].get("point_index", map_pts[0])) if map_pts else None
 
-    if detect_change("_prev_map_key", _map_key):
-        if _map_pts:
-            point = _map_pts[0]
+    if detect_change("prev_map_key", map_key):
+        if map_pts:
+            point = map_pts[0]
             cd = point.get("customdata", [])
             clip_url = extract_clip_url(cd)
             if clip_url:
@@ -458,11 +458,11 @@ with highlight_col:
             goal_labels.append(label)
             goal_url_map[label] = row["highlight_clip_url"]
 
-        st.session_state["_goal_url_map"] = goal_url_map
+        st.session_state["goal_url_map"] = goal_url_map
 
-        def _on_goal_select():
+        def on_goal_select():
             selected = st.session_state.get("goal_radio")
-            url_map = st.session_state.get("_goal_url_map", {})
+            url_map = st.session_state.get("goal_url_map", {})
             if selected and selected in url_map:
                 st.session_state["active_video"] = url_map[selected]
 
@@ -501,7 +501,7 @@ with highlight_col:
                 key="goal_radio",
                 index=None,
                 label_visibility="collapsed",
-                on_change=_on_goal_select,
+                on_change=on_goal_select,
             )
 
     st.markdown('</div>', unsafe_allow_html=True)
