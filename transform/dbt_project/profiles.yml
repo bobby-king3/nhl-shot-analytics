@@ -1,0 +1,7 @@
+nhl_shot_intelligence:
+  target: prod
+  outputs:
+    prod:
+      type: duckdb
+      path: "md:nhl"
+      threads: 4
