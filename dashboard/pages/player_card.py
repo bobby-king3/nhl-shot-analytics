@@ -848,9 +848,6 @@ with breakdown_col:
             color=bar_fill_colors,
             line=dict(color=bar_line_colors, width=1),
         ),
-        text=type_df["shots"],
-        textposition="outside",
-        textfont=dict(color="rgba(255,255,255,0.6)", size=11),
         hovertemplate="<b>%{y}</b><br>Shots: %{x}<extra></extra>",
         showlegend=False,
     ))
@@ -861,7 +858,7 @@ with breakdown_col:
         mode="markers+text",
         marker=dict(color=dot_colors, size=10, line=dict(color="white", width=1.5)),
         text=[f"{v}%" for v in type_df["sh_pct"]],
-        textposition="middle right",
+        textposition="top right",
         textfont=dict(color="rgba(255,255,255,0.75)", size=10),
         hovertemplate="<b>%{y}</b><br>Sh%: %{text}<extra></extra>",
         showlegend=False,
