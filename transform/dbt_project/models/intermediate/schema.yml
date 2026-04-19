@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: int_shot_events
+    description: NHL play-by-play joined with MoneyPuck xG, rush, and rebound flags
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+      - name: event_id
+        tests:
+          - not_null
+      - name: shooter_id
+        tests:
+          - not_null
+      - name: period
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 1 and 5"
+      - name: event_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['goal', 'shot-on-goal', 'missed-shot', 'blocked-shot']
+      - name: x_goal
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 0 and 1"
+              config:
+                where: "x_goal is not null"

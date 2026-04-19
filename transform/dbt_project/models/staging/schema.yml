@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: stg_players
+    description: Player metadata from the NHL API
+    columns:
+      - name: player_id
+        description: NHL player ID
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_games
+    description: Game metadata from the NHL schedule API
+    columns:
+      - name: game_id
+        description: NHL game ID
+        tests:
+          - unique
+          - not_null
+      - name: game_date
+        tests:
+          - not_null
+
+  - name: stg_play_by_play
+    description: Shot events from the NHL public API
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+      - name: event_id
+        tests:
+          - not_null
+      - name: event_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['goal', 'shot-on-goal', 'missed-shot', 'blocked-shot']
+
+  - name: stg_moneypuck_shots
+    description: Shot data from MoneyPuck with xG, rush, and rebound flags
+    columns:
+      - name: shooter_id
+        tests:
+          - not_null
+      - name: x_goal
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 0 and 1"
