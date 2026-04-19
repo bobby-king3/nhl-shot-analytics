@@ -54,6 +54,8 @@ st.markdown("""
     border-radius: 10px;
     padding: 14px 18px;
     text-align: center;
+    position: relative;
+    cursor: default;
   }
   .stat-card .label {
     font-size: 11px;
@@ -66,6 +68,29 @@ st.markdown("""
     font-size: 26px;
     font-weight: 700;
     color: #FAFAFA;
+  }
+  .stat-card::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15,20,35,0.97);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.85);
+    padding: 7px 11px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: normal;
+    width: 200px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .stat-card:hover::after {
+    opacity: 1;
   }
   .section-header {
     font-size: 12px;
@@ -264,16 +289,16 @@ st.markdown(f"""
 
 gax_display = f"+{goals_above_expected}" if goals_above_expected and goals_above_expected > 0 else str(goals_above_expected)
 c1, c2, c3, c4, c5, c6 = st.columns(6)
-for col, label, value in [
-    (c1, "Goals",   goals),
-    (c2, "SOG",     shots_on_goal),
-    (c3, "Sh%",     f"{sh_pct}%"),
-    (c4, "xG",      total_xg),
-    (c5, "xG / GP", xg_per_game),
-    (c6, "Goals Above xG (GAX)", gax_display),
+for col, label, value, tooltip in [
+    (c1, "Goals",                 goals,         "Total goals scored (excludes shootout)"),
+    (c2, "SOG",                   shots_on_goal, "Shots on goal — shots that required a save or resulted in a goal"),
+    (c3, "Sh%",                   f"{sh_pct}%",  "Shooting percentage — goals divided by shots on goal"),
+    (c4, "xG",                    total_xg,      "Total expected goals — sum of shot quality based on location, type, and context (MoneyPuck model)"),
+    (c5, "xG / GP",               xg_per_game,   "Expected goals per game — measures how dangerous a player's shots are on a per game basis"),
+    (c6, "Goals Above xG (GAX)", gax_display,    "Goals above expected — positive means the player is finishing better than their shot quality predicts; negative suggests underperformance or bad luck"),
 ]:
     col.markdown(f"""
-    <div class="stat-card">
+    <div class="stat-card" data-tooltip="{tooltip}">
       <div class="label">{label}</div>
       <div class="value">{value}</div>
     </div>
