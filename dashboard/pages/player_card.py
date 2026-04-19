@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
+import pandas as pd
 import sys
 from pathlib import Path
 
@@ -281,10 +282,10 @@ game_log_game_id = st.session_state.get("game_log_game_id")
 if game_log_game_id:
     shots_df = shots_df[shots_df["game_id"] == game_log_game_id].copy()
     _opp = game_log_df[game_log_df["game_id"] == game_log_game_id]["opponent"].values
-    _opp_label = f" vs {_opp[0]}" if len(_opp) > 0 else ""
+    opp_label = f" vs {_opp[0]}" if len(_opp) > 0 else ""
     st.markdown(
         f"<div style='font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:8px;'>"
-        f"Showing selected game{_opp_label} · stat cards reflect full season</div>",
+        f"Showing selected game{opp_label} · stat cards reflect full season</div>",
         unsafe_allow_html=True
     )
 elif game_filter_active:
@@ -317,6 +318,17 @@ filtered_shots = shots_df[
 mask = filtered_shots["x_coord"] < 0
 filtered_shots.loc[mask, "x_coord"] = -filtered_shots.loc[mask, "x_coord"]
 filtered_shots.loc[mask, "y_coord"] = -filtered_shots.loc[mask, "y_coord"]
+
+filtered_shots = filtered_shots.merge(
+    game_log_df[["game_id", "opponent", "is_home"]], on="game_id", how="left"
+)
+filtered_shots["date_str"] = filtered_shots["game_date"].apply(
+    lambda d: d.strftime("%b %d") if d is not None else "—"
+)
+filtered_shots["opp_label"] = filtered_shots.apply(
+    lambda r: f"{'vs' if r['is_home'] else 'at'} {r['opponent']}" if pd.notna(r.get("opponent")) else "—",
+    axis=1
+)
 
 goals_df    = filtered_shots[filtered_shots["event_type"] == "goal"]
 blocked_df  = filtered_shots[filtered_shots["event_type"] == "blocked-shot"]
@@ -459,9 +471,12 @@ with map_col:
                 map_nongoals_df["strength"],
                 map_nongoals_df["period"],
                 map_nongoals_df["highlight_clip_url"].fillna(""),
+                map_nongoals_df["date_str"],
+                map_nongoals_df["opp_label"],
             ]),
             hovertemplate=(
                 "<b>%{customdata[0]}</b><br>"
+                "%{customdata[7]}  %{customdata[8]}<br>"
                 "Distance: %{customdata[1]} ft<br>"
                 "Angle: %{customdata[2]}°<br>"
                 "xG: %{customdata[3]}<br>"
@@ -489,9 +504,12 @@ with map_col:
                 map_blocked_df["shot_angle"].round(1),
                 map_blocked_df["strength"],
                 map_blocked_df["period"],
+                map_blocked_df["date_str"],
+                map_blocked_df["opp_label"],
             ]),
             hovertemplate=(
                 "<b>Blocked Shot</b><br>"
+                "%{customdata[4]}  %{customdata[5]}<br>"
                 "Distance: %{customdata[0]} ft<br>"
                 "Angle: %{customdata[1]}°<br>"
                 "Strength: %{customdata[2]}<br>"
@@ -521,9 +539,12 @@ with map_col:
                 map_goals_df["strength"],
                 map_goals_df["period"],
                 map_goals_df["highlight_clip_url"].fillna(""),
+                map_goals_df["date_str"],
+                map_goals_df["opp_label"],
             ]),
             hovertemplate=(
                 "<b>GOAL ⭐</b><br>"
+                "%{customdata[6]}  %{customdata[7]}<br>"
                 "Distance: %{customdata[0]} ft<br>"
                 "Angle: %{customdata[1]}°<br>"
                 "xG: %{customdata[2]}<br>"
