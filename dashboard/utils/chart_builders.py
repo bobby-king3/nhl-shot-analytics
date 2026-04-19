@@ -49,7 +49,7 @@ def build_game_log_chart(
     ))
 
     # Goal markers
-    if len(goal_games) > 0:
+    if not goal_games.empty:
         fig.add_trace(go.Scatter(
             x=goal_games["game_num"],
             y=goal_games["xg"],
@@ -90,7 +90,7 @@ def build_shot_map(
     xg_vals = map_nongoals_df["x_goal"].fillna(0).clip(0, 0.5)
 
     # Non-goals
-    if len(map_nongoals_df) > 0:
+    if not map_nongoals_df.empty:
         fig.add_trace(go.Scatter(
             x=map_nongoals_df["x_coord"],
             y=map_nongoals_df["y_coord"],
@@ -134,7 +134,7 @@ def build_shot_map(
         ))
 
     # Blocked shots
-    if len(map_blocked_df) > 0:
+    if not map_blocked_df.empty:
         fig.add_trace(go.Scatter(
             x=map_blocked_df["x_coord"],
             y=map_blocked_df["y_coord"],
@@ -167,7 +167,7 @@ def build_shot_map(
         ))
 
     # Goals
-    if len(map_goals_df) > 0:
+    if not map_goals_df.empty:
         fig.add_trace(go.Scatter(
             x=map_goals_df["x_coord"],
             y=map_goals_df["y_coord"],

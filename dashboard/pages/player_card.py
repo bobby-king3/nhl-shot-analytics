@@ -359,7 +359,7 @@ if detect_change("_shot_type_prev", _widget_type):
             st.session_state["selected_shot_type"] = _widget_type
 
 selected_shot_type = st.session_state.get("selected_shot_type")
-map_goals_df, map_nongoals_df, map_blocked_df = apply_shot_type_filter(goals_df, blocked_df, nongoals_df, selected_shot_type)
+map_goals_df, map_blocked_df, map_nongoals_df = apply_shot_type_filter(goals_df, blocked_df, nongoals_df, selected_shot_type)
 
 st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
 st.markdown('<div class="chart-card"><div class="section-header">Game Log</div>', unsafe_allow_html=True)
