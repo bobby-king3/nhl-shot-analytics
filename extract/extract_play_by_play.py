@@ -2,14 +2,11 @@ import sys
 sys.path.append(".")
 
 import json
-import duckdb
 from datetime import date, datetime, timedelta, timezone
+from extract.connection import get_connection
 from extract.nhl_client.nhl_api import get, get_play_by_play
 
-DB_PATH = "data/nhl.duckdb"
 SHOT_EVENT_TYPES = {"shot-on-goal", "goal", "missed-shot", "blocked-shot"}
-
-# Initial load date used
 INITIAL_START_DATE = date(2023, 10, 10)
 
 
@@ -45,6 +42,7 @@ def get_completed_games(con):
                     game_ids.append((game["id"], game.get("season")))
         current += timedelta(weeks=1)
 
+    # Leave yesterday unconfirmed so late-finishing games aren't missed
     set_last_updated(con, end - timedelta(days=1))
     return list({gid: season for gid, season in game_ids}.items())
 
@@ -92,7 +90,6 @@ def extract_game(con, game_id, season):
             continue
 
         details = play.get("details", {})
-
         shooter_id = details.get("scoringPlayerId") or details.get("shootingPlayerId")
 
         rows.append((
@@ -126,7 +123,7 @@ def extract_game(con, game_id, season):
 
 
 def main():
-    con = duckdb.connect(DB_PATH)
+    con = get_connection()
     create_table(con)
 
     already_processed = get_already_processed(con)

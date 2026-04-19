@@ -1,13 +1,26 @@
+import os
 import duckdb
 import streamlit as st
 from pathlib import Path
 
-DB_PATH = str(Path(__file__).parent.parent.parent / "data" / "nhl.duckdb")
+LOCAL_DB = str(Path(__file__).parent.parent.parent / "data" / "nhl.duckdb")
+
+
+def connect() -> duckdb.DuckDBPyConnection:
+    try:
+        token = st.secrets.get("MOTHERDUCK_TOKEN")
+    except Exception:
+        token = None
+    token = token or os.environ.get("MOTHERDUCK_TOKEN")
+    if token:
+        os.environ.setdefault("motherduck_token", token)
+        return duckdb.connect("md:nhl", read_only=True)
+    return duckdb.connect(LOCAL_DB, read_only=True)
 
 
 @st.cache_data(ttl=3600)
 def get_league_stats(season: int) -> dict:
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    conn = connect()
     row = conn.execute("""
         select
             count(distinct game_id)          as games_played,
@@ -28,7 +41,7 @@ def get_league_stats(season: int) -> dict:
 
 @st.cache_data(ttl=3600)
 def get_leaderboard(season: int, n: int = 20):
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    conn = connect()
     df = conn.execute("""
         select
             p.player_id,
@@ -56,7 +69,7 @@ def get_leaderboard(season: int, n: int = 20):
 
 @st.cache_data(ttl=3600)
 def get_player_stats(player_id: int, season: int):
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    conn = connect()
     row = conn.execute("""
         select
             p.full_name,
@@ -88,7 +101,7 @@ def get_player_stats(player_id: int, season: int):
 
 @st.cache_data(ttl=3600)
 def get_player_shots(player_id: int, season: int):
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    conn = connect()
     df = conn.execute("""
         select
             game_id,
@@ -117,7 +130,7 @@ def get_player_shots(player_id: int, season: int):
 
 @st.cache_data(ttl=3600)
 def get_player_game_log(player_id: int, season: int):
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    conn = connect()
     df = conn.execute("""
         with player_games as (
             select
@@ -163,7 +176,7 @@ def get_player_game_log(player_id: int, season: int):
 
 @st.cache_data(ttl=3600)
 def get_all_players(season: int):
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    conn = connect()
     df = conn.execute("""
         select
             p.player_id,
@@ -181,7 +194,7 @@ def get_all_players(season: int):
 
 @st.cache_data(ttl=3600)
 def get_teams(season: int):
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    conn = connect()
     rows = conn.execute("""
         select distinct p.team_abbrev
         from main.mart_player_shooting m
@@ -195,7 +208,7 @@ def get_teams(season: int):
 
 @st.cache_data(ttl=3600)
 def get_available_seasons():
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    conn = connect()
     rows = conn.execute("""
         select distinct season from main.mart_player_shooting order by season desc
     """).fetchall()

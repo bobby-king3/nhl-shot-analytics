@@ -1,11 +1,10 @@
 import sys
 sys.path.append(".")
 
-import duckdb
 from datetime import date, timedelta
+from extract.connection import get_connection
 from extract.nhl_client.nhl_api import get
 
-DB_PATH = "data/nhl.duckdb"
 SEASON_START_DATES = [date(2023, 10, 10), date(2024, 10, 8), date(2025, 10, 7)]
 
 
@@ -57,7 +56,6 @@ def fetch_all_games(con):
                     home = game.get("homeTeam", {})
                     away = game.get("awayTeam", {})
                     outcome = game.get("gameOutcome", {})
-
                     start_time = game.get("startTimeUTC")
                     game_date = start_time[:10] if start_time else None
 
@@ -87,7 +85,7 @@ def fetch_all_games(con):
 
 
 def main():
-    con = duckdb.connect(DB_PATH)
+    con = get_connection()
     create_table(con)
     fetch_all_games(con)
     con.close()

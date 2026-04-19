@@ -1,11 +1,9 @@
 import sys
 sys.path.append(".")
 
-import duckdb
 from datetime import datetime, timezone
+from extract.connection import get_connection
 from extract.nhl_client.nhl_api import get
-
-DB_PATH = "data/nhl.duckdb"
 
 
 def create_table(con):
@@ -57,7 +55,7 @@ def fetch_player(player_id):
 
 
 def main():
-    con = duckdb.connect(DB_PATH)
+    con = get_connection()
     create_table(con)
 
     all_ids = get_all_shooter_ids(con)
