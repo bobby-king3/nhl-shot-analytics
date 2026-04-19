@@ -612,13 +612,11 @@ with map_col:
             point = _map_pts[0]
             cd = point.get("customdata", [])
 
-            # Extract clip URL from customdata, with fallback to alternate index
             clip_url = str(cd[5]) if len(cd) > 5 else ""
             is_invalid = clip_url in ("", "nan", "None")
             if is_invalid and len(cd) > 6:
                 clip_url = str(cd[6])
 
-            # Validate final URL and set session state
             clip_url = "" if clip_url in ("", "nan", "None") else clip_url
             if clip_url:
                 st.session_state["active_video"] = clip_url
@@ -714,15 +712,13 @@ with wheel_col:
             )
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ── Goal Highlight + Shot Type Breakdown ─────────────────────────────────────
+
 st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
 highlight_col, breakdown_col = st.columns([2, 2])
 
 with highlight_col:
     st.markdown('<div class="chart-card"><div class="section-header">Goal Highlight</div>', unsafe_allow_html=True)
 
-    # Build goal list first so on_change callback can update active_video
-    # before the video player renders on the next rerun
     goal_clips = (
         shots_df[
             (shots_df["event_type"] == "goal") &
@@ -753,7 +749,6 @@ with highlight_col:
             if selected and selected in url_map:
                 st.session_state["active_video"] = url_map[selected]
 
-    # Video player — active_video already updated by on_change before this runs
     active_video_sharing_url = st.session_state.get("active_video")
     if active_video_sharing_url:
         with st.spinner("Loading clip..."):
@@ -818,7 +813,6 @@ with breakdown_col:
         for v in type_df["sh_pct"]
     ]
 
-    # Generate bar colors based on selection state
     bar_fill_colors = []
     bar_line_colors = []
     for shot_type in type_df["shot_type"]:
