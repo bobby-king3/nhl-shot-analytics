@@ -139,10 +139,10 @@ if total_games > 1:
     selected_game_ids_list = st.sidebar.multiselect(
         "Games", options=list(game_options.keys()),
         format_func=lambda gid: game_options[gid],
-        default=list(game_options.keys()), key="pc_games"
+        default=[], placeholder="All games", key="pc_games"
     )
     selected_game_ids = set(selected_game_ids_list) if selected_game_ids_list else set(game_log_df["game_id"])
-    game_filter_active = len(selected_game_ids_list) > 0 and len(selected_game_ids_list) < total_games
+    game_filter_active = len(selected_game_ids_list) > 0
 else:
     selected_game_ids = set(game_log_df["game_id"])
     game_filter_active = False
