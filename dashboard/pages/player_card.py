@@ -133,7 +133,7 @@ total_games = len(game_log_df)
 if total_games > 1:
     st.sidebar.markdown("---")
     game_options = {
-        row.game_id: f"G{row.game_num} vs {row.opponent}  —  {'⭐ ' if row.goals > 0 else ''}{row.goals}G  {row.xg} xG"
+        row.game_id: f"G{row.game_num} {'vs' if row.is_home else 'at'} {row.opponent}  —  {'⭐ ' if row.goals > 0 else ''}{row.goals}G  {row.xg} xG"
         for row in game_log_df.itertuples()
     }
     selected_game_ids_list = st.sidebar.multiselect(
@@ -662,7 +662,7 @@ with highlight_col:
             shots_df["highlight_clip_url"].notna() &
             (shots_df["highlight_clip_url"] != "")
         ]
-        .merge(game_log_df[["game_id", "game_num", "opponent"]], on="game_id", how="left")
+        .merge(game_log_df[["game_id", "game_num", "opponent", "is_home"]], on="game_id", how="left")
         .sort_values(["game_num", "period", "time_in_period"])
         .reset_index(drop=True)
     )
@@ -673,7 +673,8 @@ with highlight_col:
             for i, row in goal_clips.iterrows():
                 xg_val = f"{round(row['x_goal'], 2)}" if row['x_goal'] else "—"
                 date_str = row['game_date'].strftime("%b %d") if row['game_date'] is not None else "—"
-                label = f"{date_str}  vs {row['opponent']}  ·  P{int(row['period'])} {row['time_in_period']}  ·  {xg_val} xG"
+                home_away = "vs" if row.get("is_home") else "at"
+                label = f"{date_str}  {home_away} {row['opponent']}  ·  P{int(row['period'])} {row['time_in_period']}  ·  {xg_val} xG"
                 if st.button(label, key=f"goal_btn_{i}", use_container_width=True):
                     st.session_state["active_video"] = row["highlight_clip_url"]
 
