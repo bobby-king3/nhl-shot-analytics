@@ -847,7 +847,7 @@ with breakdown_col:
         mode="markers+text",
         marker=dict(color=dot_colors, size=10, line=dict(color="white", width=1.5)),
         text=[f"{v}%" for v in type_df["sh_pct"]],
-        textposition="top right",
+        textposition="middle right",
         textfont=dict(color="rgba(255,255,255,0.75)", size=10),
         hovertemplate="<b>%{y}</b><br>Sh%: %{text}<extra></extra>",
         showlegend=False,
