@@ -75,7 +75,9 @@ def get_player_stats(player_id: int, season: int):
             m.avg_xg_per_shot_pctile,
             m.xg_per_game_pctile,
             m.rebound_shot_pct_pctile,
-            m.shot_distance_pctile
+            m.shot_distance_pctile,
+            m.goals_above_expected,
+            m.goals_above_expected_pctile
         from main.mart_player_shooting m
         join main.stg_players p on p.player_id = m.shooter_id
         where m.shooter_id = ? and m.season = ?

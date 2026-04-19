@@ -200,7 +200,8 @@ if _log_x != _prev_log_x:
 (full_name, position, team_abbrev, headshot_url, team_logo_url,
  games_played, goals, shots_on_goal, sh_pct, total_xg, xg_per_game,
  goals_pctile, sh_pctile, avg_xg_pctile, xg_pg_pctile,
- rebound_pctile, dist_pctile) = stats
+ rebound_pctile, dist_pctile,
+ goals_above_expected, gax_pctile) = stats
 
 primary, secondary = team_colors(team_abbrev)
 r, g, b = int(primary[1:3], 16), int(primary[3:5], 16), int(primary[5:7], 16)
@@ -261,13 +262,15 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-c1, c2, c3, c4, c5 = st.columns(5)
+gax_display = f"+{goals_above_expected}" if goals_above_expected and goals_above_expected > 0 else str(goals_above_expected)
+c1, c2, c3, c4, c5, c6 = st.columns(6)
 for col, label, value in [
     (c1, "Goals",   goals),
     (c2, "SOG",     shots_on_goal),
     (c3, "Sh%",     f"{sh_pct}%"),
     (c4, "xG",      total_xg),
     (c5, "xG / GP", xg_per_game),
+    (c6, "Goals Above xG (GAX)", gax_display),
 ]:
     col.markdown(f"""
     <div class="stat-card">
@@ -588,7 +591,7 @@ with wheel_col:
     st.markdown('<div class="chart-card"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
     st.caption("Min. 50 shot attempts")
 
-    categories = ["Goals/GP", "Sh%", "Avg xG/Shot", "xG/GP", "Rebound Shot%", "Shot Distance"]
+    categories = ["Goals/GP", "Sh%", "Avg xG/Shot", "xG/GP", "Rebound Shot%", "Shot Distance", "GAX"]
     values = [
         round((goals_pctile   or 0) * 100),
         round((sh_pctile      or 0) * 100),
@@ -596,6 +599,7 @@ with wheel_col:
         round((xg_pg_pctile   or 0) * 100),
         round((rebound_pctile or 0) * 100),
         round((dist_pctile    or 0) * 100),
+        round((gax_pctile     or 0) * 100),
     ]
 
     def pctile_color(v):

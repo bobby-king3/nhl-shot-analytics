@@ -90,3 +90,8 @@ models:
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "between 0 and 1"
+      - name: goals_above_expected_pctile
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 0 and 1"

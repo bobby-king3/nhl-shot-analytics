@@ -37,7 +37,7 @@ player_season as (
             / nullif(count(*), 0), 1
         )                                                                               as rebound_shot_pct,
 
-        -- rates (per game, since we have no TOI)
+        -- per_game rates
         round(
             count(*) filter (where event_type = 'goal')
             * 1.0 / nullif(count(distinct game_id), 0), 3
@@ -51,7 +51,12 @@ player_season as (
         round(
             100.0 * count(*) filter (where event_type = 'goal')
             / nullif(count(*) filter (where event_type in ('shot-on-goal', 'goal')), 0), 1
-        )                                                                               as sh_pct
+        )                                                                               as sh_pct,
+
+        -- goals above expected
+        round(
+            count(*) filter (where event_type = 'goal') - sum(x_goal), 2
+        )                                                                               as goals_above_expected
 
     from shots
     group by 1, 2
@@ -73,8 +78,9 @@ with_percentiles as (
         round(percent_rank() over (partition by season order by sh_pct),               3)  as sh_pct_pctile,
         round(percent_rank() over (partition by season order by avg_xg_per_shot),      3)  as avg_xg_per_shot_pctile,
         round(percent_rank() over (partition by season order by xg_per_game),          3)  as xg_per_game_pctile,
-        round(percent_rank() over (partition by season order by rebound_shot_pct),     3)  as rebound_shot_pct_pctile,
-        round(percent_rank() over (partition by season order by avg_shot_distance desc), 3) as shot_distance_pctile
+        round(percent_rank() over (partition by season order by rebound_shot_pct),       3)  as rebound_shot_pct_pctile,
+        round(percent_rank() over (partition by season order by avg_shot_distance desc), 3)  as shot_distance_pctile,
+        round(percent_rank() over (partition by season order by goals_above_expected),   3)  as goals_above_expected_pctile
 
     from qualified
 )
