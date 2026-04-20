@@ -207,6 +207,27 @@ def get_teams(season: int):
 
 
 @st.cache_data(ttl=3600)
+def get_player_season_log(player_id: int):
+    conn = connect()
+    df = conn.execute("""
+        select
+            season,
+            games_played,
+            goals,
+            shots_on_goal,
+            sh_pct,
+            round(total_xg, 1)       as total_xg,
+            round(xg_per_game, 3)    as xg_per_game,
+            goals_above_expected
+        from main.mart_player_shooting
+        where shooter_id = ?
+        order by season asc
+    """, [player_id]).df()
+    conn.close()
+    return df
+
+
+@st.cache_data(ttl=3600)
 def get_available_seasons():
     conn = connect()
     rows = conn.execute("""

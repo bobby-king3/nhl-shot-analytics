@@ -10,7 +10,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from dashboard.components.rink import make_rink_figure
 from dashboard.utils.db import (
     get_player_stats, get_player_shots, get_player_game_log,
-    get_all_players, get_available_seasons, get_teams
+    get_player_season_log, get_all_players, get_available_seasons, get_teams
 )
 from dashboard.utils.video import get_mp4_url
 from dashboard.utils.styling import hex_to_rgb, get_performance_color
@@ -285,6 +285,74 @@ for col, label, value, tooltip in stat_cards:
 
 st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 
+with st.expander("Filters", expanded=False):
+    f1, f2, f3 = st.columns(3)
+    strength_opts = sorted(shots_df["strength"].dropna().unique())
+    period_opts = sorted(shots_df["period"].dropna().unique())
+    event_opts = sorted(shots_df["event_type"].dropna().unique())
+
+    strength_sel = f1.multiselect("Strength", strength_opts, default=strength_opts)
+    period_label = {1: "P1", 2: "P2", 3: "P3", 4: "OT"}
+    period_sel = f2.multiselect("Period", period_opts, default=period_opts, format_func=lambda p: period_label.get(int(p), str(int(p))))
+    event_sel = f3.multiselect("Event Type", event_opts, default=event_opts)
+
+season_log_df = get_player_season_log(selected_player_id)
+if len(season_log_df) > 1:
+    def fmt_season(s):
+        return f"{str(s)[:4]}-{str(s)[4:6]}"
+
+    def fmt_gax(v):
+        if v is None:
+            return "—"
+        return f"+{v}" if v > 0 else str(v)
+
+    header_cols = ["Season", "GP", "G", "SOG", "Sh%", "xG", "xG/GP", "GAX"]
+    header_html = "".join(
+        f"<th style='padding:6px 12px; color:rgba(255,255,255,0.45); font-size:11px; "
+        f"text-transform:uppercase; letter-spacing:1px; font-weight:600; "
+        f"text-align:{'left' if i == 0 else 'right'}'>{c}</th>"
+        for i, c in enumerate(header_cols)
+    )
+
+    rows_html = ""
+    for _, row in season_log_df.iterrows():
+        is_current = row["season"] == selected_season
+        bg = f"rgba({r},{g},{b},0.12)" if is_current else "transparent"
+        border = f"border-left: 3px solid {primary};" if is_current else "border-left: 3px solid transparent;"
+        weight = "700" if is_current else "400"
+        color = "rgba(255,255,255,0.95)" if is_current else "rgba(255,255,255,0.6)"
+
+        cells = [
+            fmt_season(row["season"]),
+            int(row["games_played"]),
+            int(row["goals"]),
+            int(row["shots_on_goal"]),
+            f"{row['sh_pct']}%",
+            row["total_xg"],
+            row["xg_per_game"],
+            fmt_gax(row["goals_above_expected"]),
+        ]
+        cells_html = "".join(
+            f"<td style='padding:7px 12px; text-align:{'left' if i == 0 else 'right'}; "
+            f"font-family:monospace; font-size:13px; color:{color}; font-weight:{weight}'>{v}</td>"
+            for i, v in enumerate(cells)
+        )
+        rows_html += (
+            f"<tr style='background:{bg}; {border} transition:background 0.15s;'>"
+            f"{cells_html}</tr>"
+        )
+
+    st.markdown(f"""
+    <div class="chart-card" style="margin-bottom:8px;">
+      <div class="section-header">Season Stats</div>
+      <div style="font-size:11px; color:rgba(255,255,255,0.45); margin-bottom:8px;">Full season · unaffected by filters above</div>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">{header_html}</tr></thead>
+        <tbody>{rows_html}</tbody>
+      </table>
+    </div>
+    """, unsafe_allow_html=True)
+
 total_games = len(game_log_df)
 if total_games > 1:
     st.sidebar.markdown("---")
@@ -334,17 +402,6 @@ elif game_filter_active:
     shots_df = shots_df[shots_df["game_id"].isin(selected_game_ids)].copy()
     st.markdown(f"<div style='font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:8px;'>Showing {len(selected_game_ids)} of {total_games} games · stat cards reflect full season</div>", unsafe_allow_html=True)
 
-with st.expander("Filters", expanded=False):
-    f1, f2, f3 = st.columns(3)
-    strength_opts = sorted(shots_df["strength"].dropna().unique())
-    period_opts = sorted(shots_df["period"].dropna().unique())
-    event_opts = sorted(shots_df["event_type"].dropna().unique())
-
-    strength_sel = f1.multiselect("Strength", strength_opts, default=strength_opts)
-    period_label = {1: "P1", 2: "P2", 3: "P3", 4: "OT"}
-    period_sel = f2.multiselect("Period", period_opts, default=period_opts, format_func=lambda p: period_label.get(int(p), str(int(p))))
-    event_sel = f3.multiselect("Event Type", event_opts, default=event_opts)
-
 filtered_shots = prepare_filtered_shots(shots_df, game_log_df, strength_sel, period_sel, event_sel)
 goals_df, blocked_df, nongoals_df = split_shots_by_type(filtered_shots)
 
@@ -352,7 +409,7 @@ type_sel = st.session_state.get("shot_type_chart", {}).get("selection", {}).get(
 widget_type = type_sel[0].get("y") if type_sel else None
 
 if detect_change("shot_type_prev", widget_type):
-    if _widget_type is not None:
+    if widget_type is not None:
         if widget_type == st.session_state.get("selected_shot_type"):
             st.session_state["selected_shot_type"] = None
         else:
