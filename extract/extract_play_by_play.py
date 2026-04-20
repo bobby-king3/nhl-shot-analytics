@@ -13,16 +13,16 @@ INITIAL_START_DATE = date(2023, 10, 10)
 def get_start_date(con):
     con.execute("""
         CREATE TABLE IF NOT EXISTS last_updated (
-            last_date DATE PRIMARY KEY
+            last_updated_at TIMESTAMP PRIMARY KEY
         )
     """)
-    row = con.execute("SELECT last_date FROM last_updated").fetchone()
-    return (row[0] + timedelta(days=1)) if row else INITIAL_START_DATE
+    row = con.execute("SELECT last_updated_at FROM last_updated").fetchone()
+    return (row[0].date() + timedelta(days=1)) if row else INITIAL_START_DATE
 
 
 def set_last_updated(con, d):
     con.execute("DELETE FROM last_updated")
-    con.execute("INSERT INTO last_updated VALUES (?)", [d])
+    con.execute("INSERT INTO last_updated VALUES (?)", [datetime.now(timezone.utc)])
 
 
 def get_completed_games(con):
