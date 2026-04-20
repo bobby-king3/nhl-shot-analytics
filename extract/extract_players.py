@@ -75,7 +75,7 @@ def main():
             continue
 
         con.execute("""
-            INSERT OR REPLACE INTO raw_players VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO raw_players VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, [
             player["player_id"],
             player["first_name"],

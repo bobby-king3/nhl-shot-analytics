@@ -78,7 +78,7 @@ def fetch_all_games(con):
             current += timedelta(weeks=1)
 
     if rows:
-        con.executemany("INSERT OR IGNORE INTO raw_games VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+        con.executemany("INSERT INTO raw_games VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
         print(f"Inserted {len(rows)} games.")
     else:
         print("No new games to insert.")
