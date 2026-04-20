@@ -38,6 +38,7 @@ def get_existing_game_ids(con):
 
 def fetch_all_games(con):
     existing = get_existing_game_ids(con)
+    seen = set(existing)
     rows = []
     end = date.today()
 
@@ -48,8 +49,9 @@ def fetch_all_games(con):
             for week in data.get("gameWeek", []):
                 for game in week.get("games", []):
                     gid = game.get("id")
-                    if not gid or gid in existing:
+                    if not gid or gid in seen:
                         continue
+                    seen.add(gid)
                     if game.get("gameState") != "OFF":
                         continue
 
