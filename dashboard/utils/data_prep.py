@@ -2,10 +2,18 @@ import numpy as np
 
 
 def prepare_filtered_shots(shots_df, game_log_df, strength_sel, period_sel, event_sel):
+    strength_opts = shots_df["strength"].dropna().unique()
+    period_opts = shots_df["period"].dropna().unique()
+    event_opts = shots_df["event_type"].dropna().unique()
+
+    active_strength = strength_sel if strength_sel else strength_opts
+    active_period = period_sel if period_sel else period_opts
+    active_event = event_sel if event_sel else event_opts
+
     filtered = shots_df[
-        shots_df["strength"].isin(strength_sel) &
-        shots_df["period"].isin(period_sel) &
-        shots_df["event_type"].isin(event_sel)
+        shots_df["strength"].isin(active_strength) &
+        shots_df["period"].isin(active_period) &
+        shots_df["event_type"].isin(active_event)
     ].copy()
 
     mask = filtered["x_coord"] < 0

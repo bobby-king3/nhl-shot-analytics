@@ -293,17 +293,6 @@ for col, label, value, tooltip in stat_cards:
 
 st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 
-with st.expander("Filters", expanded=False):
-    f1, f2, f3 = st.columns(3)
-    strength_opts = sorted(shots_df["strength"].dropna().unique())
-    period_opts = sorted(shots_df["period"].dropna().unique())
-    event_opts = sorted(shots_df["event_type"].dropna().unique())
-
-    strength_sel = f1.multiselect("Strength", strength_opts, default=strength_opts)
-    period_label = {1: "P1", 2: "P2", 3: "P3", 4: "OT"}
-    period_sel = f2.multiselect("Period", period_opts, default=period_opts, format_func=lambda p: period_label.get(int(p), str(int(p))))
-    event_sel = f3.multiselect("Event Type", event_opts, default=event_opts)
-
 season_log_df = get_player_season_log(selected_player_id)
 if len(season_log_df) > 1:
     def fmt_season(s):
@@ -353,7 +342,6 @@ if len(season_log_df) > 1:
     st.markdown(f"""
     <div class="chart-card" style="margin-bottom:8px;">
       <div class="section-header">Season Stats</div>
-      <div style="font-size:11px; color:rgba(255,255,255,0.45); margin-bottom:8px;">Full season · unaffected by filters above</div>
       <table style="width:100%; border-collapse:collapse;">
         <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">{header_html}</tr></thead>
         <tbody>{rows_html}</tbody>
@@ -378,6 +366,16 @@ if total_games > 1:
 else:
     selected_game_ids = set(game_log_df["game_id"])
     game_filter_active = False
+
+strength_opts = sorted(shots_df["strength"].dropna().unique())
+period_opts = sorted(shots_df["period"].dropna().unique())
+event_opts = sorted(shots_df["event_type"].dropna().unique())
+period_label = {1: "P1", 2: "P2", 3: "P3", 4: "OT"}
+
+st.sidebar.markdown("---")
+strength_sel = st.sidebar.multiselect("Strength", strength_opts, default=[], placeholder="All strengths")
+period_sel = st.sidebar.multiselect("Period", period_opts, default=[], placeholder="All periods", format_func=lambda p: period_label.get(int(p), str(int(p))))
+event_sel = st.sidebar.multiselect("Event Type", event_opts, default=[], placeholder="All event types")
 
 log_pts = st.session_state.get("game_log_chart", {}).get("selection", {}).get("points", [])
 log_x = int(log_pts[0].get("x", -1)) if log_pts else None
