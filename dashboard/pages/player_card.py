@@ -166,6 +166,12 @@ st.markdown("""
 
 st.set_page_config(page_title="NHL Shot Intelligence", page_icon="🏒", layout="wide")
 
+url_player_id = None
+try:
+    url_player_id = int(st.query_params.get("player", ""))
+except (ValueError, TypeError):
+    pass
+
 seasons = get_available_seasons()
 season_labels = {s: f"{str(s)[:4]}-{str(s)[4:]}" for s in seasons}
 
@@ -178,7 +184,7 @@ if selected_team != "All Teams":
     players_df = players_df[players_df["team_abbrev"] == selected_team]
 
 player_options = {row.player_id: f"{row.full_name} ({row.team_abbrev})" for row in players_df.itertuples()}
-default_id = st.session_state.get("selected_player_id", players_df["player_id"].iloc[0])
+default_id = url_player_id if (url_player_id and url_player_id in player_options) else st.session_state.get("selected_player_id", players_df["player_id"].iloc[0])
 default_idx = list(player_options.keys()).index(default_id) if default_id in player_options else 0
 
 selected_player_id = st.sidebar.selectbox(
@@ -186,6 +192,8 @@ selected_player_id = st.sidebar.selectbox(
     format_func=lambda pid: player_options[pid],
     index=default_idx, key="pc_player"
 )
+
+st.query_params["player"] = str(selected_player_id)
 
 if detect_change("prev_player_id", selected_player_id):
     st.session_state.pop("pc_games", None)
