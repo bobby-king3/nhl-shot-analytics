@@ -164,7 +164,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-st.set_page_config(page_title="NHL Shot Intelligence", page_icon="🏒", layout="wide")
+st.set_page_config(page_title="NHL Shot Analytics", page_icon="🏒", layout="wide")
 
 url_player_id = None
 try:

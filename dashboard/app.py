@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="NHL Shot Intelligence",
+    page_title="NHL Shot Analytics",
     page_icon="🏒",
     layout="wide",
 )
