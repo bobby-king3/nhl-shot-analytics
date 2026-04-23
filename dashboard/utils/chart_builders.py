@@ -1,21 +1,58 @@
 import plotly.graph_objects as go
 import numpy as np
-import pandas as pd
-
 from dashboard.components.rink import make_rink_figure
 from dashboard.utils.plotly_config import get_dark_layout, get_dark_xaxes, get_dark_yaxes, generate_bar_colors_for_selection
 from dashboard.utils.styling import get_performance_color
 
 
-def build_game_log_chart(
-    game_log_df: pd.DataFrame,
-    selected_game_ids: set,
-    game_filter_active: bool,
-    r: int,
-    g: int,
-    b: int,
-    primary: str,
-) -> go.Figure:
+def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
+    def fmt_season(s):
+        return f"{str(s)[:4]}-{str(s)[4:6]}"
+
+    def fmt_gax(v):
+        if v is None:
+            return "—"
+        return f"+{v}" if v > 0 else str(v)
+
+    header_cols = ["Season", "GP", "G", "SOG", "Sh%", "xG", "xG/GP", "GAX"]
+    header_html = "".join(
+        f"<th style='padding:6px 12px; color:rgba(255,255,255,0.45); font-size:11px; "
+        f"text-transform:uppercase; letter-spacing:1px; font-weight:600; "
+        f"text-align:{'left' if i == 0 else 'right'}'>{c}</th>"
+        for i, c in enumerate(header_cols)
+    )
+
+    rows_html = ""
+    for _, row in season_log_df.iterrows():
+        is_current = row["season"] == selected_season
+        bg = f"rgba({r},{g},{b},0.12)" if is_current else "transparent"
+        border = f"border-left: 3px solid {primary};" if is_current else "border-left: 3px solid transparent;"
+        weight = "700" if is_current else "400"
+        color = "rgba(255,255,255,0.95)" if is_current else "rgba(255,255,255,0.6)"
+        cells = [
+            fmt_season(row["season"]), int(row["games_played"]), int(row["goals"]),
+            int(row["shots_on_goal"]), f"{row['sh_pct']}%", row["total_xg"],
+            row["xg_per_game"], fmt_gax(row["goals_above_expected"]),
+        ]
+        cells_html = "".join(
+            f"<td style='padding:7px 12px; text-align:{'left' if i == 0 else 'right'}; "
+            f"font-family:monospace; font-size:13px; color:{color}; font-weight:{weight}'>{v}</td>"
+            for i, v in enumerate(cells)
+        )
+        rows_html += f"<tr style='background:{bg}; {border} transition:background 0.15s;'>{cells_html}</tr>"
+
+    return f"""
+    <div class="chart-card" style="margin-bottom:8px;">
+      <div class="section-header">Season Stats</div>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">{header_html}</tr></thead>
+        <tbody>{rows_html}</tbody>
+      </table>
+    </div>
+    """
+
+
+def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, g, b, primary):
     rolling_avg = game_log_df["xg"].rolling(5, min_periods=1).mean()
     goal_games = game_log_df[game_log_df["goals"] > 0]
 
@@ -80,12 +117,7 @@ def build_game_log_chart(
     return fig
 
 
-def build_shot_map(
-    map_nongoals_df: pd.DataFrame,
-    map_blocked_df: pd.DataFrame,
-    map_goals_df: pd.DataFrame,
-    primary: str,
-) -> go.Figure:
+def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
     fig = make_rink_figure(height=520)
     xg_vals = map_nongoals_df["x_goal"].fillna(0).clip(0, 0.5)
 
@@ -207,14 +239,7 @@ def build_shot_map(
     return fig
 
 
-def build_percentile_wheel(
-    categories: list,
-    values: list,
-    r: int,
-    g: int,
-    b: int,
-    primary: str,
-) -> go.Figure:
+def build_percentile_wheel(categories, values, r, g, b, primary):
     bar_colors = [
         get_performance_color(v, {"high": 67, "medium": 34})
         for v in values
@@ -275,13 +300,7 @@ def build_percentile_wheel(
     return wheel
 
 
-def build_shot_type_breakdown(
-    type_df: pd.DataFrame,
-    selected_shot_type,
-    r: int,
-    g: int,
-    b: int,
-) -> go.Figure:
+def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
     dot_colors = [
         get_performance_color(v, {"high": 15, "medium": 8})
         for v in type_df["sh_pct"]

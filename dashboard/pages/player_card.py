@@ -1,7 +1,4 @@
 import streamlit as st
-import plotly.graph_objects as go
-import numpy as np
-import pandas as pd
 import sys
 from pathlib import Path
 
@@ -20,7 +17,8 @@ from dashboard.utils.data_prep import (
     prepare_shot_type_breakdown, extract_clip_url
 )
 from dashboard.utils.chart_builders import (
-    build_game_log_chart, build_shot_map, build_percentile_wheel, build_shot_type_breakdown
+    build_game_log_chart, build_shot_map, build_percentile_wheel, build_shot_type_breakdown,
+    build_season_stats_table
 )
 
 TEAM_COLORS = {
@@ -164,8 +162,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-st.set_page_config(page_title="NHL Shot Analytics", page_icon="🏒", layout="wide")
-
 url_player_id = None
 try:
     url_player_id = int(st.query_params.get("player", ""))
@@ -295,59 +291,7 @@ st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 
 season_log_df = get_player_season_log(selected_player_id)
 if len(season_log_df) > 1:
-    def fmt_season(s):
-        return f"{str(s)[:4]}-{str(s)[4:6]}"
-
-    def fmt_gax(v):
-        if v is None:
-            return "—"
-        return f"+{v}" if v > 0 else str(v)
-
-    header_cols = ["Season", "GP", "G", "SOG", "Sh%", "xG", "xG/GP", "GAX"]
-    header_html = "".join(
-        f"<th style='padding:6px 12px; color:rgba(255,255,255,0.45); font-size:11px; "
-        f"text-transform:uppercase; letter-spacing:1px; font-weight:600; "
-        f"text-align:{'left' if i == 0 else 'right'}'>{c}</th>"
-        for i, c in enumerate(header_cols)
-    )
-
-    rows_html = ""
-    for _, row in season_log_df.iterrows():
-        is_current = row["season"] == selected_season
-        bg = f"rgba({r},{g},{b},0.12)" if is_current else "transparent"
-        border = f"border-left: 3px solid {primary};" if is_current else "border-left: 3px solid transparent;"
-        weight = "700" if is_current else "400"
-        color = "rgba(255,255,255,0.95)" if is_current else "rgba(255,255,255,0.6)"
-
-        cells = [
-            fmt_season(row["season"]),
-            int(row["games_played"]),
-            int(row["goals"]),
-            int(row["shots_on_goal"]),
-            f"{row['sh_pct']}%",
-            row["total_xg"],
-            row["xg_per_game"],
-            fmt_gax(row["goals_above_expected"]),
-        ]
-        cells_html = "".join(
-            f"<td style='padding:7px 12px; text-align:{'left' if i == 0 else 'right'}; "
-            f"font-family:monospace; font-size:13px; color:{color}; font-weight:{weight}'>{v}</td>"
-            for i, v in enumerate(cells)
-        )
-        rows_html += (
-            f"<tr style='background:{bg}; {border} transition:background 0.15s;'>"
-            f"{cells_html}</tr>"
-        )
-
-    st.markdown(f"""
-    <div class="chart-card" style="margin-bottom:8px;">
-      <div class="section-header">Season Stats</div>
-      <table style="width:100%; border-collapse:collapse;">
-        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">{header_html}</tr></thead>
-        <tbody>{rows_html}</tbody>
-      </table>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(build_season_stats_table(season_log_df, selected_season, primary, r, g, b), unsafe_allow_html=True)
 
 total_games = len(game_log_df)
 if total_games > 1:
