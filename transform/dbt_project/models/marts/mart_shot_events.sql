@@ -1,15 +1,11 @@
 {{
     config(
-        materialized='incremental',
-        unique_key='event_id_pk'
+        materialized='table'
     )
 }}
 
 with shots as (
     select * from {{ ref('int_shot_events') }}
-    {% if is_incremental() %}
-        where game_id not in (select distinct game_id from {{ this }})
-    {% endif %}
 ),
 
 games as (
