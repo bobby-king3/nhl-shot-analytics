@@ -7,30 +7,13 @@ from extract.connection import get_connection
 from extract.nhl_client.nhl_api import get, get_play_by_play
 
 SHOT_EVENT_TYPES = {"shot-on-goal", "goal", "missed-shot", "blocked-shot"}
-INITIAL_START_DATE = date(2023, 10, 10)
+SEASON_START_DATES = [date(2023, 10, 10), date(2024, 10, 8), date(2025, 10, 7)]
+LOOKBACK_DAYS = 3
 
 
-def get_start_date(con):
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS last_updated (
-            last_updated_at TIMESTAMP PRIMARY KEY
-        )
-    """)
-    row = con.execute("SELECT last_updated_at FROM last_updated").fetchone()
-    return (row[0].date() + timedelta(days=1)) if row else INITIAL_START_DATE
-
-
-def set_last_updated(con, d):
-    con.execute("DELETE FROM last_updated")
-    con.execute("INSERT INTO last_updated VALUES (?)", [datetime.now(timezone.utc)])
-
-
-def get_completed_games(con):
-    start = get_start_date(con)
+def get_completed_games():
+    start = date.today() - timedelta(days=LOOKBACK_DAYS)
     end = date.today()
-
-    if start > end:
-        return []
 
     game_ids = []
     current = start
@@ -42,8 +25,6 @@ def get_completed_games(con):
                     game_ids.append((game["id"], game.get("season")))
         current += timedelta(weeks=1)
 
-    # Leave yesterday unconfirmed so late-finishing games aren't missed
-    set_last_updated(con, end - timedelta(days=1))
     return list({gid: season for gid, season in game_ids}.items())
 
 
@@ -127,7 +108,7 @@ def main():
     create_table(con)
 
     already_processed = get_already_processed(con)
-    all_game_ids = get_completed_games(con)
+    all_game_ids = get_completed_games()
     new_game_ids = [(gid, season) for gid, season in all_game_ids if gid not in already_processed]
 
     print(f"Total completed games found: {len(all_game_ids)}")
