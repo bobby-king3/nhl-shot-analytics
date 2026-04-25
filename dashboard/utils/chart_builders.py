@@ -7,7 +7,7 @@ from dashboard.utils.styling import get_performance_color
 
 def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
     def fmt_season(s):
-        return f"{str(s)[:4]}-{str(s)[4:6]}"
+        return f"{str(s)[:4]}-{str(s)[4:]}"
 
     def fmt_gax(v):
         if v is None:
