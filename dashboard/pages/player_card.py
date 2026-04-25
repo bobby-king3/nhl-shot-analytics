@@ -423,14 +423,20 @@ with wheel_col:
     bar_cols = st.columns(3)
     for i, (cat, val) in enumerate(zip(categories, values)):
         filled = round(val / 10)
-        bar = "█" * filled + "░" * (10 - filled)
         color = get_performance_color(val, {"high": 67, "medium": 34})
+        empty_bg = f"repeating-conic-gradient({color} 0% 25%, transparent 0% 50%) 0 0 / 3px 3px"
+        total_w = 99
+        filled_w = round(filled / 10 * total_w)
+        empty_w = total_w - filled_w
+        filled_bar = f"<span style='display:inline-block; width:{filled_w}px; height:13px; vertical-align:middle; background:{color};'></span>" if filled_w else ""
+        empty_bar = f"<span style='display:inline-block; width:{empty_w}px; height:13px; vertical-align:middle; background:{empty_bg}; filter:brightness(0.5);'></span>" if empty_w else ""
+        blocks = filled_bar + empty_bar
         with bar_cols[i % 3]:
             st.markdown(
-                f"<div style='font-size:11px; margin-bottom:8px; font-family:monospace;'>"
+                f"<div style='font-size:11px; margin-bottom:8px;'>"
                 f"<div style='color:rgba(255,255,255,0.5); margin-bottom:2px;'>{cat}</div>"
-                f"<span style='color:{color}'>{bar}</span>"
-                f"<span style='color:{color}; font-weight:700; margin-left:4px'>{val}</span>"
+                f"{blocks}"
+                f"<span style='color:{color}; font-weight:700; margin-left:4px; vertical-align:middle;'>{val}</span>"
                 f"</div>",
                 unsafe_allow_html=True
             )
