@@ -164,7 +164,8 @@ def get_player_game_log(player_id: int, season: int):
             pg.goals,
             pg.xg,
             coalesce(oa.opponent, '???')              as opponent,
-            g.home_team_id = pg.player_team_id        as is_home
+            g.home_team_id = pg.player_team_id        as is_home,
+            g.game_date                               as game_date
         from player_games pg
         left join opp_abbrevs oa on oa.game_id = pg.game_id
         left join main.stg_games g on g.game_id = pg.game_id

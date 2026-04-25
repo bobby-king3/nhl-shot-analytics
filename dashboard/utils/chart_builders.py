@@ -70,8 +70,8 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
         x=game_log_df["game_num"],
         y=game_log_df["xg"],
         marker=dict(color=bar_colors, line=dict(width=0)),
-        hovertemplate="Game %{x} vs %{customdata}<br>xG: %{y:.3f}<extra></extra>",
-        customdata=game_log_df["opponent"],
+        hovertemplate="Game %{x} vs %{customdata[0]}<br>%{customdata[1]}<br>xG: %{y:.3f}<extra></extra>",
+        customdata=list(zip(game_log_df["opponent"], game_log_df["game_date"].dt.strftime("%b %d, %Y"))),
         showlegend=False,
     ))
 
