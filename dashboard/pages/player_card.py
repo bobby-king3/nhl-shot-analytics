@@ -9,7 +9,7 @@ from dashboard.utils.db import (
     get_player_stats, get_player_shots, get_player_game_log,
     get_player_season_log, get_all_players, get_available_seasons, get_teams
 )
-from dashboard.utils.video import get_mp4_url
+from dashboard.utils.video import get_video_url
 from dashboard.utils.styling import hex_to_rgb, get_performance_color
 from dashboard.utils.state import detect_change
 from dashboard.utils.data_prep import (
@@ -476,15 +476,13 @@ with highlight_col:
     active_video_sharing_url = st.session_state.get("active_video")
     if active_video_sharing_url:
         with st.spinner("Loading clip..."):
-            mp4_url = get_mp4_url(active_video_sharing_url)
-        if mp4_url:
-            st.video(mp4_url)
+            video_url = get_video_url(active_video_sharing_url)
+        if video_url:
+            st.video(video_url)
         else:
-            content_id = active_video_sharing_url.rstrip("/").split("-")[-1]
-            brightcove_url = f"https://players.brightcove.net/6415718365001/default_default/index.html?videoId={content_id}"
             st.markdown(f"""
 <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:8px; overflow:hidden;">
-  <iframe src="{brightcove_url}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen></iframe>
+  <iframe src="{active_video_sharing_url}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen></iframe>
 </div>
 """, unsafe_allow_html=True)
     else:

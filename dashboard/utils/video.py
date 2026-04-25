@@ -10,24 +10,23 @@ if _env_file.exists():
             _k, _v = _line.split("=", 1)
             os.environ.setdefault(_k.strip(), _v.strip())
 
-@st.cache_data(ttl=300, show_spinner=False)
-def get_mp4_url(sharing_url: str) -> str | None:
-    account_id = os.environ.get("ACCOUNT_ID", "")
-    policy_key = os.environ.get("POLICY_KEY", "")
 
+def get_secret(key: str) -> str:
+    try:
+        return st.secrets.get(key) or ""
+    except Exception:
+        return os.environ.get(key, "")
+
+
+def resolve_mp4(sharing_url: str) -> str | None:
+    account_id = get_secret("ACCOUNT_ID") or os.environ.get("ACCOUNT_ID", "")
+    policy_key = get_secret("POLICY_KEY") or os.environ.get("POLICY_KEY", "")
     if not policy_key:
         return None
-
     try:
         content_id = sharing_url.rstrip("/").split("-")[-1]
-    except Exception:
-        return None
-
-    playback_api = f"https://edge.api.brightcove.com/playback/v1/accounts/{account_id}/videos"
-
-    try:
         r = httpx.get(
-            f"{playback_api}/{content_id}",
+            f"https://edge.api.brightcove.com/playback/v1/accounts/{account_id}/videos/{content_id}",
             headers={"BCOV-Policy": policy_key},
             timeout=8,
         )
@@ -39,3 +38,8 @@ def get_mp4_url(sharing_url: str) -> str | None:
         return mp4s[0]["src"] if mp4s else None
     except Exception:
         return None
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def get_video_url(sharing_url: str) -> str | None:
+    return resolve_mp4(sharing_url)
