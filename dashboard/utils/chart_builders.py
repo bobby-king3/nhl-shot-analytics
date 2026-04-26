@@ -589,3 +589,24 @@ def build_streak_dots(game_log_df, primary) -> str:
         + "".join(dots)
         + "</div>"
     )
+
+
+def build_streak_dots_grid(game_log_df, primary) -> str:
+    dots = []
+    for row in game_log_df.itertuples():
+        if row.result == "W":
+            color, border = primary, primary
+        elif row.result == "OTL":
+            color, border = "rgba(255,200,50,0.85)", "rgba(255,200,50,0.85)"
+        else:
+            color, border = "rgba(40,40,55,0.9)", "rgba(120,120,140,0.5)"
+        label = f"{row.result} {'vs' if row.is_home else 'at'} {row.opponent} · {int(row.gf)}–{int(row.ga)}"
+        dots.append(
+            f"<div title='{label}' style='width:12px; height:12px; border-radius:50%;"
+            f"background:{color}; border:1.5px solid {border};'></div>"
+        )
+    return (
+        "<div style='display:grid; grid-template-columns: repeat(20, 12px); gap:5px; padding:4px 0 8px 0;'>"
+        + "".join(dots)
+        + "</div>"
+    )

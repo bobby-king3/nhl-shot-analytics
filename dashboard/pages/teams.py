@@ -9,7 +9,7 @@ from dashboard.utils.db import (
     get_team_stats, get_team_game_log, get_team_roster,
 )
 from dashboard.utils.styling import hex_to_rgb
-from dashboard.utils.chart_builders import build_streak_dots
+from dashboard.utils.chart_builders import build_streak_dots_grid
 
 TEAM_COLORS = {
     "ANA": ("#FC4C02", "#B09862"), "BOS": ("#FFB81C", "#000000"),
@@ -49,8 +49,8 @@ st.markdown("""
 <style>
   .block-container {
     padding-top: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
     max-width: 100% !important;
   }
   .section-header {
@@ -141,7 +141,9 @@ st.markdown(f"""
 <div style="
   background: linear-gradient(135deg, #0A0E1A 0%, rgba({r},{g},{b},0.25) 50%, {secondary}99 100%);
   border-bottom: 3px solid {primary};
-  padding: 32px 40px 28px 40px;
+  padding: 32px calc(40px + 1.5rem) 28px calc(40px + 1.5rem);
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
   display: flex;
   align-items: center;
   gap: 40px;
@@ -208,15 +210,14 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── MAIN CONTENT ─────────────────────────────────────────────────────────────
-st.markdown("<div style='padding: 28px 40px 0 40px;'>", unsafe_allow_html=True)
+st.markdown("<div style='padding-top: 28px;'>", unsafe_allow_html=True)
 
 # ── SEASON FORM + LAST 5 ─────────────────────────────────────────────────────
 form_col, games_col = st.columns([3, 2])
 
 with form_col:
-    dots_html = build_streak_dots(game_log_df, primary) if not game_log_df.empty else ""
     legend_html = (
-        f"<div style='font-size:11px; color:rgba(255,255,255,0.3); margin-top:6px;'>"
+        f"<div style='font-size:11px; color:rgba(255,255,255,0.3); margin-top:8px;'>"
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
         f"background:{primary}; vertical-align:middle; margin-right:4px;'></span>Win &nbsp;&nbsp;"
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
@@ -226,12 +227,14 @@ with form_col:
         f"vertical-align:middle; margin-right:4px;'></span>Loss"
         f"</div>"
     )
-    st.markdown(
-        f"<div class='chart-card'><div class='section-header'>Season Performance</div>"
-        + dots_html + legend_html
-        + "</div>",
-        unsafe_allow_html=True,
-    )
+    if not game_log_df.empty:
+        grid_html = build_streak_dots_grid(game_log_df, primary)
+        st.markdown(
+            f"<div class='chart-card'><div class='section-header'>Season Performance</div>"
+            + grid_html + legend_html
+            + "</div>",
+            unsafe_allow_html=True,
+        )
 
 with games_col:
     result_colors = {"W": primary, "OTL": "rgba(255,200,50,0.9)", "L": "rgba(160,60,60,0.8)"}
