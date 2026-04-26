@@ -73,7 +73,6 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
 
     fig = go.Figure()
 
-    # xG bars
     fig.add_trace(go.Bar(
         x=game_log_df["game_num"],
         y=game_log_df["xg"],
@@ -83,7 +82,6 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
         showlegend=False,
     ))
 
-    # 5-game rolling average
     fig.add_trace(go.Scatter(
         x=game_log_df["game_num"],
         y=rolling_avg,
@@ -93,7 +91,6 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
         showlegend=False,
     ))
 
-    # Goal markers
     if not goal_games.empty:
         fig.add_trace(go.Scatter(
             x=goal_games["game_num"],
@@ -104,7 +101,6 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
             showlegend=False,
         ))
 
-    # Filter highlight rectangles
     if game_filter_active:
         selected_nums = game_log_df[game_log_df["game_id"].isin(selected_game_ids)]["game_num"].tolist()
         for gnum in selected_nums:
@@ -117,11 +113,9 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
 
     fig.update_xaxes(**get_dark_xaxes(title="Game"))
     fig.update_yaxes(**get_dark_yaxes(title="xG"))
-
     layout = get_dark_layout(height=220, margin_l=40, margin_r=20, margin_t=10, margin_b=30)
     layout["bargap"] = 0.15
     fig.update_layout(**layout)
-
     return fig
 
 
@@ -129,7 +123,6 @@ def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
     fig = make_rink_figure(height=520)
     xg_vals = map_nongoals_df["x_goal"].fillna(0).clip(0, 0.5)
 
-    # Non-goals
     if not map_nongoals_df.empty:
         fig.add_trace(go.Scatter(
             x=map_nongoals_df["x_coord"],
@@ -173,7 +166,6 @@ def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
             showlegend=False,
         ))
 
-    # Blocked shots
     if not map_blocked_df.empty:
         fig.add_trace(go.Scatter(
             x=map_blocked_df["x_coord"],
@@ -206,7 +198,6 @@ def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
             showlegend=False,
         ))
 
-    # Goals
     if not map_goals_df.empty:
         fig.add_trace(go.Scatter(
             x=map_goals_df["x_coord"],
@@ -255,7 +246,6 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
 
     wheel = go.Figure()
 
-    # Reference rings at 25, 50, 75
     for ref in [25, 50, 75]:
         wheel.add_trace(go.Scatterpolar(
             r=[ref] * (len(categories) + 1),
@@ -266,7 +256,6 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
             hoverinfo="skip",
         ))
 
-    # Player percentile polygon
     wheel.add_trace(go.Scatterpolar(
         r=values + [values[0]],
         theta=categories + [categories[0]],
@@ -314,7 +303,6 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
         for v in type_df["sh_pct"]
     ]
 
-    # Generate bar colors based on selection state
     bar_fill_colors = []
     bar_line_colors = []
     for shot_type in type_df["shot_type"]:
@@ -326,7 +314,6 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
 
     fig = go.Figure()
 
-    # Volume % bars
     fig.add_trace(go.Bar(
         x=type_df["shots"],
         y=type_df["shot_type"],
@@ -342,7 +329,6 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
         showlegend=False,
     ))
 
-    # Shooting % efficiency dots
     fig.add_trace(go.Scatter(
         x=type_df["shots"],
         y=type_df["shot_type"],
@@ -360,32 +346,27 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
     layout = get_dark_layout(height=280, margin_l=0, margin_r=60, margin_t=10, margin_b=10)
     layout["bargap"] = 0.3
     fig.update_layout(**layout)
-
     return fig
 
 
 def build_shot_density_map(shots_df, primary: str, title: str = "Shot Density") -> bytes:
     from hockey_rink import NHLRink
 
-    # Normalize all shots to attack right (positive x)
     x = shots_df["x_coord"].values.copy().astype(float)
     y = shots_df["y_coord"].values.copy().astype(float)
     flip = x < 0
     x[flip] = -x[flip]
     y[flip] = -y[flip]
 
-    # Clip to offensive zone
     mask = (x >= 25) & (x <= 89) & (y >= -42.5) & (y <= 42.5)
     x, y = x[mask], y[mask]
 
-    # Smoothed 2D histogram
     H, xedges, yedges = np.histogram2d(x, y, bins=[60, 50], range=[[25, 89], [-42.5, 42.5]])
     H = gaussian_filter(H, sigma=2.5)
     xc = (xedges[:-1] + xedges[1:]) / 2
     yc = (yedges[:-1] + yedges[1:]) / 2
     XX, YY = np.meshgrid(xc, yc)
 
-    # Parse team primary color for colormap tinting
     r_int = int(primary[1:3], 16)
     g_int = int(primary[3:5], 16)
     b_int = int(primary[5:7], 16)
@@ -476,15 +457,10 @@ def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
 
     fig = go.Figure()
 
-    # Positive shading (rolling >= 50): fill from rolling down to 50
     fig.add_trace(go.Scatter(x=game_num, y=above_50, mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
     fig.add_trace(go.Scatter(x=game_num, y=ref, fill="tonexty", fillcolor=f"rgba({r},{g},{b},0.18)", mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
-
-    # Negative shading (rolling < 50): fill from 50 down to rolling
     fig.add_trace(go.Scatter(x=game_num, y=ref, mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
     fig.add_trace(go.Scatter(x=game_num, y=below_50, fill="tonexty", fillcolor="rgba(200,60,60,0.18)", mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
-
-    # Main line
     fig.add_trace(go.Scatter(
         x=game_num, y=rolling,
         mode="lines",
@@ -497,74 +473,6 @@ def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
     fig.update_xaxes(**get_dark_xaxes(title="Game"))
     fig.update_yaxes(**get_dark_yaxes(title="xG% (10-game avg)"))
     layout = get_dark_layout(height=200, margin_l=60, margin_r=20, margin_t=10, margin_b=30)
-    fig.update_layout(**layout)
-    return fig
-
-
-def build_league_scatter(all_stats_df, selected_team, primary, r, g, b):
-    med_xgf = all_stats_df["xg_for_per_game"].median()
-    med_xga = all_stats_df["xg_against_per_game"].median()
-
-    other = all_stats_df[all_stats_df["team_abbrev"] != selected_team]
-    sel = all_stats_df[all_stats_df["team_abbrev"] == selected_team]
-
-    fig = go.Figure()
-
-    # All other teams
-    fig.add_trace(go.Scatter(
-        x=other["xg_for_per_game"],
-        y=other["xg_against_per_game"],
-        mode="markers+text",
-        marker=dict(color="rgba(255,255,255,0.12)", size=11, line=dict(color="rgba(255,255,255,0.25)", width=1)),
-        text=other["team_abbrev"],
-        textposition="top center",
-        textfont=dict(color="rgba(255,255,255,0.28)", size=8),
-        hovertemplate="<b>%{text}</b><br>xGF/GP: %{x:.3f}<br>xGA/GP: %{y:.3f}<extra></extra>",
-        showlegend=False,
-    ))
-
-    # Selected team
-    if not sel.empty:
-        t = sel.iloc[0]
-        fig.add_trace(go.Scatter(
-            x=[t["xg_for_per_game"]],
-            y=[t["xg_against_per_game"]],
-            mode="markers+text",
-            marker=dict(color=primary, size=18, line=dict(color="white", width=2)),
-            text=[selected_team],
-            textposition="top center",
-            textfont=dict(color="white", size=11, family="monospace"),
-            hovertemplate=f"<b>{selected_team}</b><br>xGF/GP: {t['xg_for_per_game']:.3f}<br>xGA/GP: {t['xg_against_per_game']:.3f}<extra></extra>",
-            showlegend=False,
-        ))
-
-    # Quadrant dividers
-    fig.add_hline(y=med_xga, line=dict(color="rgba(255,255,255,0.12)", width=1, dash="dot"))
-    fig.add_vline(x=med_xgf, line=dict(color="rgba(255,255,255,0.12)", width=1, dash="dot"))
-
-    # Quadrant corner labels (y-axis is inverted: low xGA = top = good defense)
-    xmin = all_stats_df["xg_for_per_game"].min() - 0.02
-    xmax = all_stats_df["xg_for_per_game"].max() + 0.02
-    ymin = all_stats_df["xg_against_per_game"].min() - 0.02  # visually top with reversed axis
-    ymax = all_stats_df["xg_against_per_game"].max() + 0.02  # visually bottom
-    for text, x, y, xa, ya in [
-        ("Dominant",       xmax, ymin, "right", "top"),
-        ("Strong Defense", xmin, ymin, "left",  "top"),
-        ("High Event",     xmax, ymax, "right",  "bottom"),
-        ("Struggling",     xmin, ymax, "left",   "bottom"),
-    ]:
-        fig.add_annotation(
-            x=x, y=y, text=text, xanchor=xa, yanchor=ya, showarrow=False,
-            font=dict(color="rgba(255,255,255,0.18)", size=10, style="italic"),
-        )
-
-    xax = get_dark_xaxes(title="xGF / GP  (better offense →)")
-    yax = get_dark_yaxes(title="xGA / GP  (↑ better defense)")
-    yax["autorange"] = "reversed"
-
-    fig.update_xaxes(**xax)
-    fig.update_yaxes(**yax)
-    layout = get_dark_layout(height=420, margin_l=60, margin_r=30, margin_t=20, margin_b=50)
     fig.update_layout(**layout)
     return fig
 
@@ -591,11 +499,11 @@ def build_streak_dots(game_log_df, primary) -> str:
     )
 
 
-def build_streak_dots_grid(game_log_df, primary) -> str:
+def build_streak_dots_grid(game_log_df) -> str:
     dots = []
     for row in game_log_df.itertuples():
         if row.result == "W":
-            color, border = primary, primary
+            color, border = "#4CAF50", "#4CAF50"
         elif row.result == "OTL":
             color, border = "rgba(255,200,50,0.85)", "rgba(255,200,50,0.85)"
         else:
@@ -610,3 +518,67 @@ def build_streak_dots_grid(game_log_df, primary) -> str:
         + "".join(dots)
         + "</div>"
     )
+
+
+def build_league_scatter(all_stats_df, selected_team, primary, r, g, b):
+    med_xgf = all_stats_df["xg_for_per_game"].median()
+    med_xga = all_stats_df["xg_against_per_game"].median()
+
+    other = all_stats_df[all_stats_df["team_abbrev"] != selected_team]
+    sel = all_stats_df[all_stats_df["team_abbrev"] == selected_team]
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=other["xg_for_per_game"],
+        y=other["xg_against_per_game"],
+        mode="markers+text",
+        marker=dict(color="rgba(255,255,255,0.12)", size=11, line=dict(color="rgba(255,255,255,0.25)", width=1)),
+        text=other["team_abbrev"],
+        textposition="top center",
+        textfont=dict(color="rgba(255,255,255,0.28)", size=8),
+        hovertemplate="<b>%{text}</b><br>xGF/GP: %{x:.3f}<br>xGA/GP: %{y:.3f}<extra></extra>",
+        showlegend=False,
+    ))
+
+    if not sel.empty:
+        t = sel.iloc[0]
+        fig.add_trace(go.Scatter(
+            x=[t["xg_for_per_game"]],
+            y=[t["xg_against_per_game"]],
+            mode="markers+text",
+            marker=dict(color=primary, size=18, line=dict(color="white", width=2)),
+            text=[selected_team],
+            textposition="top center",
+            textfont=dict(color="white", size=11, family="monospace"),
+            hovertemplate=f"<b>{selected_team}</b><br>xGF/GP: {t['xg_for_per_game']:.3f}<br>xGA/GP: {t['xg_against_per_game']:.3f}<extra></extra>",
+            showlegend=False,
+        ))
+
+    fig.add_hline(y=med_xga, line=dict(color="rgba(255,255,255,0.12)", width=1, dash="dot"))
+    fig.add_vline(x=med_xgf, line=dict(color="rgba(255,255,255,0.12)", width=1, dash="dot"))
+
+    xmin = all_stats_df["xg_for_per_game"].min() - 0.02
+    xmax = all_stats_df["xg_for_per_game"].max() + 0.02
+    ymin = all_stats_df["xg_against_per_game"].min() - 0.02
+    ymax = all_stats_df["xg_against_per_game"].max() + 0.02
+    for text, x, y, xa, ya in [
+        ("Dominant",       xmax, ymin, "right", "top"),
+        ("Strong Defense", xmin, ymin, "left",  "top"),
+        ("High Event",     xmax, ymax, "right",  "bottom"),
+        ("Struggling",     xmin, ymax, "left",   "bottom"),
+    ]:
+        fig.add_annotation(
+            x=x, y=y, text=text, xanchor=xa, yanchor=ya, showarrow=False,
+            font=dict(color="rgba(255,255,255,0.18)", size=10, style="italic"),
+        )
+
+    xax = get_dark_xaxes(title="xGF / GP  (better offense →)")
+    yax = get_dark_yaxes(title="xGA / GP  (↑ better defense)")
+    yax["autorange"] = "reversed"
+
+    fig.update_xaxes(**xax)
+    fig.update_yaxes(**yax)
+    layout = get_dark_layout(height=420, margin_l=60, margin_r=30, margin_t=20, margin_b=50)
+    fig.update_layout(**layout)
+    return fig

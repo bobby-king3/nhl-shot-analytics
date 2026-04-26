@@ -219,7 +219,7 @@ with form_col:
     legend_html = (
         f"<div style='font-size:11px; color:rgba(255,255,255,0.3); margin-top:8px;'>"
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
-        f"background:{primary}; vertical-align:middle; margin-right:4px;'></span>Win &nbsp;&nbsp;"
+        f"background:#4CAF50; vertical-align:middle; margin-right:4px;'></span>Win &nbsp;&nbsp;"
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
         f"background:rgba(255,200,50,0.85); vertical-align:middle; margin-right:4px;'></span>OT/SO Loss &nbsp;&nbsp;"
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
@@ -228,7 +228,7 @@ with form_col:
         f"</div>"
     )
     if not game_log_df.empty:
-        grid_html = build_streak_dots_grid(game_log_df, primary)
+        grid_html = build_streak_dots_grid(game_log_df)
         st.markdown(
             f"<div class='chart-card'><div class='section-header'>Season Performance</div>"
             + grid_html + legend_html
