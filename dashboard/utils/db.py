@@ -430,7 +430,8 @@ def get_all_team_stats(season: int):
                 sum(case when se.event_type = 'goal'          then 1 else 0 end) as goals_for,
                 sum(case when se.event_type != 'blocked-shot' then coalesce(se.x_goal, 0) else 0 end) as xg_for,
                 count(*) as shots_for,
-                count(distinct tg.game_id) as games_played
+                count(distinct tg.game_id) as games_played,
+                sum(case when se.event_type in ('shot-on-goal', 'goal') then 1 else 0 end) as sog_for
             from main.mart_shot_events se
             join team_games tg on tg.game_id = se.game_id and tg.team_id = se.team_id
             where se.period < 5
@@ -440,7 +441,8 @@ def get_all_team_stats(season: int):
             select
                 tg.team_abbrev,
                 sum(case when se.event_type = 'goal'          then 1 else 0 end) as goals_against,
-                sum(case when se.event_type != 'blocked-shot' then coalesce(se.x_goal, 0) else 0 end) as xg_against
+                sum(case when se.event_type != 'blocked-shot' then coalesce(se.x_goal, 0) else 0 end) as xg_against,
+                sum(case when se.event_type in ('shot-on-goal', 'goal') then 1 else 0 end) as sog_against
             from main.mart_shot_events se
             join team_games tg on tg.game_id = se.game_id and tg.team_id != se.team_id
             where se.period < 5
@@ -454,7 +456,9 @@ def get_all_team_stats(season: int):
             round(sf.xg_for     / sf.games_played, 3) as xg_for_per_game,
             round(sa.xg_against / sf.games_played, 3) as xg_against_per_game,
             round((sf.xg_for - sa.xg_against) / sf.games_played, 3) as xg_diff_per_game,
-            round(sf.goals_for * 1.0 / nullif(sf.shots_for, 0) * 100, 1) as sh_pct
+            round(sf.goals_for * 1.0 / nullif(sf.shots_for, 0) * 100, 1) as sh_pct,
+            round(sf.goals_for * 1.0 / nullif(sf.sog_for, 0) * 100, 1)               as sh_pct_sog,
+            round((1.0 - sa.goals_against * 1.0 / nullif(sa.sog_against, 0)) * 100, 1) as sv_pct
         from shots_for sf
         join shots_against sa on sa.team_abbrev = sf.team_abbrev
         order by xg_for_per_game desc

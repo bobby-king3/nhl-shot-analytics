@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from dashboard.utils.db import (
     get_available_seasons, get_teams,
-    get_team_stats, get_team_game_log, get_team_roster,
+    get_team_stats, get_team_game_log, get_team_roster, get_all_team_stats,
 )
 from dashboard.utils.styling import hex_to_rgb
 from dashboard.utils.chart_builders import build_streak_dots_grid
@@ -108,6 +108,36 @@ stats       = get_team_stats(selected_team, selected_season)
 game_log_df = get_team_game_log(selected_team, selected_season)
 roster_df   = get_team_roster(selected_team, selected_season)
 
+all_stats_df = get_all_team_stats(selected_season).copy()
+n_teams = len(all_stats_df)
+
+def get_rank(col, ascending=False):
+    ranked = all_stats_df[col].rank(ascending=ascending, method="min")
+    row = all_stats_df[all_stats_df["team_abbrev"] == selected_team]
+    if row.empty:
+        return "—"
+    return int(ranked[row.index[0]])
+
+gf_rank      = get_rank("gf_per_game")
+ga_rank      = get_rank("ga_per_game", ascending=True)
+xg_diff_rank = get_rank("xg_diff_per_game")
+sh_pct_rank  = get_rank("sh_pct_sog")
+
+def rank_badge(rank):
+    if not isinstance(rank, int):
+        return ""
+    pct = rank / n_teams
+    suffix = {1: "st", 2: "nd", 3: "rd"}.get(rank if rank < 20 else rank % 10, "th")
+    if pct <= 0.33:
+        bg = "rgba(76,175,80,0.15)"; bdr = "rgba(76,175,80,0.45)"; col = "#4CAF50"
+    elif pct <= 0.67:
+        bg = "rgba(255,255,255,0.07)"; bdr = "rgba(255,255,255,0.14)"; col = "rgba(255,255,255,0.45)"
+    else:
+        bg = "rgba(200,60,60,0.12)"; bdr = "rgba(200,60,60,0.35)"; col = "rgba(220,100,100,0.85)"
+    return (f"<span style='font-size:10px;background:{bg};border:1px solid {bdr};"
+            f"border-radius:4px;padding:1px 6px;color:{col};font-weight:700;margin-left:6px;"
+            f"vertical-align:middle;'>{rank}{suffix}</span>")
+
 team_name  = TEAM_NAMES.get(selected_team, selected_team)
 wins       = stats.get("wins", 0) or 0
 losses     = stats.get("losses", 0) or 0
@@ -117,18 +147,9 @@ goals_ag   = stats.get("goals_against", "—")
 xg_for     = stats.get("xg_for", "—")
 xg_ag      = stats.get("xg_against", "—")
 xg_diff    = stats.get("xg_differential", 0) or 0
-sh_pct     = stats.get("sh_pct", "—")
+sh_pct     = stats.get("sh_pct_sog", "—")
 diff_sign  = "+" if xg_diff >= 0 else ""
 diff_color = primary if xg_diff >= 0 else "#e05555"
-
-sh_pct_sog = stats.get("sh_pct_sog") or 0
-sv_pct     = stats.get("sv_pct") or 0
-pdo        = round(sh_pct_sog + sv_pct, 1) if sh_pct_sog and sv_pct else "—"
-if isinstance(pdo, float):
-    pdo_color = primary if pdo > 101 else ("#e05555" if pdo < 99 else "rgba(255,255,255,0.75)")
-    pdo_label = "above avg luck" if pdo > 101 else ("below avg luck" if pdo < 99 else "neutral luck")
-else:
-    pdo_color, pdo_label = "rgba(255,255,255,0.75)", "luck indicator"
 
 team_logo_url = roster_df.iloc[0]["team_logo_url"] if not roster_df.empty else ""
 
@@ -163,24 +184,20 @@ st.markdown(f"""
                 letter-spacing:2px; text-transform:uppercase;">{season_labels[selected_season]}</div>
     <div style="display:flex; gap:0; margin-top:14px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
       <div style="padding-right:20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:{primary};">{goals_for} <span style="font-size:13px; color:rgba(255,255,255,0.5); font-weight:400;">GF</span></div>
+        <div style="font-size:18px; font-weight:800; color:{primary};">{goals_for} <span style="font-size:13px; color:rgba(255,255,255,0.5); font-weight:400;">GF</span>{rank_badge(gf_rank)}</div>
         <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">{xg_for} xG · {gf_pg}/GP</div>
       </div>
       <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.65);">{goals_ag} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">GA</span></div>
+        <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.65);">{goals_ag} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">GA</span>{rank_badge(ga_rank)}</div>
         <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">{xg_ag} xG · {ga_pg}/GP</div>
       </div>
       <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:{diff_color};">{diff_sign}{xg_diff} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">xG Diff</span></div>
+        <div style="font-size:18px; font-weight:800; color:{diff_color};">{diff_sign}{xg_diff} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">xG Diff</span>{rank_badge(xg_diff_rank)}</div>
         <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">expected goals differential</div>
       </div>
-      <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.75);">{sh_pct}% <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">Sh%</span></div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">shooting percentage</div>
-      </div>
       <div style="padding-left:20px;">
-        <div style="font-size:18px; font-weight:800; color:{pdo_color};">{pdo} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">PDO</span></div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">{pdo_label}</div>
+        <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.75);">{sh_pct}% <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">Sh%</span>{rank_badge(sh_pct_rank)}</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">goals / shots on goal</div>
       </div>
     </div>
   </div>
