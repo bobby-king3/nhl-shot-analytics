@@ -34,8 +34,7 @@ models:
       - name: event_type
         tests:
           - accepted_values:
-              arguments:
-                values: ['goal', 'shot-on-goal', 'missed-shot', 'blocked-shot']
+              values: ['goal', 'shot-on-goal', 'missed-shot', 'blocked-shot']
 
   - name: stg_moneypuck_shots
     description: Shot data from MoneyPuck with xG, rush, and rebound flags
@@ -47,5 +46,4 @@ models:
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"

@@ -24,23 +24,19 @@ models:
       - name: period
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 1 and 5"
+              expression: "between 1 and 5"
       - name: event_type
         tests:
           - accepted_values:
-              arguments:
-                values: ['goal', 'shot-on-goal', 'missed-shot', 'blocked-shot']
+              values: ['goal', 'shot-on-goal', 'missed-shot', 'blocked-shot']
       - name: strength
         tests:
           - accepted_values:
-              arguments:
-                values: ['5v5', 'PP/SH', '4v4', '3v3', 'EN', 'other']
+              values: ['5v5', 'PP/SH', '4v4', '3v3', 'EN', 'other']
       - name: x_goal
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"
               config:
                 where: "x_goal is not null"
 
@@ -56,42 +52,34 @@ models:
       - name: sh_pct
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 100"
+              expression: "between 0 and 100"
               config:
                 where: "sh_pct is not null"
       - name: goals_per_game_pctile
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"
       - name: xg_per_game_pctile
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"
       - name: sh_pct_pctile
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"
       - name: avg_xg_per_shot_pctile
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"
       - name: rebound_shot_pct_pctile
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"
       - name: shot_distance_pctile
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"
       - name: goals_above_expected_pctile
         tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: "between 0 and 1"
+              expression: "between 0 and 1"
