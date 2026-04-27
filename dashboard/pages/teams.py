@@ -9,7 +9,7 @@ from dashboard.utils.db import (
     get_team_stats, get_team_game_log, get_team_roster, get_all_team_stats,
 )
 from dashboard.utils.styling import hex_to_rgb
-from dashboard.utils.chart_builders import build_streak_dots_grid
+from dashboard.utils.chart_builders import build_streak_dots_grid, build_team_rolling_xgpct
 
 TEAM_COLORS = {
     "ANA": ("#FC4C02", "#B09862"), "BOS": ("#FFB81C", "#000000"),
@@ -246,36 +246,95 @@ with form_col:
     )
     if not game_log_df.empty:
         grid_html = build_streak_dots_grid(game_log_df)
+
+        def split_record(df):
+            w   = (df["result"] == "W").sum()
+            l   = (df["result"] == "L").sum()
+            otl = (df["result"] == "OTL").sum()
+            return w, l, otl
+
+        home_df  = game_log_df[game_log_df["is_home"]]
+        away_df  = game_log_df[~game_log_df["is_home"]]
+        l10_df   = game_log_df.tail(10)
+
+        hw, hl, hotl = split_record(home_df)
+        aw, al, aotl = split_record(away_df)
+        l10w, l10l, l10otl = split_record(l10_df)
+
+        splits_html = f"""
+        <div style='display:flex; gap:0; margin-top:16px; padding-top:14px;
+                    border-top:1px solid rgba(255,255,255,0.07);'>
+          <div style='flex:1; text-align:center; padding-right:12px;
+                      border-right:1px solid rgba(255,255,255,0.07);'>
+            <div style='font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
+                        letter-spacing:1.5px; margin-bottom:6px;'>Home</div>
+            <div style='font-size:20px; font-weight:800; color:#FAFAFA; line-height:1;'>{hw}–{hl}–{hotl}</div>
+          </div>
+          <div style='flex:1; text-align:center; padding: 0 12px;
+                      border-right:1px solid rgba(255,255,255,0.07);'>
+            <div style='font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
+                        letter-spacing:1.5px; margin-bottom:6px;'>Away</div>
+            <div style='font-size:20px; font-weight:800; color:#FAFAFA; line-height:1;'>{aw}–{al}–{aotl}</div>
+          </div>
+          <div style='flex:1; text-align:center; padding-left:12px;'>
+            <div style='font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
+                        letter-spacing:1.5px; margin-bottom:6px;'>Last 10</div>
+            <div style='font-size:20px; font-weight:800; color:#FAFAFA; line-height:1;'>{l10w}–{l10l}–{l10otl}</div>
+          </div>
+        </div>"""
+
         st.markdown(
             f"<div class='chart-card'><div class='section-header'>Season Performance</div>"
-            + grid_html + legend_html
+            + grid_html + legend_html + splits_html
             + "</div>",
             unsafe_allow_html=True,
         )
 
+        fig_xg = build_team_rolling_xgpct(game_log_df, r, g, b, primary)
+        st.markdown(
+            "<div class='chart-card' style='margin-top:14px;'>"
+            "<div class='section-header'>Rolling xG% (10-game avg)</div>",
+            unsafe_allow_html=True,
+        )
+        st.plotly_chart(fig_xg, use_container_width=True, config={"displayModeBar": False})
+
 with games_col:
     result_colors = {"W": primary, "OTL": "rgba(255,200,50,0.9)", "L": "rgba(160,60,60,0.8)"}
+    col_header = (
+        "<div style='display:flex; align-items:center; gap:10px; padding-bottom:6px;"
+        "border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:2px;'>"
+        "<div style='width:32px;'></div>"
+        "<div style='flex:1; font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px;'>Opponent</div>"
+        "<div style='font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; width:48px; text-align:right;'>Score</div>"
+        "<div style='font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; width:32px; text-align:right;'>xGF</div>"
+        "<div style='font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; width:32px; text-align:right;'>xGA</div>"
+        "<div style='font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; width:42px; text-align:right;'>Date</div>"
+        "</div>"
+    )
     rows_html = ""
     if not game_log_df.empty:
-        for row in game_log_df.tail(5).iloc[::-1].itertuples():
+        for row in game_log_df.tail(10).iloc[::-1].itertuples():
             res_color   = result_colors.get(row.result, "grey")
             home_away   = "vs" if row.is_home else "at"
             date_str    = row.game_date.strftime("%b %d") if row.game_date is not None else "—"
-            xg_total    = row.xg_for + row.xg_against
-            xg_pct      = round(row.xg_for / xg_total * 100) if xg_total > 0 else 50
-            xgpct_color = primary if xg_pct >= 50 else "rgba(160,60,60,0.9)"
+            xgf_val     = round(row.xg_for, 1)
+            xga_val     = round(row.xg_against, 1)
+            xgf_color   = primary if xgf_val >= xga_val else "rgba(255,255,255,0.45)"
+            xga_color   = "rgba(160,60,60,0.9)" if xga_val > xgf_val else "rgba(255,255,255,0.45)"
             rows_html += (
                 f"<div style='display:flex; align-items:center; gap:10px; padding:9px 0;"
                 f"border-bottom:1px solid rgba(255,255,255,0.05);'>"
                 f"<div style='width:32px; font-size:13px; font-weight:800; color:{res_color};'>{row.result}</div>"
                 f"<div style='flex:1; font-size:13px; color:rgba(255,255,255,0.75);'>{home_away} {row.opponent}</div>"
-                f"<div style='font-size:12px; font-family:monospace; color:rgba(255,255,255,0.45);'>{int(row.gf)}–{int(row.ga)}</div>"
-                f"<div style='font-size:12px; font-family:monospace; color:{xgpct_color}; width:42px; text-align:right;'>{xg_pct}%</div>"
+                f"<div style='font-size:12px; font-family:monospace; color:rgba(255,255,255,0.45); width:48px; text-align:right;'>{int(row.gf)}–{int(row.ga)}</div>"
+                f"<div style='font-size:12px; font-family:monospace; color:{xgf_color}; font-weight:700; width:32px; text-align:right;'>{xgf_val}</div>"
+                f"<div style='font-size:12px; font-family:monospace; color:{xga_color}; font-weight:700; width:32px; text-align:right;'>{xga_val}</div>"
                 f"<div style='font-size:11px; color:rgba(255,255,255,0.25); width:42px; text-align:right;'>{date_str}</div>"
                 f"</div>"
             )
     st.markdown(
-        "<div class='chart-card'><div class='section-header'>Last 5 Games</div>"
+        "<div class='chart-card'><div class='section-header'>Last 10 Games</div>"
+        + col_header
         + rows_html
         + "</div>",
         unsafe_allow_html=True,
