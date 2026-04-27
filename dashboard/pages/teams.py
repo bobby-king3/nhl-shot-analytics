@@ -41,7 +41,7 @@ TEAM_NAMES = {
     "NYR": "New York Rangers", "OTT": "Ottawa Senators", "PHI": "Philadelphia Flyers",
     "PIT": "Pittsburgh Penguins", "SEA": "Seattle Kraken", "SJS": "San Jose Sharks",
     "STL": "St. Louis Blues", "TBL": "Tampa Bay Lightning", "TOR": "Toronto Maple Leafs",
-    "UTA": "Utah Hockey Club", "VAN": "Vancouver Canucks", "VGK": "Vegas Golden Knights",
+    "UTA": "Utah Mammoth", "VAN": "Vancouver Canucks", "VGK": "Vegas Golden Knights",
     "WSH": "Washington Capitals", "WPG": "Winnipeg Jets",
 }
 
@@ -348,9 +348,6 @@ st.markdown(
 # ── ROSTER CARD GRID ─────────────────────────────────────────────────────────
 cards = []
 for row in roster_df.itertuples():
-    gax = row.gax or 0
-    gax_str   = f"+{gax}" if gax > 0 else str(gax) if gax != 0 else "—"
-    gax_color = primary if gax > 0 else ("#e05555" if gax < 0 else "rgba(255,255,255,0.35)")
     cards.append(
         f"<a href='player_card?player={row.player_id}' target='_self' style='text-decoration:none; color:inherit;'>"
         f"<div class='player-card' style='background:rgba({r},{g},{b},0.07); border:1px solid rgba({r},{g},{b},0.22);"
@@ -362,10 +359,10 @@ for row in roster_df.itertuples():
         f"<div style='display:flex; justify-content:center; gap:18px; margin-bottom:14px;'>"
         f"<div><div style='font-size:22px; font-weight:900; color:{primary}; line-height:1;'>{int(row.goals)}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Goals</div></div>"
-        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.65); line-height:1;'>{row.total_xg}</div>"
+        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.85); line-height:1;'>{int(row.points)}</div>"
+        f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Points</div></div>"
+        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.5); line-height:1;'>{row.total_xg}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>xG</div></div>"
-        f"<div><div style='font-size:22px; font-weight:900; color:{gax_color}; line-height:1;'>{gax_str}</div>"
-        f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>GAX</div></div>"
         f"</div>"
         f"<div style='font-size:11px; font-weight:600; color:{primary}; border:1px solid rgba({r},{g},{b},0.4);"
         f"border-radius:5px; padding:5px 0;'>View Player Card →</div>"
