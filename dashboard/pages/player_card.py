@@ -268,24 +268,24 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 gax_display = f"+{goals_above_expected}" if goals_above_expected and goals_above_expected > 0 else str(goals_above_expected)
-c1, c2, c3, c4, c5, c6 = st.columns(6)
 
 stat_cards = [
-    (c1, "Goals", goals, "Total goals scored (excludes shootout)"),
-    (c2, "SOG", shots_on_goal, "Shots on goal — shots that required a save or resulted in a goal"),
-    (c3, "Sh%", f"{sh_pct}%", "Shooting percentage — goals divided by shots on goal"),
-    (c4, "xG", total_xg, "Total expected goals — sum of shot quality based on location, type, and context (MoneyPuck model)"),
-    (c5, "xG / GP", xg_per_game, "Expected goals per game — measures how dangerous a player's shots are on a per game basis"),
-    (c6, "Goals Above xG (GAX)", gax_display, "Goals above expected — positive means the player is finishing better than their shot quality predicts; negative suggests underperformance or bad luck"),
+    ("Goals",              goals,          "Total goals scored (excludes shootout)"),
+    ("SOG",                shots_on_goal,  "Shots on goal — shots that required a save or resulted in a goal"),
+    ("Sh%",                f"{sh_pct}%",   "Shooting percentage — goals divided by shots on goal"),
+    ("xG",                 total_xg,       "Total expected goals — sum of shot quality based on location, type, and context (MoneyPuck model)"),
+    ("xG / GP",            xg_per_game,    "Expected goals per game — measures how dangerous a player's shots are on a per game basis"),
+    ("Goals Above xG (GAX)", gax_display,  "Goals above expected — positive means the player is finishing better than their shot quality predicts; negative suggests underperformance or bad luck"),
 ]
 
-for col, label, value, tooltip in stat_cards:
-    col.markdown(f"""
-    <div class="stat-card" data-tooltip="{tooltip}">
-      <div class="label">{label}</div>
-      <div class="value">{value}</div>
-    </div>
-    """, unsafe_allow_html=True)
+cards_html = "".join(
+    f'<div class="stat-card" data-tooltip="{tooltip}"><div class="label">{label}</div><div class="value">{value}</div></div>'
+    for label, value, tooltip in stat_cards
+)
+st.markdown(
+    f"<div style='display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:12px;'>{cards_html}</div>",
+    unsafe_allow_html=True,
+)
 
 st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 

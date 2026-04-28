@@ -162,12 +162,13 @@ st.markdown(f"""
 <div style="
   background: linear-gradient(135deg, #0A0E1A 0%, rgba({r},{g},{b},0.25) 50%, {secondary}99 100%);
   border-bottom: 3px solid {primary};
-  padding: 32px calc(40px + 1.5rem) 28px calc(40px + 1.5rem);
+  padding: 24px calc(20px + 1.5rem) 20px calc(20px + 1.5rem);
   margin-left: -1.5rem;
   margin-right: -1.5rem;
   display: flex;
   align-items: center;
-  gap: 40px;
+  flex-wrap: wrap;
+  gap: 24px;
   margin-bottom: 0;
 ">
   <!-- Logo -->
@@ -371,7 +372,7 @@ for row in roster_df.itertuples():
 
 st.markdown(
     "<div class='chart-card'><div class='section-header'>Roster</div>"
-    "<div style='display:grid; grid-template-columns: repeat(4, 1fr); gap:14px;'>"
+    "<div style='display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:14px;'>"
     + "".join(cards)
     + "</div></div>",
     unsafe_allow_html=True,
