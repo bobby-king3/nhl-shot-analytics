@@ -229,7 +229,29 @@ st.markdown(f"""
  games_played, goals, shots_on_goal, sh_pct, total_xg, xg_per_game,
  goals_pctile, sh_pctile, avg_xg_pctile, xg_pg_pctile,
  rebound_pctile, dist_pctile,
- goals_above_expected, gax_pctile) = stats
+ goals_above_expected, gax_pctile,
+ sweater_number, height_in, weight_lbs, birth_country, shoots_catches) = stats
+
+COUNTRY_FLAGS = {
+    "CAN": "🇨🇦", "USA": "🇺🇸", "SWE": "🇸🇪", "FIN": "🇫🇮",
+    "RUS": "🇷🇺", "CZE": "🇨🇿", "SVK": "🇸🇰", "GER": "🇩🇪",
+    "AUT": "🇦🇹", "SUI": "🇨🇭", "LVA": "🇱🇻", "BLR": "🇧🇾",
+    "DNK": "🇩🇰", "NOR": "🇳🇴", "FRA": "🇫🇷", "CHE": "🇨🇭",
+}
+
+def format_height(inches):
+    if inches is None:
+        return None
+    return f"{inches // 12}'{inches % 12}\""
+
+number_str  = f"#{sweater_number}" if sweater_number else None
+height_str  = format_height(height_in)
+weight_str  = f"{weight_lbs} lbs" if weight_lbs else None
+country_str = COUNTRY_FLAGS.get(birth_country, birth_country) if birth_country else None
+hand_str    = f"Shoots {shoots_catches}" if shoots_catches else None
+
+bio_parts = [x for x in [number_str, height_str, weight_str, country_str, hand_str] if x]
+bio_line  = " · ".join(bio_parts)
 
 st.markdown(f"""
 <div style="
@@ -257,6 +279,7 @@ st.markdown(f"""
     <div style="font-size:14px; color:rgba(255,255,255,0.5); margin-top:5px; letter-spacing:0.5px;">
       {position} · {team_abbrev} · {season_labels[selected_season]}
     </div>
+    {f'<div style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:4px; letter-spacing:0.3px;">{bio_line}</div>' if bio_line else ''}
   </div>
   <div style="flex-shrink:0; background:rgba(255,255,255,0.07);
               border:1px solid rgba(255,255,255,0.12);
@@ -283,7 +306,7 @@ cards_html = "".join(
     for label, value, tooltip in stat_cards
 )
 st.markdown(
-    f"<div style='display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:12px;'>{cards_html}</div>",
+    f"<div style='display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; width:100%;'>{cards_html}</div>",
     unsafe_allow_html=True,
 )
 
