@@ -48,7 +48,7 @@ TEAM_NAMES = {
 st.markdown("""
 <style>
   .block-container {
-    padding-top: 0 !important;
+    padding-top: 1rem !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
     max-width: 100% !important;
