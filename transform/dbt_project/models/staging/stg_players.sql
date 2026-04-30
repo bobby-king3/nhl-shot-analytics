@@ -16,6 +16,13 @@ select
         then 'https://assets.nhle.com/logos/nhl/svg/' || team_abbrev || '_light.svg'
     end as team_logo_url,
     is_active,
+    sweater_number,
+    height_in,
+    weight_lbs,
+    birth_date,
+    birth_city,
+    birth_country,
+    shoots_catches,
     ingested_at
 
 from source
