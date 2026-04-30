@@ -468,11 +468,23 @@ def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
         hovertemplate="Game %{x}<br>10-game xG%: %{y:.1f}%<extra></extra>",
         showlegend=False,
     ))
-    fig.add_hline(y=50, line=dict(color="rgba(255,255,255,0.2)", width=1, dash="dot"))
+    fig.add_hline(y=50, line=dict(color="rgba(255,255,255,0.35)", width=1, dash="dot"))
+    fig.add_annotation(
+        x=1, y=50, xref="paper", yref="y",
+        text="50%", showarrow=False,
+        font=dict(color="rgba(255,255,255,0.4)", size=10),
+        xanchor="left", yanchor="middle",
+        xshift=4,
+    )
 
     fig.update_xaxes(**get_dark_xaxes(title="Game"))
-    fig.update_yaxes(**get_dark_yaxes(title="xG% (10-game avg)"))
-    layout = get_dark_layout(height=200, margin_l=60, margin_r=20, margin_t=10, margin_b=30)
+    fig.update_yaxes(
+        **get_dark_yaxes(title="xG%"),
+        range=[35, 65],
+        tickvals=[40, 50, 60],
+        ticktext=["40%", "50%", "60%"],
+    )
+    layout = get_dark_layout(height=200, margin_l=50, margin_r=36, margin_t=10, margin_b=30)
     fig.update_layout(**layout)
     return fig
 
