@@ -227,7 +227,7 @@ def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
             showlegend=False,
         ))
 
-    fig.update_layout(clickmode="event")
+    fig.update_layout(clickmode="event+select")
     return fig
 
 

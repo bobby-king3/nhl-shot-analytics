@@ -450,18 +450,19 @@ with map_col:
     st.markdown('</div>', unsafe_allow_html=True)
 
     map_pts = (clicked or {}).get("selection", {}).get("points", [])
-    map_key = str(map_pts[0].get("point_index", map_pts[0])) if map_pts else None
+    map_key = ",".join(
+        f"{p.get('curve_number', '')}_{p.get('point_index', '')}" for p in map_pts
+    ) if map_pts else None
 
     if detect_change("prev_map_key", map_key):
         if map_pts:
-            point = map_pts[0]
+            point = map_pts[-1]  # last in list = most recently clicked
             cd = point.get("customdata", [])
             clip_url = extract_clip_url(cd)
-            if clip_url:
-                st.session_state["active_video"] = clip_url
-            else:
-                st.session_state["active_video"] = None
-                st.caption("No video available for this shot.")
+            st.session_state["active_video"] = clip_url or None
+            st.session_state["shot_selected"] = True
+        else:
+            st.session_state["shot_selected"] = False
 
 with wheel_col:
     st.markdown('<div class="chart-card"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
@@ -541,6 +542,7 @@ with highlight_col:
                 st.session_state["active_video"] = url_map[selected]
 
     active_video_sharing_url = st.session_state.get("active_video")
+    shot_selected = st.session_state.get("shot_selected", False)
     if active_video_sharing_url:
         with st.spinner("Loading clip..."):
             video_url = get_video_url(active_video_sharing_url)
@@ -550,6 +552,18 @@ with highlight_col:
             st.markdown(f"""
 <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:8px; overflow:hidden;">
   <iframe src="{active_video_sharing_url}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen></iframe>
+</div>
+""", unsafe_allow_html=True)
+    elif shot_selected:
+        st.markdown("""
+<div style="
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 32px 16px; border-radius:8px;
+    background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.12);
+    color:rgba(255,255,255,0.3); font-size:13px; text-align:center; gap:8px;
+">
+  <div style="font-size:28px;">▶</div>
+  <div>No highlight available for this shot</div>
 </div>
 """, unsafe_allow_html=True)
     else:
