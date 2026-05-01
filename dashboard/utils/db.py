@@ -320,9 +320,6 @@ def get_team_stats(team_abbrev: str, season: int) -> dict:
 
 
 @st.cache_data(ttl=3600)
-
-
-@st.cache_data(ttl=3600)
 def get_team_game_log(team_abbrev: str, season: int):
     conn = connect()
     df = conn.execute("""
