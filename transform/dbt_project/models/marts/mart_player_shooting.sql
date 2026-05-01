@@ -83,6 +83,20 @@ with_percentiles as (
         round(percent_rank() over (partition by season order by goals_above_expected),   3)  as goals_above_expected_pctile
 
     from qualified
+),
+
+with_player_stats as (
+    select
+        p.*,
+        s.assists,
+        s.points,
+        s.plus_minus,
+        s.pp_points,
+        s.toi_per_game_min
+    from with_percentiles p
+    left join {{ ref('stg_player_stats') }} s
+        on  s.player_id = p.shooter_id
+        and s.season    = p.season
 )
 
-select * from with_percentiles
+select * from with_player_stats

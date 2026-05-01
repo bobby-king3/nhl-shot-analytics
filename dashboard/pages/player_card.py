@@ -20,26 +20,7 @@ from dashboard.utils.chart_builders import (
     build_game_log_chart, build_shot_map, build_percentile_wheel, build_shot_type_breakdown,
     build_season_stats_table
 )
-
-TEAM_COLORS = {
-    "ANA": ("#FC4C02", "#B09862"), "BOS": ("#FFB81C", "#000000"),
-    "BUF": ("#FCB514", "#002654"), "CAR": ("#CC0000", "#000000"),
-    "CBJ": ("#CE1126", "#002654"), "CGY": ("#C8102E", "#F1BE48"),
-    "CHI": ("#CF0A2C", "#000000"), "COL": ("#6F263D", "#236192"),
-    "DAL": ("#006847", "#8F8F8C"), "DET": ("#CE1126", "#FFFFFF"),
-    "EDM": ("#FF4C00", "#041E42"), "FLA": ("#C8102E", "#041E42"),
-    "LAK": ("#A2AAAD", "#111111"), "MIN": ("#154734", "#A6192E"),
-    "MTL": ("#AF1E2D", "#192168"), "NJD": ("#CE1126", "#000000"),
-    "NSH": ("#FFB81C", "#041E42"), "NYI": ("#00539B", "#F47D30"),
-    "NYR": ("#0038A8", "#CE1126"), "OTT": ("#C8102E", "#C69214"),
-    "PHI": ("#F74902", "#000000"), "PIT": ("#FCB514", "#000000"),
-    "SEA": ("#99D9D9", "#001628"), "SJS": ("#006D75", "#EA7200"),
-    "STL": ("#FCB514", "#002F87"), "TBL": ("#1B5299", "#002868"),
-    "TOR": ("#2D7DD2", "#003E7E"), "UTA": ("#69B3E7", "#010101"),
-    "VAN": ("#00843D", "#00205B"), "VGK": ("#B4975A", "#333F42"),
-    "WSH": ("#C8102E", "#041E42"), "WPG": ("#004C97", "#041E42"),
-}
-DEFAULT_COLORS = ("#C8102E", "#1A1A2E")
+from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS
 
 st.markdown("""
 <style>
@@ -229,7 +210,29 @@ st.markdown(f"""
  games_played, goals, shots_on_goal, sh_pct, total_xg, xg_per_game,
  goals_pctile, sh_pctile, avg_xg_pctile, xg_pg_pctile,
  rebound_pctile, dist_pctile,
- goals_above_expected, gax_pctile) = stats
+ goals_above_expected, gax_pctile,
+ sweater_number, height_in, weight_lbs, birth_country, shoots_catches) = stats
+
+COUNTRY_FLAGS = {
+    "CAN": "🇨🇦", "USA": "🇺🇸", "SWE": "🇸🇪", "FIN": "🇫🇮",
+    "RUS": "🇷🇺", "CZE": "🇨🇿", "SVK": "🇸🇰", "GER": "🇩🇪",
+    "AUT": "🇦🇹", "SUI": "🇨🇭", "LVA": "🇱🇻", "BLR": "🇧🇾",
+    "DNK": "🇩🇰", "NOR": "🇳🇴", "FRA": "🇫🇷", "CHE": "🇨🇭",
+}
+
+def format_height(inches):
+    if inches is None:
+        return None
+    return f"{inches // 12}'{inches % 12}\""
+
+number_str  = f"#{sweater_number}" if sweater_number else None
+height_str  = format_height(height_in)
+weight_str  = f"{weight_lbs} lbs" if weight_lbs else None
+country_str = COUNTRY_FLAGS.get(birth_country, birth_country) if birth_country else None
+hand_str    = f"Shoots {shoots_catches}" if shoots_catches else None
+
+text_parts = [x for x in [number_str, height_str, weight_str, hand_str] if x]
+bio_text   = " · ".join(text_parts)
 
 st.markdown(f"""
 <div style="
@@ -257,6 +260,10 @@ st.markdown(f"""
     <div style="font-size:14px; color:rgba(255,255,255,0.5); margin-top:5px; letter-spacing:0.5px;">
       {position} · {team_abbrev} · {season_labels[selected_season]}
     </div>
+    {f'''<div style="display:flex; align-items:center; gap:5px; margin-top:4px;">
+      {f'<span style="font-size:14px;">{country_str}</span>' if country_str else ''}
+      {f'<span style="font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.3px;">{bio_text}</span>' if bio_text else ''}
+    </div>''' if (country_str or bio_text) else ''}
   </div>
   <div style="flex-shrink:0; background:rgba(255,255,255,0.07);
               border:1px solid rgba(255,255,255,0.12);
@@ -268,24 +275,24 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 gax_display = f"+{goals_above_expected}" if goals_above_expected and goals_above_expected > 0 else str(goals_above_expected)
-c1, c2, c3, c4, c5, c6 = st.columns(6)
 
 stat_cards = [
-    (c1, "Goals", goals, "Total goals scored (excludes shootout)"),
-    (c2, "SOG", shots_on_goal, "Shots on goal — shots that required a save or resulted in a goal"),
-    (c3, "Sh%", f"{sh_pct}%", "Shooting percentage — goals divided by shots on goal"),
-    (c4, "xG", total_xg, "Total expected goals — sum of shot quality based on location, type, and context (MoneyPuck model)"),
-    (c5, "xG / GP", xg_per_game, "Expected goals per game — measures how dangerous a player's shots are on a per game basis"),
-    (c6, "Goals Above xG (GAX)", gax_display, "Goals above expected — positive means the player is finishing better than their shot quality predicts; negative suggests underperformance or bad luck"),
+    ("Goals",              goals,          "Total goals scored (excludes shootout)"),
+    ("SOG",                shots_on_goal,  "Shots on goal — shots that required a save or resulted in a goal"),
+    ("Sh%",                f"{sh_pct}%",   "Shooting percentage — goals divided by shots on goal"),
+    ("xG",                 total_xg,       "Total expected goals — sum of shot quality based on location, type, and context (MoneyPuck model)"),
+    ("xG / GP",            xg_per_game,    "Expected goals per game — measures how dangerous a player's shots are on a per game basis"),
+    ("Goals Above xG (GAX)", gax_display,  "Goals above expected — positive means the player is finishing better than their shot quality predicts; negative suggests underperformance or bad luck"),
 ]
 
-for col, label, value, tooltip in stat_cards:
-    col.markdown(f"""
-    <div class="stat-card" data-tooltip="{tooltip}">
-      <div class="label">{label}</div>
-      <div class="value">{value}</div>
-    </div>
-    """, unsafe_allow_html=True)
+cards_html = "".join(
+    f'<div class="stat-card" data-tooltip="{tooltip}"><div class="label">{label}</div><div class="value">{value}</div></div>'
+    for label, value, tooltip in stat_cards
+)
+st.markdown(
+    f"<div style='display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; width:100%;'>{cards_html}</div>",
+    unsafe_allow_html=True,
+)
 
 st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 

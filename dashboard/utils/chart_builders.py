@@ -66,7 +66,6 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
 
     fig = go.Figure()
 
-    # xG bars
     fig.add_trace(go.Bar(
         x=game_log_df["game_num"],
         y=game_log_df["xg"],
@@ -76,7 +75,6 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
         showlegend=False,
     ))
 
-    # 5-game rolling average
     fig.add_trace(go.Scatter(
         x=game_log_df["game_num"],
         y=rolling_avg,
@@ -86,7 +84,6 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
         showlegend=False,
     ))
 
-    # Goal markers
     if not goal_games.empty:
         fig.add_trace(go.Scatter(
             x=goal_games["game_num"],
@@ -97,7 +94,6 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
             showlegend=False,
         ))
 
-    # Filter highlight rectangles
     if game_filter_active:
         selected_nums = game_log_df[game_log_df["game_id"].isin(selected_game_ids)]["game_num"].tolist()
         for gnum in selected_nums:
@@ -110,11 +106,9 @@ def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, 
 
     fig.update_xaxes(**get_dark_xaxes(title="Game"))
     fig.update_yaxes(**get_dark_yaxes(title="xG"))
-
     layout = get_dark_layout(height=220, margin_l=40, margin_r=20, margin_t=10, margin_b=30)
     layout["bargap"] = 0.15
     fig.update_layout(**layout)
-
     return fig
 
 
@@ -122,7 +116,6 @@ def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
     fig = make_rink_figure(height=520)
     xg_vals = map_nongoals_df["x_goal"].fillna(0).clip(0, 0.5)
 
-    # Non-goals
     if not map_nongoals_df.empty:
         fig.add_trace(go.Scatter(
             x=map_nongoals_df["x_coord"],
@@ -166,7 +159,6 @@ def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
             showlegend=False,
         ))
 
-    # Blocked shots
     if not map_blocked_df.empty:
         fig.add_trace(go.Scatter(
             x=map_blocked_df["x_coord"],
@@ -199,7 +191,6 @@ def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
             showlegend=False,
         ))
 
-    # Goals
     if not map_goals_df.empty:
         fig.add_trace(go.Scatter(
             x=map_goals_df["x_coord"],
@@ -248,7 +239,6 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
 
     wheel = go.Figure()
 
-    # Reference rings at 25, 50, 75
     for ref in [25, 50, 75]:
         wheel.add_trace(go.Scatterpolar(
             r=[ref] * (len(categories) + 1),
@@ -259,7 +249,6 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
             hoverinfo="skip",
         ))
 
-    # Player percentile polygon
     wheel.add_trace(go.Scatterpolar(
         r=values + [values[0]],
         theta=categories + [categories[0]],
@@ -307,7 +296,6 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
         for v in type_df["sh_pct"]
     ]
 
-    # Generate bar colors based on selection state
     bar_fill_colors = []
     bar_line_colors = []
     for shot_type in type_df["shot_type"]:
@@ -319,7 +307,6 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
 
     fig = go.Figure()
 
-    # Volume % bars
     fig.add_trace(go.Bar(
         x=type_df["shots"],
         y=type_df["shot_type"],
@@ -335,7 +322,6 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
         showlegend=False,
     ))
 
-    # Shooting % efficiency dots
     fig.add_trace(go.Scatter(
         x=type_df["shots"],
         y=type_df["shot_type"],
@@ -353,5 +339,74 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
     layout = get_dark_layout(height=280, margin_l=0, margin_r=60, margin_t=10, margin_b=10)
     layout["bargap"] = 0.3
     fig.update_layout(**layout)
-
     return fig
+
+
+
+
+def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
+    xg_total = game_log_df["xg_for"] + game_log_df["xg_against"]
+    xg_pct = (game_log_df["xg_for"] / xg_total.replace(0, np.nan) * 100).fillna(50)
+    rolling = xg_pct.rolling(10, min_periods=1).mean().round(1)
+    game_num = game_log_df["game_num"].values
+
+    ref = np.full(len(game_num), 50.0)
+    above_50 = np.maximum(rolling.values, 50.0)
+    below_50 = np.minimum(rolling.values, 50.0)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(x=game_num, y=above_50, mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
+    fig.add_trace(go.Scatter(x=game_num, y=ref, fill="tonexty", fillcolor=f"rgba({r},{g},{b},0.18)", mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
+    fig.add_trace(go.Scatter(x=game_num, y=ref, mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
+    fig.add_trace(go.Scatter(x=game_num, y=below_50, fill="tonexty", fillcolor="rgba(200,60,60,0.18)", mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
+    fig.add_trace(go.Scatter(
+        x=game_num, y=rolling,
+        mode="lines",
+        line=dict(color=primary, width=2.5),
+        hovertemplate="Game %{x}<br>10-game xG%: %{y:.1f}%<extra></extra>",
+        showlegend=False,
+    ))
+    fig.add_hline(y=50, line=dict(color="rgba(255,255,255,0.35)", width=1, dash="dot"))
+    fig.add_annotation(
+        x=1, y=50, xref="paper", yref="y",
+        text="50%", showarrow=False,
+        font=dict(color="rgba(255,255,255,0.4)", size=10),
+        xanchor="left", yanchor="middle",
+        xshift=4,
+    )
+
+    fig.update_xaxes(**get_dark_xaxes(title="Game"))
+    fig.update_yaxes(
+        **get_dark_yaxes(title="xG%"),
+        range=[35, 65],
+        tickvals=[40, 50, 60],
+        ticktext=["40%", "50%", "60%"],
+    )
+    layout = get_dark_layout(height=200, margin_l=50, margin_r=36, margin_t=10, margin_b=30)
+    fig.update_layout(**layout)
+    return fig
+
+
+
+def build_streak_dots_grid(game_log_df) -> str:
+    dots = []
+    for row in game_log_df.itertuples():
+        if row.result == "W":
+            color, border = "#4CAF50", "#4CAF50"
+        elif row.result == "OTL":
+            color, border = "rgba(255,200,50,0.85)", "rgba(255,200,50,0.85)"
+        else:
+            color, border = "rgba(40,40,55,0.9)", "rgba(120,120,140,0.5)"
+        label = f"{row.result} {'vs' if row.is_home else 'at'} {row.opponent} · {int(row.gf)}–{int(row.ga)}"
+        dots.append(
+            f"<div title='{label}' style='width:12px; height:12px; border-radius:50%;"
+            f"background:{color}; border:1.5px solid {border};'></div>"
+        )
+    return (
+        "<div style='display:grid; grid-template-columns: repeat(20, 12px); gap:5px; padding:4px 0 8px 0;'>"
+        + "".join(dots)
+        + "</div>"
+    )
+
+

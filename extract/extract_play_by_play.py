@@ -7,7 +7,6 @@ from extract.connection import get_connection
 from extract.nhl_client.nhl_api import get, get_play_by_play
 
 SHOT_EVENT_TYPES = {"shot-on-goal", "goal", "missed-shot", "blocked-shot"}
-SEASON_START_DATES = [date(2023, 10, 10), date(2024, 10, 8), date(2025, 10, 7)]
 LOOKBACK_DAYS = 3
 
 
