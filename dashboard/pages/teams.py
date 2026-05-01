@@ -328,6 +328,12 @@ st.markdown(
 )
 
 # ── ROSTER CARD GRID ─────────────────────────────────────────────────────────
+SORT_OPTIONS = {"Points": "points", "Goals": "goals", "xG": "total_xg", "Position": "position", "Name": "last_name"}
+sort_label = st.selectbox("Sort roster by", options=list(SORT_OPTIONS.keys()), key="roster_sort")
+sort_col = SORT_OPTIONS[sort_label]
+ascending = sort_col in ("position", "last_name")
+roster_df = roster_df.sort_values(sort_col, ascending=ascending)
+
 cards = []
 for row in roster_df.itertuples():
     cards.append(

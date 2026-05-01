@@ -452,6 +452,7 @@ def get_team_roster(team_abbrev: str, season: int):
         select
             p.player_id,
             p.full_name,
+            p.last_name,
             p.position,
             p.headshot_url,
             p.team_logo_url,
