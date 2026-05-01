@@ -5,6 +5,7 @@ from pathlib import Path
 from extract.extract_games import main as run_extract_games
 from extract.extract_play_by_play import main as run_extract_play_by_play
 from extract.extract_players import main as run_extract_players
+from extract.extract_skater_stats import main as run_extract_skater_stats
 
 ROOT = Path(__file__).parent.parent
 DBT_DIR = ROOT / "transform" / "dbt_project"
@@ -36,10 +37,13 @@ def main():
     section("2/4  Extract play-by-play")
     run_extract_play_by_play()
 
-    section("3/4  Extract players")
+    section("3/5  Extract players")
     run_extract_players()
 
-    section("4/4  dbt (deps → run → test)")
+    section("4/5  Extract skater stats")
+    run_extract_skater_stats()
+
+    section("5/5  dbt (deps → run → test)")
     run_dbt("deps")
     run_dbt("run")
     run_dbt("test")
