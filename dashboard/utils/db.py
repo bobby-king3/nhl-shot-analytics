@@ -156,18 +156,15 @@ def get_player_game_log(player_id: int, season: int):
               and period < 5
             group by game_id, team_id
         ),
-        opponent_teams as (
-            select s.game_id, s.team_id as opp_team_id
-            from main.mart_shot_events s
-            join player_games pg on s.game_id = pg.game_id
-            where s.team_id != pg.player_team_id
-            group by s.game_id, s.team_id
-        ),
         opp_abbrevs as (
-            select ot.game_id, any_value(p.team_abbrev) as opponent
-            from opponent_teams ot
-            join main.stg_players p on p.team_id = ot.opp_team_id
-            group by ot.game_id
+            select
+                pg.game_id,
+                case when g.home_team_id = pg.player_team_id
+                     then g.away_team_abbrev
+                     else g.home_team_abbrev
+                end as opponent
+            from player_games pg
+            join main.stg_games g on g.game_id = pg.game_id
         )
         select
             pg.game_id,
