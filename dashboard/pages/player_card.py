@@ -250,8 +250,8 @@ weight_str  = f"{weight_lbs} lbs" if weight_lbs else None
 country_str = COUNTRY_FLAGS.get(birth_country, birth_country) if birth_country else None
 hand_str    = f"Shoots {shoots_catches}" if shoots_catches else None
 
-bio_parts = [x for x in [number_str, height_str, weight_str, country_str, hand_str] if x]
-bio_line  = " · ".join(bio_parts)
+text_parts = [x for x in [number_str, height_str, weight_str, hand_str] if x]
+bio_text   = " · ".join(text_parts)
 
 st.markdown(f"""
 <div style="
@@ -279,7 +279,10 @@ st.markdown(f"""
     <div style="font-size:14px; color:rgba(255,255,255,0.5); margin-top:5px; letter-spacing:0.5px;">
       {position} · {team_abbrev} · {season_labels[selected_season]}
     </div>
-    {f'<div style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:4px; letter-spacing:0.3px;">{bio_line}</div>' if bio_line else ''}
+    {f'''<div style="display:flex; align-items:center; gap:5px; margin-top:4px;">
+      {f'<span style="font-size:14px;">{country_str}</span>' if country_str else ''}
+      {f'<span style="font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.3px;">{bio_text}</span>' if bio_text else ''}
+    </div>''' if (country_str or bio_text) else ''}
   </div>
   <div style="flex-shrink:0; background:rgba(255,255,255,0.07);
               border:1px solid rgba(255,255,255,0.12);
