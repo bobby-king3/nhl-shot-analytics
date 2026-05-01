@@ -56,9 +56,28 @@ st.markdown("""
 
 seasons = get_available_seasons()
 season_labels = {s: f"{str(s)[:4]}-{str(s)[4:]}" for s in seasons}
-selected_season = st.sidebar.selectbox("Season", options=seasons, format_func=lambda s: season_labels[s], key="t_season")
+
+url_team   = st.query_params.get("team", None)
+url_season = st.query_params.get("season", None)
+try:
+    url_season = int(url_season) if url_season else None
+except ValueError:
+    url_season = None
+
+selected_season = st.sidebar.selectbox(
+    "Season", options=seasons, format_func=lambda s: season_labels[s],
+    index=seasons.index(url_season) if url_season in seasons else 0,
+    key="t_season"
+)
 all_teams = get_teams(selected_season)
-selected_team = st.sidebar.selectbox("Team", options=all_teams, key="t_team")
+selected_team = st.sidebar.selectbox(
+    "Team", options=all_teams,
+    index=all_teams.index(url_team) if url_team in all_teams else 0,
+    key="t_team"
+)
+
+st.query_params["team"]   = selected_team
+st.query_params["season"] = str(selected_season)
 
 primary, secondary = TEAM_COLORS.get(selected_team, DEFAULT_COLORS)
 r, g, b = hex_to_rgb(primary)
