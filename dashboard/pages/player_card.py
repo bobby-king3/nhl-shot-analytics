@@ -114,6 +114,54 @@ st.markdown("""
     border-radius: 12px;
     padding: 16px;
   }
+  .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+    font-size: 9px;
+    font-weight: 700;
+    font-style: italic;
+    font-family: serif;
+    line-height: 1;
+    cursor: default;
+    position: relative;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+  .info-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15,20,35,0.97);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.85);
+    -webkit-text-fill-color: rgba(255,255,255,0.85);
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    padding: 7px 11px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    font-style: normal;
+    font-family: sans-serif;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .info-icon:hover::after { opacity: 1; }
+  .info-icon:hover { background: var(--team-primary, #C8102E); color: white; }
   div[data-testid="stRadio"] > div { gap: 1px !important; }
   div[data-testid="stRadio"] label {
     padding: 5px 8px !important;
@@ -388,7 +436,13 @@ map_col, wheel_col = st.columns([2, 2])
 
 with map_col:
     header_suffix = f" · {selected_shot_type} only" if selected_shot_type else ""
-    st.markdown(f'<div class="chart-card"><div class="section-header">Shot Map — {len(filtered_shots):,} shots · {len(goals_df)} goals{header_suffix}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="chart-card"><div class="section-header">'
+        f'Shot Map — {len(filtered_shots):,} shots · {len(goals_df)} goals{header_suffix}'
+        f'<span class="info-icon" data-tooltip="Click any shot for details · goals include highlight video · double-click to reset">i</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
     fig_rink = build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary)
     clicked = st.plotly_chart(fig_rink, use_container_width=True, on_select="rerun", key="shot_map")
