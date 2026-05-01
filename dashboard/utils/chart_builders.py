@@ -1,12 +1,5 @@
-import urllib.request, urllib.error  # must precede hockey_rink import
-import io
 import plotly.graph_objects as go
 import numpy as np
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-from scipy.ndimage import gaussian_filter
 from dashboard.components.rink import make_rink_figure
 from dashboard.utils.plotly_config import get_dark_layout, get_dark_xaxes, get_dark_yaxes, generate_bar_colors_for_selection
 from dashboard.utils.styling import get_performance_color
