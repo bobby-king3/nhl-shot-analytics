@@ -320,30 +320,6 @@ def get_team_stats(team_abbrev: str, season: int) -> dict:
 
 
 @st.cache_data(ttl=3600)
-def get_team_shots(team_abbrev: str, season: int):
-    conn = connect()
-    df = conn.execute("""
-        with team_games as (
-            select
-                game_id,
-                case when home_team_abbrev = ? then home_team_id else away_team_id end as team_id
-            from main.stg_games
-            where (home_team_abbrev = ? or away_team_abbrev = ?) and season = ?
-        )
-        select
-            se.x_coord,
-            se.y_coord,
-            se.event_type,
-            se.shot_type,
-            se.x_goal,
-            se.strength
-        from main.mart_shot_events se
-        join team_games tg on tg.game_id = se.game_id and tg.team_id = se.team_id
-        where se.period < 5
-          and se.x_coord is not null and se.y_coord is not null
-    """, [team_abbrev] * 3 + [season]).df()
-    conn.close()
-    return df
 
 
 @st.cache_data(ttl=3600)
