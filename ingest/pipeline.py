@@ -31,10 +31,10 @@ def run_dbt(command):
 def main():
     print("=== NHL Shot Intelligence Pipeline ===")
 
-    section("1/4  Extract games")
+    section("1/5  Extract games")
     run_extract_games()
 
-    section("2/4  Extract play-by-play")
+    section("2/5  Extract play-by-play")
     run_extract_play_by_play()
 
     section("3/5  Extract players")
