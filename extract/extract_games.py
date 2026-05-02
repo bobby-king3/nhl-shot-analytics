@@ -1,7 +1,4 @@
-import sys
-sys.path.append(".")
-
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from extract.connection import get_connection
 from extract.nhl_client.nhl_api import get
 
@@ -75,12 +72,19 @@ def fetch_all_games(con):
                         away.get("abbrev"),
                         away.get("score"),
                         outcome.get("lastPeriodType"),
-                        date.today().isoformat(),
+                        datetime.now(timezone.utc),
                     ))
             current += timedelta(weeks=1)
 
     if rows:
-        con.executemany("INSERT INTO raw_games VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+        con.executemany("""
+            INSERT INTO raw_games (
+                game_id, season, game_type, game_date, start_time_utc, venue,
+                home_team_id, home_team_abbrev, home_score,
+                away_team_id, away_team_abbrev, away_score,
+                last_period_type, ingested_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, rows)
         print(f"Inserted {len(rows)} games.")
     else:
         print("No new games to insert.")
