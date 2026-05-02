@@ -1,4 +1,4 @@
-def get_dark_layout(height: int = 280, margin_l: int = 40, margin_r: int = 20, margin_t: int = 10, margin_b: int = 30) -> dict:
+def get_dark_layout(height = 280, margin_l = 40, margin_r = 20, margin_t = 10, margin_b = 30):
     return {
         "paper_bgcolor": "rgba(0,0,0,0)",
         "plot_bgcolor": "rgba(0,0,0,0)",
@@ -7,7 +7,7 @@ def get_dark_layout(height: int = 280, margin_l: int = 40, margin_r: int = 20, m
     }
 
 
-def get_dark_xaxes(title: str = "", show_grid: bool = False) -> dict:
+def get_dark_xaxes(title = "", show_grid = False):
     return {
         "showgrid": show_grid,
         "zeroline": False,
@@ -17,7 +17,7 @@ def get_dark_xaxes(title: str = "", show_grid: bool = False) -> dict:
     }
 
 
-def get_dark_yaxes(title: str = "", show_grid: bool = True) -> dict:
+def get_dark_yaxes(title = "", show_grid = True):
     return {
         "showgrid": show_grid,
         "gridcolor": "rgba(255,255,255,0.06)" if show_grid else None,
@@ -28,7 +28,7 @@ def get_dark_yaxes(title: str = "", show_grid: bool = True) -> dict:
     }
 
 
-def generate_bar_colors_for_selection(df_values, r: int, g: int, b: int, selected_value=None, selected_active: bool = False) -> list:
+def generate_bar_colors_for_selection(df_values, r, g, b, selected_value=None, selected_active=False):
     colors = []
     for val in df_values:
         is_selected = val == selected_value if selected_value is not None else False
