@@ -42,6 +42,9 @@ models:
 
   - name: mart_player_shooting
     description: Season-level shooting stats and percentile ranks per player
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [shooter_id, season]
     columns:
       - name: shooter_id
         tests:

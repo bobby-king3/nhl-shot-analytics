@@ -6,8 +6,8 @@ select
     game_id,
     season,
     game_type,
-    cast(game_date as date)                         as game_date,
-    cast(start_time_utc as timestamp)               as start_time_utc,
+    cast(game_date as date) as game_date,
+    cast(start_time_utc as timestamp) as start_time_utc,
     venue,
     home_team_id,
     home_team_abbrev,
@@ -20,8 +20,8 @@ select
         when last_period_type = 'REG' then 'Regulation'
         when last_period_type = 'OT'  then 'Overtime'
         when last_period_type = 'SO'  then 'Shootout'
-    end                                             as game_outcome,
-    home_score > away_score                         as home_win,
+    end as game_outcome,
+    home_score > away_score as home_win,
     ingested_at
 
 from source
