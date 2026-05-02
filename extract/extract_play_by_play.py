@@ -1,7 +1,6 @@
 import json
 import logging
 from datetime import date, datetime, timedelta, timezone
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from extract.connection import get_connection
 from extract.logging_config import setup_logging
@@ -11,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 SHOT_EVENT_TYPES = {"shot-on-goal", "goal", "missed-shot", "blocked-shot"}
 LOOKBACK_DAYS = 3
-MAX_WORKERS = 6
 
 
 def get_completed_games():
@@ -65,7 +63,7 @@ def create_table(con):
     """)
 
 
-def fetch_game(game_id, season):
+def extract_game(con, game_id, season):
     pbp = get_play_by_play(game_id)
     rows = []
 
@@ -98,27 +96,25 @@ def fetch_game(game_id, season):
             datetime.now(timezone.utc),
         ))
 
-    return game_id, rows
+    if rows:
+        con.execute("BEGIN")
+        try:
+            con.executemany("""
+                INSERT INTO raw_play_by_play (
+                    game_id, event_id, season, period, time_in_period,
+                    event_type, x_coord, y_coord, shot_type,
+                    shooter_id, goalie_id, team_id, situation_code,
+                    home_defending_side, away_score, home_score,
+                    highlight_clip_url, raw, ingested_at
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """, rows)
+            con.execute("COMMIT")
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
 
-def insert_game(con, game_id, rows):
-    if not rows:
-        return 0
-    con.execute("BEGIN")
-    try:
-        con.executemany("""
-            INSERT INTO raw_play_by_play (
-                game_id, event_id, season, period, time_in_period,
-                event_type, x_coord, y_coord, shot_type,
-                shooter_id, goalie_id, team_id, situation_code,
-                home_defending_side, away_score, home_score,
-                highlight_clip_url, raw, ingested_at
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """, rows)
-        con.execute("COMMIT")
-    except Exception:
-        con.execute("ROLLBACK")
-        raise
     return len(rows)
+
 
 def main():
     con = get_connection()
@@ -132,15 +128,9 @@ def main():
     logger.info("Already processed:           %d", len(already_processed))
     logger.info("New games to fetch:          %d", len(new_game_ids))
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {
-            executor.submit(fetch_game, gid, season): (gid, season)
-            for gid, season in new_game_ids
-        }
-        for i, future in enumerate(as_completed(futures), 1):
-            game_id, rows = future.result()
-            shot_count = insert_game(con, game_id, rows)
-            logger.info("[%d/%d] game %d: %d shot events", i, len(new_game_ids), game_id, shot_count)
+    for i, (game_id, season) in enumerate(new_game_ids, 1):
+        shot_count = extract_game(con, game_id, season)
+        logger.info("[%d/%d] game %d: %d shot events", i, len(new_game_ids), game_id, shot_count)
 
     con.close()
     logger.info("Play-by-play extraction complete.")
