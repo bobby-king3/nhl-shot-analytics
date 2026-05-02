@@ -19,7 +19,7 @@ select
     sweater_number,
     height_in,
     weight_lbs,
-    birth_date,
+    TRY_CAST(birth_date AS DATE) as birth_date,
     birth_city,
     birth_country,
     shoots_catches,
