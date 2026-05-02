@@ -1,13 +1,13 @@
-import sys
-sys.path.append(".")
-
 import json
 from datetime import date, datetime, timedelta, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from extract.connection import get_connection
 from extract.nhl_client.nhl_api import get, get_play_by_play
 
 SHOT_EVENT_TYPES = {"shot-on-goal", "goal", "missed-shot", "blocked-shot"}
 LOOKBACK_DAYS = 3
+MAX_WORKERS = 6
 
 
 def get_completed_games():
@@ -61,7 +61,7 @@ def create_table(con):
     """)
 
 
-def extract_game(con, game_id, season):
+def fetch_game(game_id, season):
     pbp = get_play_by_play(game_id)
     rows = []
 
@@ -94,13 +94,21 @@ def extract_game(con, game_id, season):
             datetime.now(timezone.utc),
         ))
 
-    if rows:
+    return game_id, rows
+
+def insert_game(con, game_id, rows):
+    if not rows:
+        return 0
+    con.execute("BEGIN")
+    try:
         con.executemany("""
             INSERT INTO raw_play_by_play VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, rows)
-
+        con.execute("COMMIT")
+    except Exception:
+        con.execute("ROLLBACK")
+        raise
     return len(rows)
-
 
 def main():
     con = get_connection()
@@ -114,9 +122,15 @@ def main():
     print(f"Already processed:           {len(already_processed)}")
     print(f"New games to fetch:          {len(new_game_ids)}")
 
-    for i, (game_id, season) in enumerate(new_game_ids, 1):
-        shot_count = extract_game(con, game_id, season)
-        print(f"  [{i}/{len(new_game_ids)}] game {game_id} (season {season}): {shot_count} shot events")
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {
+            executor.submit(fetch_game, gid, season): (gid, season)
+            for gid, season in new_game_ids
+        }
+        for i, future in enumerate(as_completed(futures), 1):
+            game_id, rows = future.result()
+            shot_count = insert_game(con, game_id, rows)
+            print(f"[{i}/{len(new_game_ids)}] game {game_id}: {shot_count} shot events")
 
     con.close()
     print("Done.")
