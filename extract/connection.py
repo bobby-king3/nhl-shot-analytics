@@ -3,8 +3,7 @@ import duckdb
 
 LOCAL_DB_PATH = "data/nhl.duckdb"
 
-
-def get_connection(read_only: bool = False) -> duckdb.DuckDBPyConnection:
+def get_connection(read_only=False):
     token = os.environ.get("MOTHERDUCK_TOKEN")
     if token:
         os.environ.setdefault("motherduck_token", token)
