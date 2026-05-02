@@ -86,3 +86,32 @@ models:
         tests:
           - dbt_utils.expression_is_true:
               expression: "between 0 and 1"
+
+  - name: mart_team_season
+    description: Season level team stats: w/l record, goals/xG for and against, shooting %, save %
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [season, team_abbrev]
+    columns:
+      - name: season
+        tests:
+          - not_null
+      - name: team_abbrev
+        tests:
+          - not_null
+      - name: games_played
+        tests:
+          - not_null
+      - name: wins
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: losses
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: otl
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+

@@ -241,65 +241,22 @@ def get_available_seasons():
 def get_team_stats(team_abbrev: str, season: int) -> dict:
     conn = connect()
     row = conn.execute("""
-        with team_games as (
-            select
-                game_id,
-                case when home_team_abbrev = ? then home_team_id else away_team_id end as team_id,
-                case when home_team_abbrev = ? then home_score  else away_score  end as gf,
-                case when home_team_abbrev = ? then away_score  else home_score  end as ga,
-                home_team_abbrev = ? as is_home,
-                home_win,
-                last_period_type
-            from main.stg_games
-            where (home_team_abbrev = ? or away_team_abbrev = ?) and season = ?
-        ),
-        shots_for as (
-            select
-                sum(case when se.event_type = 'goal'           then 1 else 0 end) as goals_for,
-                sum(case when se.event_type != 'blocked-shot'  then coalesce(se.x_goal, 0) else 0 end) as xg_for,
-                count(*) as shots_for,
-                sum(case when se.event_type in ('shot-on-goal', 'goal') then 1 else 0 end) as sog_for
-            from main.mart_shot_events se
-            join team_games tg on tg.game_id = se.game_id and tg.team_id = se.team_id
-            where se.period < 5
-        ),
-        shots_against as (
-            select
-                sum(case when se.event_type = 'goal'           then 1 else 0 end) as goals_against,
-                sum(case when se.event_type != 'blocked-shot'  then coalesce(se.x_goal, 0) else 0 end) as xg_against,
-                sum(case when se.event_type in ('shot-on-goal', 'goal') then 1 else 0 end) as sog_against
-            from main.mart_shot_events se
-            join team_games tg on tg.game_id = se.game_id and tg.team_id != se.team_id
-            where se.period < 5
-        ),
-        record as (
-            select
-                count(*) as games_played,
-                sum(case when (    is_home and     home_win)
-                           or (not is_home and not home_win) then 1 else 0 end) as wins,
-                sum(case when last_period_type != 'REG'
-                           and ((    is_home and not home_win)
-                                or (not is_home and     home_win)) then 1 else 0 end) as otl,
-                sum(case when last_period_type  = 'REG'
-                           and ((    is_home and not home_win)
-                                or (not is_home and     home_win)) then 1 else 0 end) as losses
-            from team_games
-        )
         select
-            r.games_played,
-            r.wins,
-            r.losses,
-            r.otl,
-            sf.goals_for,
-            round(sf.xg_for, 1) as xg_for,
-            round(sf.goals_for * 1.0 / nullif(sf.shots_for, 0) * 100, 1) as sh_pct,
-            sa.goals_against,
-            round(sa.xg_against, 1) as xg_against,
-            round(sf.xg_for - sa.xg_against, 1) as xg_differential,
-            round(sf.goals_for * 1.0 / nullif(sf.sog_for, 0) * 100, 1) as sh_pct_sog,
-            round((1.0 - sa.goals_against * 1.0 / nullif(sa.sog_against, 0)) * 100, 1) as sv_pct
-        from record r, shots_for sf, shots_against sa
-    """, [team_abbrev] * 6 + [season]).fetchone()
+            games_played,
+            wins,
+            losses,
+            otl,
+            goals_for,
+            xg_for,
+            sh_pct,
+            goals_against,
+            xg_against,
+            xg_differential,
+            sh_pct_sog,
+            sv_pct
+        from main.mart_team_season
+        where team_abbrev = ? and season = ?
+    """, [team_abbrev, season]).fetchone()
     conn.close()
     if row is None:
         return {}
@@ -366,68 +323,21 @@ def get_team_game_log(team_abbrev: str, season: int):
 def get_all_team_stats(season: int):
     conn = connect()
     df = conn.execute("""
-        with all_teams as (
-            select distinct
-                home_team_abbrev as team_abbrev,
-                home_team_id     as team_id
-            from main.stg_games where season = ?
-            union
-            select distinct
-                away_team_abbrev,
-                away_team_id
-            from main.stg_games where season = ?
-        ),
-        team_games as (
-            select
-                t.team_abbrev,
-                t.team_id,
-                g.game_id,
-                g.home_win,
-                g.last_period_type,
-                g.home_team_abbrev = t.team_abbrev as is_home
-            from main.stg_games g
-            join all_teams t on t.team_id = g.home_team_id or t.team_id = g.away_team_id
-            where g.season = ?
-        ),
-        shots_for as (
-            select
-                tg.team_abbrev,
-                sum(case when se.event_type = 'goal' then 1 else 0 end) as goals_for,
-                sum(case when se.event_type != 'blocked-shot' then coalesce(se.x_goal, 0) else 0 end) as xg_for,
-                count(*) as shots_for,
-                count(distinct tg.game_id) as games_played,
-                sum(case when se.event_type in ('shot-on-goal', 'goal') then 1 else 0 end) as sog_for
-            from main.mart_shot_events se
-            join team_games tg on tg.game_id = se.game_id and tg.team_id = se.team_id
-            where se.period < 5
-            group by tg.team_abbrev
-        ),
-        shots_against as (
-            select
-                tg.team_abbrev,
-                sum(case when se.event_type = 'goal' then 1 else 0 end) as goals_against,
-                sum(case when se.event_type != 'blocked-shot' then coalesce(se.x_goal, 0) else 0 end) as xg_against,
-                sum(case when se.event_type in ('shot-on-goal', 'goal') then 1 else 0 end) as sog_against
-            from main.mart_shot_events se
-            join team_games tg on tg.game_id = se.game_id and tg.team_id != se.team_id
-            where se.period < 5
-            group by tg.team_abbrev
-        )
         select
-            sf.team_abbrev,
-            sf.games_played,
-            round(sf.goals_for  * 1.0 / sf.games_played, 2) as gf_per_game,
-            round(sa.goals_against * 1.0 / sf.games_played, 2) as ga_per_game,
-            round(sf.xg_for     / sf.games_played, 3) as xg_for_per_game,
-            round(sa.xg_against / sf.games_played, 3) as xg_against_per_game,
-            round((sf.xg_for - sa.xg_against) / sf.games_played, 3) as xg_diff_per_game,
-            round(sf.goals_for * 1.0 / nullif(sf.shots_for, 0) * 100, 1) as sh_pct,
-            round(sf.goals_for * 1.0 / nullif(sf.sog_for, 0) * 100, 1)               as sh_pct_sog,
-            round((1.0 - sa.goals_against * 1.0 / nullif(sa.sog_against, 0)) * 100, 1) as sv_pct
-        from shots_for sf
-        join shots_against sa on sa.team_abbrev = sf.team_abbrev
+            team_abbrev,
+            games_played,
+            gf_per_game,
+            ga_per_game,
+            xg_for_per_game,
+            xg_against_per_game,
+            xg_diff_per_game,
+            sh_pct,
+            sh_pct_sog,
+            sv_pct
+        from main.mart_team_season
+        where season = ?
         order by xg_for_per_game desc
-    """, [season, season, season]).df()
+    """, [season]).df()
     conn.close()
     return df
 
