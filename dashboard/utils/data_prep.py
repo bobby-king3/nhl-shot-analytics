@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def prepare_filtered_shots(shots_df, game_log_df, strength_sel, period_sel, event_sel):
     strength_opts = shots_df["strength"].dropna().unique()
     period_opts = shots_df["period"].dropna().unique()
@@ -30,13 +29,11 @@ def prepare_filtered_shots(shots_df, game_log_df, strength_sel, period_sel, even
 
     return filtered
 
-
 def split_shots_by_type(filtered_shots):
     goals = filtered_shots[filtered_shots["event_type"] == "goal"]
     blocked = filtered_shots[filtered_shots["event_type"] == "blocked-shot"]
     nongoals = filtered_shots[~filtered_shots["event_type"].isin(["goal", "blocked-shot"])]
     return goals, blocked, nongoals
-
 
 def apply_shot_type_filter(goals_df, blocked_df, nongoals_df, selected_shot_type):
     if selected_shot_type:
@@ -46,7 +43,6 @@ def apply_shot_type_filter(goals_df, blocked_df, nongoals_df, selected_shot_type
             nongoals_df[nongoals_df["shot_type"] == selected_shot_type],
         )
     return goals_df, blocked_df, nongoals_df
-
 
 def prepare_shot_type_breakdown(filtered_shots):
     breakdown = (
@@ -62,15 +58,14 @@ def prepare_shot_type_breakdown(filtered_shots):
     )
     return breakdown
 
-
 def extract_clip_url(customdata):
     n = len(customdata)
     if n == 9:
-        idx = 6   # non-goal: [event_type, dist, angle, xg, strength, period, clip_url, date, opp]
+        idx = 6   # non-goal (event_type, dist, angle, xg, strength, period, clip_url, date, opp)
     elif n == 8:
-        idx = 5   # goal: [dist, angle, xg, strength, period, clip_url, date, opp]
+        idx = 5   # goal (dist, angle, xg, strength, period, clip_url, date, opp)
     else:
-        return ""  # blocked shot (6 cols) or unknown — no clip URL
+        return ""  # blocked shot (6 cols) or unknown = no clip URL
     url = str(customdata[idx])
     if url not in ("", "nan", "None"):
         return url
