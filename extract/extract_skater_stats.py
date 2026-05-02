@@ -83,7 +83,14 @@ def extract_season(con, season_id):
     ]
 
     con.executemany(
-        "INSERT INTO raw_player_stats VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        """
+        INSERT INTO raw_player_stats (
+            player_id, season_id, team_abbrev, position,
+            games_played, goals, assists, points, plus_minus,
+            pp_goals, pp_points, sh_goals, sh_points,
+            shots, shooting_pct, toi_per_game, ingested_at
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
         rows,
     )
     return len(rows)

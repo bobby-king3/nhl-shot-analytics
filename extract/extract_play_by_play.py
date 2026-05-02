@@ -106,7 +106,13 @@ def insert_game(con, game_id, rows):
     con.execute("BEGIN")
     try:
         con.executemany("""
-            INSERT INTO raw_play_by_play VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            INSERT INTO raw_play_by_play (
+                game_id, event_id, season, period, time_in_period,
+                event_type, x_coord, y_coord, shot_type,
+                shooter_id, goalie_id, team_id, situation_code,
+                home_defending_side, away_score, home_score,
+                highlight_clip_url, raw, ingested_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, rows)
         con.execute("COMMIT")
     except Exception:
