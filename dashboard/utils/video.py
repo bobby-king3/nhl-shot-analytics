@@ -3,22 +3,20 @@ from pathlib import Path
 import httpx
 import streamlit as st
 
-_env_file = Path(__file__).parent.parent.parent / ".env"
-if _env_file.exists():
-    for _line in _env_file.read_text().splitlines():
-        if "=" in _line and not _line.startswith("#"):
-            _k, _v = _line.split("=", 1)
-            os.environ.setdefault(_k.strip(), _v.strip())
+env_file = Path(__file__).parent.parent.parent / ".env"
+if env_file.exists():
+    for line in env_file.read_text().splitlines():
+        if "=" in line and not line.startswith("#"):
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 
-
-def get_secret(key: str) -> str:
+def get_secret(key):
     try:
         return st.secrets.get(key) or ""
     except Exception:
         return os.environ.get(key, "")
 
-
-def resolve_mp4(sharing_url: str) -> str | None:
+def resolve_mp4(sharing_url):
     account_id = get_secret("ACCOUNT_ID") or os.environ.get("ACCOUNT_ID", "")
     policy_key = get_secret("POLICY_KEY") or os.environ.get("POLICY_KEY", "")
     if not policy_key:
@@ -39,7 +37,6 @@ def resolve_mp4(sharing_url: str) -> str | None:
     except Exception:
         return None
 
-
 @st.cache_data(ttl=300, show_spinner=False)
-def get_video_url(sharing_url: str) -> str | None:
+def get_video_url(sharing_url):
     return resolve_mp4(sharing_url)

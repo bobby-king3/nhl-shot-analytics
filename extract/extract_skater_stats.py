@@ -1,9 +1,10 @@
-import sys
-sys.path.append(".")
-
+import logging
 from datetime import datetime, timezone
 from extract.connection import get_connection
+from extract.logging_config import setup_logging
 from extract.nhl_client.nhl_api import get_stats
+
+logger = logging.getLogger(__name__)
 
 
 def create_table(con):
@@ -38,7 +39,19 @@ def get_seasons(con):
     return [r[0] for r in rows]
 
 
+def is_season_complete(season_id):
+    return (season_id % 10000) < datetime.now(timezone.utc).year
+
+
 def extract_season(con, season_id):
+    if is_season_complete(season_id):
+        existing = con.execute(
+            "SELECT COUNT(*) FROM raw_player_stats WHERE season_id = ?", [season_id]
+        ).fetchone()[0]
+        if existing > 0:
+            logger.info("Season %d: skipped (%d skaters cached)", season_id, existing)
+            return None
+
     data = get_stats(
         f"/skater/summary?limit=-1&isAggregate=true&cayenneExp=seasonId={season_id}"
     )
@@ -70,7 +83,14 @@ def extract_season(con, season_id):
     ]
 
     con.executemany(
-        "INSERT INTO raw_player_stats VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        """
+        INSERT INTO raw_player_stats (
+            player_id, season_id, team_abbrev, position,
+            games_played, goals, assists, points, plus_minus,
+            pp_goals, pp_points, sh_goals, sh_points,
+            shots, shooting_pct, toi_per_game, ingested_at
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """,
         rows,
     )
     return len(rows)
@@ -81,15 +101,17 @@ def main():
     create_table(con)
 
     seasons = get_seasons(con)
-    print(f"Seasons to process: {seasons}")
+    logger.info("Seasons to process: %s", seasons)
 
     for season in seasons:
         count = extract_season(con, season)
-        print(f"  Season {season}: {count} skaters loaded")
+        if count is not None:
+            logger.info("Season %d: %d skaters loaded", season, count)
 
     con.close()
-    print("Done.")
+    logger.info("Skater stats extraction complete.")
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()

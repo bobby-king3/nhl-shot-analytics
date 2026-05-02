@@ -1,9 +1,10 @@
-import sys
-sys.path.append(".")
-
+import logging
 from datetime import datetime, timezone
 from extract.connection import get_connection
+from extract.logging_config import setup_logging
 from extract.nhl_client.nhl_api import get
+
+logger = logging.getLogger(__name__)
 
 
 def create_table(con):
@@ -38,7 +39,7 @@ def fetch_roster(team_abbrev):
     try:
         data = get(f"/roster/{team_abbrev}/current")
     except Exception as e:
-        print(f"  Warning: could not fetch roster for {team_abbrev}: {e}")
+        logger.warning("Could not fetch roster for %s: %s", team_abbrev, e)
         return []
 
     players = []
@@ -64,9 +65,10 @@ def fetch_roster(team_abbrev):
     return players
 
 
-def upsert(con, player, ingested_at):
-    con.execute("DELETE FROM raw_players WHERE player_id = ?", [player["player_id"]])
-    con.execute("""
+def upsert_all(con, players, ingested_at):
+    player_ids = [p["player_id"] for p in players]
+    con.execute(f"DELETE FROM raw_players WHERE player_id IN ({','.join('?' * len(player_ids))})", player_ids)
+    con.executemany("""
         INSERT INTO raw_players (
             player_id, first_name, last_name, position, headshot_url,
             team_id, team_abbrev, is_active, sweater_number,
@@ -74,22 +76,13 @@ def upsert(con, player, ingested_at):
             shoots_catches, ingested_at
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, [
-        player["player_id"],
-        player["first_name"],
-        player["last_name"],
-        player["position"],
-        player["headshot_url"],
-        player["team_id"],
-        player["team_abbrev"],
-        player["is_active"],
-        player["sweater_number"],
-        player["height_in"],
-        player["weight_lbs"],
-        player["birth_date"],
-        player["birth_city"],
-        player["birth_country"],
-        player["shoots_catches"],
-        ingested_at,
+        (
+            p["player_id"], p["first_name"], p["last_name"], p["position"],
+            p["headshot_url"], p["team_id"], p["team_abbrev"], p["is_active"],
+            p["sweater_number"], p["height_in"], p["weight_lbs"], p["birth_date"],
+            p["birth_city"], p["birth_country"], p["shoots_catches"], ingested_at,
+        )
+        for p in players
     ])
 
 
@@ -98,21 +91,21 @@ def main():
     create_table(con)
 
     teams = get_current_teams()
-    print(f"Teams to process: {len(teams)}")
+    logger.info("Teams to process: %d", len(teams))
 
     ingested_at = datetime.now(timezone.utc)
-    total = 0
+    all_players = []
 
     for team in teams:
         players = fetch_roster(team)
-        for player in players:
-            upsert(con, player, ingested_at)
-        total += len(players)
-        print(f"  {team}: {len(players)} players")
+        all_players.extend(players)
+        logger.info("  %s: %d players", team, len(players))
 
+    upsert_all(con, all_players, ingested_at)
     con.close()
-    print(f"Done. Inserted/updated {total} players across {len(teams)} teams.")
+    logger.info("Players extraction complete. Inserted/updated %d players across %d teams.", len(all_players), len(teams))
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()

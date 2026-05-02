@@ -12,7 +12,6 @@ if _env_file.exists():
             _k, _v = _line.split("=", 1)
             os.environ.setdefault(_k.strip(), _v.strip())
 
-
 def connect() -> duckdb.DuckDBPyConnection:
     try:
         token = st.secrets.get("MOTHERDUCK_TOKEN")
@@ -24,16 +23,15 @@ def connect() -> duckdb.DuckDBPyConnection:
         return duckdb.connect("md:nhl", read_only=True)
     return duckdb.connect(LOCAL_DB, read_only=True)
 
-
 @st.cache_data(ttl=3600)
 def get_league_stats(season: int) -> dict:
     conn = connect()
     row = conn.execute("""
         select
-            count(distinct game_id)          as games_played,
+            count(distinct game_id) as games_played,
             round(avg(goals_per_game) * 2, 2) as avg_goals_per_game,
-            round(avg(xg_per_game) * 2, 3)   as avg_xg_per_game,
-            round(avg(sh_pct), 1)             as league_sh_pct
+            round(avg(xg_per_game) * 2, 3) as avg_xg_per_game,
+            round(avg(sh_pct), 1) as league_sh_pct
         from main.mart_player_shooting
         where season = ?
     """, [season]).fetchone()
@@ -44,7 +42,6 @@ def get_league_stats(season: int) -> dict:
         "avg_xg_per_game":    row[2],
         "league_sh_pct":      row[3],
     }
-
 
 @st.cache_data(ttl=3600)
 def get_leaderboard(season: int, n: int = 20):
@@ -61,7 +58,7 @@ def get_leaderboard(season: int, n: int = 20):
             m.goals,
             m.shots_on_goal,
             m.sh_pct,
-            round(m.total_xg, 1)    as total_xg,
+            round(m.total_xg, 1) as total_xg,
             round(m.xg_per_game, 3) as xg_per_game,
             m.xg_per_game_pctile
         from main.mart_player_shooting m
@@ -72,7 +69,6 @@ def get_leaderboard(season: int, n: int = 20):
     """, [season, n]).df()
     conn.close()
     return df
-
 
 @st.cache_data(ttl=3600)
 def get_player_stats(player_id: int, season: int):
@@ -88,8 +84,8 @@ def get_player_stats(player_id: int, season: int):
             m.goals,
             m.shots_on_goal,
             m.sh_pct,
-            round(m.total_xg, 1)        as total_xg,
-            round(m.xg_per_game, 3)     as xg_per_game,
+            round(m.total_xg, 1) as total_xg,
+            round(m.xg_per_game, 3) as xg_per_game,
             m.goals_per_game_pctile,
             m.sh_pct_pctile,
             m.avg_xg_per_shot_pctile,
@@ -139,7 +135,6 @@ def get_player_shots(player_id: int, season: int):
     conn.close()
     return df
 
-
 @st.cache_data(ttl=3600)
 def get_player_game_log(player_id: int, season: int):
     conn = connect()
@@ -148,8 +143,8 @@ def get_player_game_log(player_id: int, season: int):
             select
                 game_id,
                 team_id as player_team_id,
-                count(*)                                                              as shots,
-                sum(case when event_type = 'goal' then 1 else 0 end)                 as goals,
+                count(*) as shots,
+                sum(case when event_type = 'goal' then 1 else 0 end) as goals,
                 round(sum(case when event_type != 'blocked-shot' then coalesce(x_goal, 0) else 0 end), 3) as xg
             from main.mart_shot_events
             where shooter_id = ? and season = ?
@@ -172,9 +167,9 @@ def get_player_game_log(player_id: int, season: int):
             pg.shots,
             pg.goals,
             pg.xg,
-            coalesce(oa.opponent, '???')              as opponent,
-            g.home_team_id = pg.player_team_id        as is_home,
-            g.game_date                               as game_date
+            coalesce(oa.opponent, '???') as opponent,
+            g.home_team_id = pg.player_team_id  as is_home,
+            g.game_date as game_date
         from player_games pg
         left join opp_abbrevs oa on oa.game_id = pg.game_id
         left join main.stg_games g on g.game_id = pg.game_id
@@ -182,7 +177,6 @@ def get_player_game_log(player_id: int, season: int):
     """, [player_id, season]).df()
     conn.close()
     return df
-
 
 @st.cache_data(ttl=3600)
 def get_all_players(season: int):
@@ -201,7 +195,6 @@ def get_all_players(season: int):
     conn.close()
     return df
 
-
 @st.cache_data(ttl=3600)
 def get_teams(season: int):
     conn = connect()
@@ -215,7 +208,6 @@ def get_teams(season: int):
     conn.close()
     return [r[0] for r in rows]
 
-
 @st.cache_data(ttl=3600)
 def get_player_season_log(player_id: int):
     conn = connect()
@@ -226,8 +218,8 @@ def get_player_season_log(player_id: int):
             goals,
             shots_on_goal,
             sh_pct,
-            round(total_xg, 1)       as total_xg,
-            round(xg_per_game, 3)    as xg_per_game,
+            round(total_xg, 1) as total_xg,
+            round(xg_per_game, 3) as xg_per_game,
             goals_above_expected
         from main.mart_player_shooting
         where shooter_id = ?
@@ -235,7 +227,6 @@ def get_player_season_log(player_id: int):
     """, [player_id]).df()
     conn.close()
     return df
-
 
 @st.cache_data(ttl=3600)
 def get_available_seasons():
@@ -245,7 +236,6 @@ def get_available_seasons():
     """).fetchall()
     conn.close()
     return [r[0] for r in rows]
-
 
 @st.cache_data(ttl=3600)
 def get_team_stats(team_abbrev: str, season: int) -> dict:
@@ -257,7 +247,7 @@ def get_team_stats(team_abbrev: str, season: int) -> dict:
                 case when home_team_abbrev = ? then home_team_id else away_team_id end as team_id,
                 case when home_team_abbrev = ? then home_score  else away_score  end as gf,
                 case when home_team_abbrev = ? then away_score  else home_score  end as ga,
-                home_team_abbrev = ?                                                  as is_home,
+                home_team_abbrev = ? as is_home,
                 home_win,
                 last_period_type
             from main.stg_games
@@ -301,12 +291,12 @@ def get_team_stats(team_abbrev: str, season: int) -> dict:
             r.losses,
             r.otl,
             sf.goals_for,
-            round(sf.xg_for, 1)                                                       as xg_for,
-            round(sf.goals_for * 1.0 / nullif(sf.shots_for, 0) * 100, 1)             as sh_pct,
+            round(sf.xg_for, 1) as xg_for,
+            round(sf.goals_for * 1.0 / nullif(sf.shots_for, 0) * 100, 1) as sh_pct,
             sa.goals_against,
-            round(sa.xg_against, 1)                                                   as xg_against,
-            round(sf.xg_for - sa.xg_against, 1)                                       as xg_differential,
-            round(sf.goals_for * 1.0 / nullif(sf.sog_for, 0) * 100, 1)               as sh_pct_sog,
+            round(sa.xg_against, 1) as xg_against,
+            round(sf.xg_for - sa.xg_against, 1) as xg_differential,
+            round(sf.goals_for * 1.0 / nullif(sf.sog_for, 0) * 100, 1) as sh_pct_sog,
             round((1.0 - sa.goals_against * 1.0 / nullif(sa.sog_against, 0)) * 100, 1) as sv_pct
         from record r, shots_for sf, shots_against sa
     """, [team_abbrev] * 6 + [season]).fetchone()
@@ -331,9 +321,9 @@ def get_team_game_log(team_abbrev: str, season: int):
                 g.home_win,
                 case when g.home_team_abbrev = ? then g.home_team_id  else g.away_team_id  end as team_id,
                 case when g.home_team_abbrev = ? then g.away_team_abbrev else g.home_team_abbrev end as opponent,
-                case when g.home_team_abbrev = ? then g.home_score    else g.away_score    end as gf,
-                case when g.home_team_abbrev = ? then g.away_score    else g.home_score    end as ga,
-                g.home_team_abbrev = ?                                                          as is_home
+                case when g.home_team_abbrev = ? then g.home_score else g.away_score end as gf,
+                case when g.home_team_abbrev = ? then g.away_score else g.home_score end as ga,
+                g.home_team_abbrev = ? as is_home
             from main.stg_games g
             where (g.home_team_abbrev = ? or g.away_team_abbrev = ?) and g.season = ?
         ),
@@ -402,7 +392,7 @@ def get_all_team_stats(season: int):
         shots_for as (
             select
                 tg.team_abbrev,
-                sum(case when se.event_type = 'goal'          then 1 else 0 end) as goals_for,
+                sum(case when se.event_type = 'goal' then 1 else 0 end) as goals_for,
                 sum(case when se.event_type != 'blocked-shot' then coalesce(se.x_goal, 0) else 0 end) as xg_for,
                 count(*) as shots_for,
                 count(distinct tg.game_id) as games_played,
@@ -415,7 +405,7 @@ def get_all_team_stats(season: int):
         shots_against as (
             select
                 tg.team_abbrev,
-                sum(case when se.event_type = 'goal'          then 1 else 0 end) as goals_against,
+                sum(case when se.event_type = 'goal' then 1 else 0 end) as goals_against,
                 sum(case when se.event_type != 'blocked-shot' then coalesce(se.x_goal, 0) else 0 end) as xg_against,
                 sum(case when se.event_type in ('shot-on-goal', 'goal') then 1 else 0 end) as sog_against
             from main.mart_shot_events se
@@ -455,13 +445,13 @@ def get_team_roster(team_abbrev: str, season: int):
             p.team_logo_url,
             m.games_played,
             m.goals,
-            coalesce(m.assists, 0)      as assists,
-            coalesce(m.points, 0)       as points,
+            coalesce(m.assists, 0)  as assists,
+            coalesce(m.points, 0)  as points,
             m.shots_on_goal,
             m.sh_pct,
-            round(m.total_xg, 1)        as total_xg,
-            round(m.xg_per_game, 3)     as xg_per_game,
-            m.goals_above_expected      as gax
+            round(m.total_xg, 1) as total_xg,
+            round(m.xg_per_game, 3) as xg_per_game,
+            m.goals_above_expected  as gax
         from main.mart_player_shooting m
         join main.stg_players p on p.player_id = m.shooter_id
         where p.team_abbrev = ? and m.season = ?

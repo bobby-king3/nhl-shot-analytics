@@ -3,6 +3,9 @@ version: 2
 models:
   - name: int_shot_events
     description: NHL play-by-play joined with MoneyPuck xG, rush, and rebound flags
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [game_id, event_id]
     columns:
       - name: game_id
         tests:

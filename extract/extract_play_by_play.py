@@ -1,10 +1,12 @@
-import sys
-sys.path.append(".")
-
 import json
+import logging
 from datetime import date, datetime, timedelta, timezone
+
 from extract.connection import get_connection
+from extract.logging_config import setup_logging
 from extract.nhl_client.nhl_api import get, get_play_by_play
+
+logger = logging.getLogger(__name__)
 
 SHOT_EVENT_TYPES = {"shot-on-goal", "goal", "missed-shot", "blocked-shot"}
 LOOKBACK_DAYS = 3
@@ -95,9 +97,21 @@ def extract_game(con, game_id, season):
         ))
 
     if rows:
-        con.executemany("""
-            INSERT INTO raw_play_by_play VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """, rows)
+        con.execute("BEGIN")
+        try:
+            con.executemany("""
+                INSERT INTO raw_play_by_play (
+                    game_id, event_id, season, period, time_in_period,
+                    event_type, x_coord, y_coord, shot_type,
+                    shooter_id, goalie_id, team_id, situation_code,
+                    home_defending_side, away_score, home_score,
+                    highlight_clip_url, raw, ingested_at
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """, rows)
+            con.execute("COMMIT")
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
 
     return len(rows)
 
@@ -110,17 +124,18 @@ def main():
     all_game_ids = get_completed_games()
     new_game_ids = [(gid, season) for gid, season in all_game_ids if gid not in already_processed]
 
-    print(f"Total completed games found: {len(all_game_ids)}")
-    print(f"Already processed:           {len(already_processed)}")
-    print(f"New games to fetch:          {len(new_game_ids)}")
+    logger.info("Total completed games found: %d", len(all_game_ids))
+    logger.info("Already processed:           %d", len(already_processed))
+    logger.info("New games to fetch:          %d", len(new_game_ids))
 
     for i, (game_id, season) in enumerate(new_game_ids, 1):
         shot_count = extract_game(con, game_id, season)
-        print(f"  [{i}/{len(new_game_ids)}] game {game_id} (season {season}): {shot_count} shot events")
+        logger.info("[%d/%d] game %d: %d shot events", i, len(new_game_ids), game_id, shot_count)
 
     con.close()
-    print("Done.")
+    logger.info("Play-by-play extraction complete.")
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()

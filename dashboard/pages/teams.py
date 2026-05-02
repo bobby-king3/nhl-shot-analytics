@@ -10,21 +10,7 @@ from dashboard.utils.db import (
 )
 from dashboard.utils.styling import hex_to_rgb
 from dashboard.utils.chart_builders import build_streak_dots_grid, build_team_rolling_xgpct
-from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS
-
-TEAM_NAMES = {
-    "ANA": "Anaheim Ducks", "BOS": "Boston Bruins", "BUF": "Buffalo Sabres",
-    "CAR": "Carolina Hurricanes", "CBJ": "Columbus Blue Jackets", "CGY": "Calgary Flames",
-    "CHI": "Chicago Blackhawks", "COL": "Colorado Avalanche", "DAL": "Dallas Stars",
-    "DET": "Detroit Red Wings", "EDM": "Edmonton Oilers", "FLA": "Florida Panthers",
-    "LAK": "Los Angeles Kings", "MIN": "Minnesota Wild", "MTL": "Montréal Canadiens",
-    "NJD": "New Jersey Devils", "NSH": "Nashville Predators", "NYI": "New York Islanders",
-    "NYR": "New York Rangers", "OTT": "Ottawa Senators", "PHI": "Philadelphia Flyers",
-    "PIT": "Pittsburgh Penguins", "SEA": "Seattle Kraken", "SJS": "San Jose Sharks",
-    "STL": "St. Louis Blues", "TBL": "Tampa Bay Lightning", "TOR": "Toronto Maple Leafs",
-    "UTA": "Utah Mammoth", "VAN": "Vancouver Canucks", "VGK": "Vegas Golden Knights",
-    "WSH": "Washington Capitals", "WPG": "Winnipeg Jets",
-}
+from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS, TEAM_NAMES
 
 st.markdown("""
 <style>

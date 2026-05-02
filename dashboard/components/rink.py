@@ -1,21 +1,17 @@
 import io
 import base64
-import urllib.request, urllib.error
-
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import streamlit as st
+from sportypy.surfaces.hockey import NHLRink
 
 X_MIN, X_MAX = 24.0,  103.0
 Y_MIN, Y_MAX = -43.5,  43.5
 
-
 @st.cache_data(show_spinner=False)
-def _get_rink_image() -> str:
-    from sportypy.surfaces.hockey import NHLRink
-
+def _get_rink_image():
     fig, ax = plt.subplots(figsize=(12, 8), facecolor="white")
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
     ax.set_axis_off()
@@ -30,8 +26,7 @@ def _get_rink_image() -> str:
 
     return f"data:image/png;base64,{base64.b64encode(buf.read()).decode()}"
 
-
-def make_rink_figure(height: int = 460) -> go.Figure:
+def make_rink_figure(height=460):
     fig = go.Figure()
 
     fig.add_layout_image(dict(

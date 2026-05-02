@@ -24,6 +24,9 @@ models:
 
   - name: stg_play_by_play
     description: Shot events from the NHL public API
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [game_id, event_id]
     columns:
       - name: game_id
         tests:
@@ -35,6 +38,29 @@ models:
         tests:
           - accepted_values:
               values: ['goal', 'shot-on-goal', 'missed-shot', 'blocked-shot']
+
+  - name: stg_player_stats
+    description: Season-level skater stats from the NHL API
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [player_id, season]
+    columns:
+      - name: player_id
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: goals
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: shooting_pct
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"
+              config:
+                where: "shooting_pct is not null"
 
   - name: stg_moneypuck_shots
     description: Shot data from MoneyPuck with xG, rush, and rebound flags

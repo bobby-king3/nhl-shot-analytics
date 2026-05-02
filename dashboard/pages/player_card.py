@@ -456,7 +456,7 @@ with map_col:
 
     if detect_change("prev_map_key", map_key):
         if map_pts:
-            point = map_pts[-1]  # last in list = most recently clicked
+            point = map_pts[-1]
             cd = point.get("customdata", [])
             clip_url = extract_clip_url(cd)
             st.session_state["active_video"] = clip_url or None
