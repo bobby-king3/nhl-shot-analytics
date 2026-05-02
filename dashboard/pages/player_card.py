@@ -259,7 +259,8 @@ st.markdown(f"""
  goals_pctile, sh_pctile, avg_xg_pctile, xg_pg_pctile,
  rebound_pctile, dist_pctile,
  goals_above_expected, gax_pctile,
- sweater_number, height_in, weight_lbs, birth_country, shoots_catches) = stats
+ sweater_number, height_in, weight_lbs, birth_country, shoots_catches,
+ birth_date) = stats
 
 COUNTRY_FLAGS = {
     "CAN": "🇨🇦", "USA": "🇺🇸", "SWE": "🇸🇪", "FIN": "🇫🇮",
@@ -279,7 +280,9 @@ weight_str  = f"{weight_lbs} lbs" if weight_lbs else None
 country_str = COUNTRY_FLAGS.get(birth_country, birth_country) if birth_country else None
 hand_str    = f"Shoots {shoots_catches}" if shoots_catches else None
 
-text_parts = [x for x in [number_str, height_str, weight_str, hand_str] if x]
+dob_str = f"DOB: {birth_date.strftime('%m/%d/%Y')}" if birth_date else None
+
+text_parts = [x for x in [number_str, height_str, weight_str, dob_str, hand_str] if x]
 bio_text   = " · ".join(text_parts)
 
 st.markdown(f"""

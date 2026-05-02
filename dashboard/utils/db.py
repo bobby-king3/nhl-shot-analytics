@@ -98,7 +98,8 @@ def get_player_stats(player_id: int, season: int):
             p.height_in,
             p.weight_lbs,
             p.birth_country,
-            p.shoots_catches
+            p.shoots_catches,
+            p.birth_date
         from main.mart_player_shooting m
         join main.mart_players p on p.player_id = m.shooter_id
         where m.shooter_id = ? and m.season = ?
