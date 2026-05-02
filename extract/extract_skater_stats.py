@@ -1,9 +1,10 @@
-import sys
-sys.path.append(".")
-
+import logging
 from datetime import datetime, timezone
 from extract.connection import get_connection
+from extract.logging_config import setup_logging
 from extract.nhl_client.nhl_api import get_stats
+
+logger = logging.getLogger(__name__)
 
 
 def create_table(con):
@@ -48,7 +49,7 @@ def extract_season(con, season_id):
             "SELECT COUNT(*) FROM raw_player_stats WHERE season_id = ?", [season_id]
         ).fetchone()[0]
         if existing > 0:
-            print(f"Season {season_id}: skipped ({existing} skaters)")
+            logger.info("Season %d: skipped (%d skaters cached)", season_id, existing)
             return None
 
     data = get_stats(
@@ -93,16 +94,17 @@ def main():
     create_table(con)
 
     seasons = get_seasons(con)
-    print(f"Seasons to process: {seasons}")
+    logger.info("Seasons to process: %s", seasons)
 
     for season in seasons:
         count = extract_season(con, season)
         if count is not None:
-            print(f"Season {season}: {count} skaters loaded")
+            logger.info("Season %d: %d skaters loaded", season, count)
 
     con.close()
-    print("Done.")
+    logger.info("Skater stats extraction complete.")
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()

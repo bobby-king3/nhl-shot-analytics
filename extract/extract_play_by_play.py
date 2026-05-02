@@ -1,9 +1,13 @@
 import json
+import logging
 from datetime import date, datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from extract.connection import get_connection
+from extract.logging_config import setup_logging
 from extract.nhl_client.nhl_api import get, get_play_by_play
+
+logger = logging.getLogger(__name__)
 
 SHOT_EVENT_TYPES = {"shot-on-goal", "goal", "missed-shot", "blocked-shot"}
 LOOKBACK_DAYS = 3
@@ -118,9 +122,9 @@ def main():
     all_game_ids = get_completed_games()
     new_game_ids = [(gid, season) for gid, season in all_game_ids if gid not in already_processed]
 
-    print(f"Total completed games found: {len(all_game_ids)}")
-    print(f"Already processed:           {len(already_processed)}")
-    print(f"New games to fetch:          {len(new_game_ids)}")
+    logger.info("Total completed games found: %d", len(all_game_ids))
+    logger.info("Already processed:           %d", len(already_processed))
+    logger.info("New games to fetch:          %d", len(new_game_ids))
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = {
@@ -130,11 +134,12 @@ def main():
         for i, future in enumerate(as_completed(futures), 1):
             game_id, rows = future.result()
             shot_count = insert_game(con, game_id, rows)
-            print(f"[{i}/{len(new_game_ids)}] game {game_id}: {shot_count} shot events")
+            logger.info("[%d/%d] game %d: %d shot events", i, len(new_game_ids), game_id, shot_count)
 
     con.close()
-    print("Done.")
+    logger.info("Play-by-play extraction complete.")
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()

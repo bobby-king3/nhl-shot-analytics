@@ -1,6 +1,10 @@
+import logging
 from datetime import date, datetime, timedelta, timezone
 from extract.connection import get_connection
+from extract.logging_config import setup_logging
 from extract.nhl_client.nhl_api import get
+
+logger = logging.getLogger(__name__)
 
 SEASON_START_DATES = [date(2023, 10, 10), date(2024, 10, 8), date(2025, 10, 7)]
 
@@ -85,9 +89,9 @@ def fetch_all_games(con):
                 last_period_type, ingested_at
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, rows)
-        print(f"Inserted {len(rows)} games.")
+        logger.info("Inserted %d games.", len(rows))
     else:
-        print("No new games to insert.")
+        logger.info("No new games to insert.")
 
 
 def main():
@@ -95,8 +99,9 @@ def main():
     create_table(con)
     fetch_all_games(con)
     con.close()
-    print("Done.")
+    logger.info("Games extraction complete.")
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()

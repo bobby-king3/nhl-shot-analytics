@@ -1,9 +1,10 @@
-import sys
-sys.path.append(".")
-
+import logging
 from datetime import datetime, timezone
 from extract.connection import get_connection
+from extract.logging_config import setup_logging
 from extract.nhl_client.nhl_api import get
+
+logger = logging.getLogger(__name__)
 
 
 def create_table(con):
@@ -38,7 +39,7 @@ def fetch_roster(team_abbrev):
     try:
         data = get(f"/roster/{team_abbrev}/current")
     except Exception as e:
-        print(f"  Warning: could not fetch roster for {team_abbrev}: {e}")
+        logger.warning("Could not fetch roster for %s: %s", team_abbrev, e)
         return []
 
     players = []
@@ -98,7 +99,7 @@ def main():
     create_table(con)
 
     teams = get_current_teams()
-    print(f"Teams to process: {len(teams)}")
+    logger.info("Teams to process: %d", len(teams))
 
     ingested_at = datetime.now(timezone.utc)
     total = 0
@@ -108,11 +109,12 @@ def main():
         for player in players:
             upsert(con, player, ingested_at)
         total += len(players)
-        print(f"  {team}: {len(players)} players")
+        logger.info("  %s: %d players", team, len(players))
 
     con.close()
-    print(f"Done. Inserted/updated {total} players across {len(teams)} teams.")
+    logger.info("Players extraction complete. Inserted/updated %d players across %d teams.", total, len(teams))
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()

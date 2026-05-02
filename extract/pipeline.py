@@ -1,6 +1,11 @@
+import logging
 import os
 import subprocess
 from pathlib import Path
+
+from extract.logging_config import setup_logging
+
+logger = logging.getLogger(__name__)
 
 from extract.extract_games import main as run_extract_games
 from extract.extract_play_by_play import main as run_extract_play_by_play
@@ -12,9 +17,9 @@ DBT_DIR = ROOT / "transform" / "dbt_project"
 
 
 def section(label):
-    print(f"\n{'─' * 60}")
-    print(f"  {label}")
-    print(f"{'─' * 60}")
+    logger.info("─" * 60)
+    logger.info("  %s", label)
+    logger.info("─" * 60)
 
 
 def run_dbt(command):
@@ -29,7 +34,7 @@ def run_dbt(command):
 
 
 def main():
-    print("=== NHL Shot Intelligence Pipeline ===")
+    logger.info("=== NHL Shot Intelligence Pipeline ===")
 
     section("1/5  Extract games")
     run_extract_games()
@@ -48,8 +53,9 @@ def main():
     run_dbt("run")
     run_dbt("test")
 
-    print("\n=== Pipeline complete ===")
+    logger.info("=== Pipeline complete ===")
 
 
 if __name__ == "__main__":
+    setup_logging()
     main()
