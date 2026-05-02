@@ -62,7 +62,7 @@ def get_leaderboard(season: int, n: int = 20):
             round(m.xg_per_game, 3) as xg_per_game,
             m.xg_per_game_pctile
         from main.mart_player_shooting m
-        join main.stg_players p on p.player_id = m.shooter_id
+        join main.mart_players p on p.player_id = m.shooter_id
         where m.season = ?
         order by m.total_xg desc
         limit ?
@@ -100,7 +100,7 @@ def get_player_stats(player_id: int, season: int):
             p.birth_country,
             p.shoots_catches
         from main.mart_player_shooting m
-        join main.stg_players p on p.player_id = m.shooter_id
+        join main.mart_players p on p.player_id = m.shooter_id
         where m.shooter_id = ? and m.season = ?
     """, [player_id, season]).fetchone()
     conn.close()
@@ -188,7 +188,7 @@ def get_all_players(season: int):
             p.position,
             p.team_abbrev
         from main.mart_player_shooting m
-        join main.stg_players p on p.player_id = m.shooter_id
+        join main.mart_players p on p.player_id = m.shooter_id
         where m.season = ?
         order by p.last_name
     """, [season]).df()
@@ -201,7 +201,7 @@ def get_teams(season: int):
     rows = conn.execute("""
         select distinct p.team_abbrev
         from main.mart_player_shooting m
-        join main.stg_players p on p.player_id = m.shooter_id
+        join main.mart_players p on p.player_id = m.shooter_id
         where m.season = ? and p.team_abbrev is not null
         order by p.team_abbrev
     """, [season]).fetchall()
@@ -333,7 +333,7 @@ def get_team_roster(team_abbrev: str, season: int):
             round(m.xg_per_game, 3) as xg_per_game,
             m.goals_above_expected  as gax
         from main.mart_player_shooting m
-        join main.stg_players p on p.player_id = m.shooter_id
+        join main.mart_players p on p.player_id = m.shooter_id
         where p.team_abbrev = ? and m.season = ?
         order by m.total_xg desc
     """, [team_abbrev, season]).df()

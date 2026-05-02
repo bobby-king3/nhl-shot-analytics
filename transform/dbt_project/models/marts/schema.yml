@@ -115,6 +115,17 @@ models:
           - dbt_utils.expression_is_true:
               expression: ">= 0"
 
+  - name: mart_players
+    description: Player dimension — one row per player with bio and current team details.
+    columns:
+      - name: player_id
+        tests:
+          - unique
+          - not_null
+      - name: full_name
+        tests:
+          - not_null
+
   - name: mart_team_games
     description: One row per team per game from each team's perspective (2 rows per game). Powers mart_team_season and the dashboard team game log.
     tests:
