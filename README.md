@@ -95,13 +95,12 @@ This runs all extractors (games, play-by-play, rosters, skater stats), then `dbt
 For goal-video playback in the dashboard, set `ACCOUNT_ID` and `POLICY_KEY` in `.env` for the Brightcove Playback API.
 
 ## Planned Future Work
-- Automate the MoneyPuck shot ingest (currently a manual CSV → parquet → MotherDuck step) so xG values land in the warehouse on the same daily cadence as the NHL API data.
+- MoneyPuck is an amazing resource in hockey analytics.  Per their website, scraping requires special approvals.  I respected their guidelines and manually saved CSV calculations for xG metrics.  I plan to build out a model to make calculations of xG per shot attempt and integrate directly within this pipeline
+    - https://moneypuck.com/data.htm
 - Add a goalie analytics page (save% by zone, high-danger save rate).
-- Add a team-vs-team comparison view.
-- Move the heaviest dashboard SQL into dbt marts and expose them via dbt `exposures` for full lineage coverage.
+
 
 ## Data Sources
 
 - [NHL API](https://api-web.nhle.com/) — schedule, play-by-play, rosters, stats. Public, no auth.
 - [MoneyPuck](https://moneypuck.com/) — open shot data with pre-computed xG.
-- Brightcove Playback API — resolves NHL goal-clip video URLs for the dashboard's click-to-watch feature.
