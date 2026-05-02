@@ -142,37 +142,28 @@ def get_player_game_log(player_id: int, season: int):
         with player_games as (
             select
                 game_id,
-                team_id as player_team_id,
+                team_id,
                 count(*) as shots,
-                sum(case when event_type = 'goal' then 1 else 0 end) as goals,
-                round(sum(case when event_type != 'blocked-shot' then coalesce(x_goal, 0) else 0 end), 3) as xg
+                count(*) filter (where event_type = 'goal') as goals,
+                round(sum(coalesce(x_goal, 0)) filter (where event_type != 'blocked-shot'), 3) as xg
             from main.mart_shot_events
             where shooter_id = ? and season = ?
               and period < 5
             group by game_id, team_id
-        ),
-        opp_abbrevs as (
-            select
-                pg.game_id,
-                case when g.home_team_id = pg.player_team_id
-                     then g.away_team_abbrev
-                     else g.home_team_abbrev
-                end as opponent
-            from player_games pg
-            join main.stg_games g on g.game_id = pg.game_id
         )
         select
             pg.game_id,
-            row_number() over (order by pg.game_id)  as game_num,
+            row_number() over (order by pg.game_id) as game_num,
             pg.shots,
             pg.goals,
             pg.xg,
-            coalesce(oa.opponent, '???') as opponent,
-            g.home_team_id = pg.player_team_id  as is_home,
-            g.game_date as game_date
+            tg.opponent_abbrev as opponent,
+            tg.is_home,
+            tg.game_date
         from player_games pg
-        left join opp_abbrevs oa on oa.game_id = pg.game_id
-        left join main.stg_games g on g.game_id = pg.game_id
+        join main.mart_team_games tg
+          on tg.game_id = pg.game_id
+         and tg.team_id = pg.team_id
         order by pg.game_id
     """, [player_id, season]).df()
     conn.close()
