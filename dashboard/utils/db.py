@@ -270,51 +270,21 @@ def get_team_stats(team_abbrev: str, season: int) -> dict:
 def get_team_game_log(team_abbrev: str, season: int):
     conn = connect()
     df = conn.execute("""
-        with team_games as (
-            select
-                g.game_id,
-                g.game_date,
-                g.last_period_type,
-                g.home_win,
-                case when g.home_team_abbrev = ? then g.home_team_id  else g.away_team_id  end as team_id,
-                case when g.home_team_abbrev = ? then g.away_team_abbrev else g.home_team_abbrev end as opponent,
-                case when g.home_team_abbrev = ? then g.home_score else g.away_score end as gf,
-                case when g.home_team_abbrev = ? then g.away_score else g.home_score end as ga,
-                g.home_team_abbrev = ? as is_home
-            from main.stg_games g
-            where (g.home_team_abbrev = ? or g.away_team_abbrev = ?) and g.season = ?
-        ),
-        shot_stats as (
-            select
-                tg.game_id,
-                round(sum(case when se.team_id  = tg.team_id and se.event_type != 'blocked-shot'
-                               then coalesce(se.x_goal, 0) else 0 end), 2) as xg_for,
-                round(sum(case when se.team_id != tg.team_id and se.event_type != 'blocked-shot'
-                               then coalesce(se.x_goal, 0) else 0 end), 2) as xg_against
-            from main.mart_shot_events se
-            join team_games tg on tg.game_id = se.game_id
-            where se.period < 5
-            group by tg.game_id
-        )
         select
-            tg.game_id,
-            row_number() over (order by tg.game_id) as game_num,
-            tg.game_date,
-            tg.opponent,
-            tg.is_home,
-            tg.gf,
-            tg.ga,
-            ss.xg_for,
-            ss.xg_against,
-            case
-                when (tg.is_home and tg.home_win) or (not tg.is_home and not tg.home_win) then 'W'
-                when tg.last_period_type != 'REG' then 'OTL'
-                else 'L'
-            end as result
-        from team_games tg
-        join shot_stats ss on ss.game_id = tg.game_id
-        order by tg.game_id
-    """, [team_abbrev] * 7 + [season]).df()
+            game_id,
+            row_number() over (order by game_id) as game_num,
+            game_date,
+            opponent_abbrev as opponent,
+            is_home,
+            gf,
+            ga,
+            round(xg_for, 2)     as xg_for,
+            round(xg_against, 2) as xg_against,
+            result
+        from main.mart_team_games
+        where team_abbrev = ? and season = ?
+        order by game_id
+    """, [team_abbrev, season]).df()
     conn.close()
     return df
 
