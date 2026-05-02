@@ -1,0 +1,21 @@
+version: 2
+
+exposures:
+  - name: streamlit_dashboard
+    label: NHL Shot Analytics Dashboard
+    type: dashboard
+    maturity: high
+    url: https://nhl-shot-analytics.streamlit.app/
+    description: >
+      Interactive Streamlit dashboard with team and player metrics
+
+    depends_on:
+      - ref('mart_players')
+      - ref('mart_player_shooting')
+      - ref('mart_shot_events')
+      - ref('mart_team_games')
+      - ref('mart_team_season')
+
+    owner:
+      name: Bobby King
+      email: bobby-king3@users.noreply.github.com
