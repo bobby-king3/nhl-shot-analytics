@@ -24,4 +24,4 @@ jobs:
       - name: Run pipeline
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
-        run: python -m ingest.pipeline
+        run: python -m extract.pipeline
