@@ -38,7 +38,19 @@ def get_seasons(con):
     return [r[0] for r in rows]
 
 
+def is_season_complete(season_id):
+    return (season_id % 10000) < datetime.now(timezone.utc).year
+
+
 def extract_season(con, season_id):
+    if is_season_complete(season_id):
+        existing = con.execute(
+            "SELECT COUNT(*) FROM raw_player_stats WHERE season_id = ?", [season_id]
+        ).fetchone()[0]
+        if existing > 0:
+            print(f"Season {season_id}: skipped ({existing} skaters)")
+            return None
+
     data = get_stats(
         f"/skater/summary?limit=-1&isAggregate=true&cayenneExp=seasonId={season_id}"
     )
@@ -85,7 +97,8 @@ def main():
 
     for season in seasons:
         count = extract_season(con, season)
-        print(f"  Season {season}: {count} skaters loaded")
+        if count is not None:
+            print(f"Season {season}: {count} skaters loaded")
 
     con.close()
     print("Done.")
