@@ -2,6 +2,14 @@ with stg as (
     select * from {{ ref('stg_play_by_play') }}
 ),
 
+games as (
+    select
+        game_id,
+        home_team_id,
+        away_team_id
+    from {{ ref('stg_games') }}
+),
+
 mp as (
     -- Deduplicate MoneyPuck: saw rare cases where same player shoots twice in same second
     select
@@ -34,10 +42,14 @@ parsed as (
 joined as (
     select
         parsed.*,
+        g.home_team_id,
+        g.away_team_id,
         mp.x_goal,
         mp.is_rush,
         mp.is_rebound
     from parsed
+    left join games g
+        on g.game_id = parsed.game_id
     left join mp
         on cast(substring(cast(parsed.game_id as varchar), 5) as integer) = mp.mp_game_id
         and parsed.shooter_id = mp.shooter_id
@@ -72,16 +84,20 @@ final as (
         raw,
         round(sqrt(power(x_coord - net_x, 2) + power(y_coord, 2)), 2) as shot_distance,
         round(degrees(atan2(abs(y_coord), abs(abs(x_coord) - 89.0))), 2) as shot_angle,
+
         case
-            when away_goalie = 0 or home_goalie = 0 then true
+            when team_id = home_team_id and away_goalie = 0 then true
+            when team_id = away_team_id and home_goalie = 0 then true
             else false
         end as is_empty_net,
+
         case
-            when away_goalie = 0 or home_goalie = 0 then 'EN'
-            when away_skaters = home_skaters and away_skaters = 5 then '5v5'
-            when away_skaters = home_skaters and away_skaters = 4 then '4v4'
-            when away_skaters = home_skaters and away_skaters = 3 then '3v3'
-            when away_skaters != home_skaters then 'PP/SH'
+            when team_id = home_team_id and away_goalie = 0                       then 'EN'
+            when team_id = away_team_id and home_goalie = 0                       then 'EN'
+            when away_skaters = home_skaters and away_skaters = 5                 then '5v5'
+            when away_skaters = home_skaters and away_skaters = 4                 then '4v4'
+            when away_skaters = home_skaters and away_skaters = 3                 then '3v3'
+            when away_skaters != home_skaters                                     then 'PP/SH'
             else 'other'
         end as strength,
         x_goal,
