@@ -14,7 +14,7 @@ The pipeline runs daily at 07:00 UTC with GitHub Actions. Each run pulls newly f
 
 MoneyPuck is a hockey analytics site that publishes shot-level data and models expected goals. This project uses MoneyPuck's public shot files to enrich NHL play-by-play events with xG, rush shot, and rebound shot fields.
 
-The modeled shot table covers **355,344 shot attempts** across the 2023-24, 2024-25, and 2025-26 NHL seasons. Each shot is modeled with game context, player/team details, rink location, shot distance and angle, strength state, xG, and goal video links when available.
+The modeled shot table covers the 2023-24, 2024-25, and 2025-26 NHL seasons. Each shot is modeled with game context, player/team details, rink location, shot distance and angle, strength state, xG, and goal video links when available.
 
 **NHL API**
 - Game schedule, teams, scores, venues, and game outcomes
