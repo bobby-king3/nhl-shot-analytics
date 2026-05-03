@@ -6,7 +6,7 @@ This project builds a cloud ELT pipeline for NHL shot analytics using Python, Mo
 
 ## Pipeline
 
-![Pipeline Diagram](pipeline_diagram.svg)
+![Pipeline Diagram](assets/pipeline_diagram.svg)
 
 ## Project Summary
 
@@ -58,9 +58,21 @@ The Streamlit app has two main views:
 - **Teams** - season record, goals for and against, xG for and against, rolling xG share, shooting percentage, save percentage, recent games, and roster details
 - **Players** - player cards, league percentile rankings, shot type breakdowns, game logs, career season tables, rink-based shot maps, and click-to-watch goal videos
 
+**Team View**
+
+![Team dashboard](assets/screenshots/team_dashboard.png)
+
+**Player Overview**
+
+![Player dashboard](assets/screenshots/player_dashboard.png)
+
+**Shot Map and Percentiles**
+
+![Player shot map and percentile ranks](assets/screenshots/player_shot_map.png)
+
 ## dbt Lineage
 
-![dbt lineage graph](dbt_lineage.png)
+![dbt lineage graph](assets/dbt_lineage.png)
 
 ## Future Work
 
