@@ -62,11 +62,6 @@ The Streamlit app has two main views:
 
 ![dbt lineage graph](dbt_lineage.png)
 
-## Data Sources
-
-- [NHL API](https://api-web.nhle.com/) - schedule, play-by-play, rosters, player stats, team logos, and highlight links
-- [MoneyPuck](https://moneypuck.com/data.htm) - public shot data with pre-computed expected goals, rush shot, and rebound shot fields
-
 ## Future Work
 
 - Build an expected goals model directly integrated in the pipeline.
