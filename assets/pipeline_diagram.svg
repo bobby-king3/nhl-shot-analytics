@@ -24,7 +24,7 @@
   <text x="265" y="28" text-anchor="middle" font-size="9" fill="#94A3B8" font-weight="700" letter-spacing="1.5">EXTRACT &amp; LOAD</text>
   <text x="455" y="28" text-anchor="middle" font-size="9" fill="#94A3B8" font-weight="700" letter-spacing="1.5">STORAGE</text>
   <text x="645" y="28" text-anchor="middle" font-size="9" fill="#94A3B8" font-weight="700" letter-spacing="1.5">TRANSFORM</text>
-  <text x="820" y="28" text-anchor="middle" font-size="9" fill="#94A3B8" font-weight="700" letter-spacing="1.5">SERVE</text>
+  <text x="820" y="28" text-anchor="middle" font-size="9" fill="#94A3B8" font-weight="700" letter-spacing="1.5">DASHBOARD</text>
 
   <!-- NHL API box: center (85, 86) -->
   <rect x="15" y="60" width="140" height="52" rx="8" fill="#DBEAFE" stroke="#3B82F6" stroke-width="1.5" filter="url(#sh)"/>
@@ -34,7 +34,7 @@
   <!-- MoneyPuck box: center (85, 159), dashed = manual load -->
   <rect x="15" y="133" width="140" height="52" rx="8" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5" stroke-dasharray="6,3" filter="url(#sh)"/>
   <text x="85" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#15803D">MoneyPuck</text>
-  <text x="85" y="173" text-anchor="middle" font-size="10" fill="#16A34A">manual load</text>
+  <text x="85" y="173" text-anchor="middle" font-size="10" fill="#16A34A">CSV by season</text>
 
   <!-- Arrows: sources → Python -->
   <line x1="155" y1="86"  x2="184" y2="120" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#arr)"/>
@@ -45,7 +45,7 @@
   <text x="265" y="89"  text-anchor="middle" font-size="13" font-weight="600" fill="#0F172A">Python</text>
   <text x="265" y="107" text-anchor="middle" font-size="10" fill="#475569">GitHub Actions</text>
   <text x="265" y="123" text-anchor="middle" font-size="10" fill="#64748B">daily · 07:00 UTC</text>
-  <text x="265" y="139" text-anchor="middle" font-size="10" fill="#64748B">play-by-play · players</text>
+  <text x="265" y="139" text-anchor="middle" font-size="10" fill="#64748B">play by play · players</text>
   <text x="265" y="155" text-anchor="middle" font-size="10" fill="#64748B">dbt run · dbt test</text>
 
   <!-- Arrow: Python → MotherDuck -->

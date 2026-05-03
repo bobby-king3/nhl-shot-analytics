@@ -80,5 +80,5 @@ Goal events on the shot map can be selected to watch the available NHL highlight
 
 ## Future Work
 
-- Build an expected goals model directly integrated in the pipeline.
+- Build an expected goals model directly integrated in the pipeline. MoneyPuck does not allow scraping/CSV extraction, so the current xG values require a manual CSV download each season in current process.
 - Add a goalie analytics page with save percentage by zone and high-danger save rate.
