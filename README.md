@@ -1,43 +1,55 @@
 # NHL Shot Analytics
 
-This project ingests NHL play-by-play, rosters, and shot data from the NHL API and MoneyPuck, models it with dbt, and serves an interactive Streamlit dashboard with team rolling-metric views and player shot maps with click-to-watch goal videos. Built as an ELT pipeline using Python, DuckDB/MotherDuck, and dbt.
+This project ingests NHL play-by-play, roster, schedule, and player data from the NHL API and leverages MoneyPuck shot data with modeled xG metrics per shot on goal.
 
 ## Pipeline
 
-![Pipeline Diagram](pipeline_diagram.png)
+```
+NHL API -> Python Extract -> DuckDB / MotherDuck -> dbt Transform -> Streamlit Dashboard
+MoneyPuck shot files -> dbt Transform
+```
 
 ## Background
 
-```
-NHL API + MoneyPuck → Python Extract → DuckDB / MotherDuck → dbt Transform → Streamlit Dashboard
-```
+The pipeline runs daily at 07:00 UTC with GitHub Actions. Each run pulls newly finished NHL games, play-by-play shot events, rosters, and skater stats from the public [NHL API](https://api-web.nhle.com/).
 
-The pipeline runs daily at 07:00 UTC via GitHub Actions. Each run pulls finished games, play-by-play events, rosters, and skater stats from the public [NHL API](https://api-web.nhle.com/), then joins the play-by-play to MoneyPuck shot data (which provides pre-computed expected goals values) before running `dbt build`. The warehouse is MotherDuck in production with a local DuckDB fallback for development.
+MoneyPuck is a hockey analytics site that publishes shot level data and models expected goals. This project uses MoneyPuck's public shot files for xG, rush shot, and rebound shot fields.
+
+The production warehouse is hosted in MotherDuck. The Streamlit dashboard reads from dbt mart tables and is deployed as a cloud app.
 
 ## Dataset
 
-[X] shot events across [X] games covering the [2023-24], [2024-25], and current [2025-26] NHL seasons, with rosters and skater stats for [X] active players. Each shot event includes shooter, location, distance, angle, strength state, and an xG value joined from MoneyPuck.
+355,344 MoneyPuck shot attempts across the 2023-24, 2024-25, and 2025-26 NHL seasons. The modeled data includes game context, shooter and goalie ids, team, period, time, shot type, rink coordinates, shot distance, shot angle, strength state, rush/rebound flags, expected goals, and highlight video links when available.
+
+| Season | Shot attempts | Games | Shooters |
+| --- | ---: | ---: | ---: |
+| 2023-24 | 122,472 | 1,400 | 909 |
+| 2024-25 | 119,870 | 1,398 | 917 |
+| 2025-26 | 113,002 | 1,323 | 939 |
 
 ## dbt Models
 
-**Staging** (views, 1:1 with raw)
-- `stg_games` — cleaned game schedule with derived `game_outcome` and `home_win`
-- `stg_play_by_play` — typed play-by-play events
-- `stg_moneypuck_shots` — MoneyPuck shots renamed to NHL conventions
-- `stg_players` — rosters with derived `full_name` and team logo URL
-- `stg_player_stats` — skater season totals
+**Staging**
+- `stg_games` - cleaned NHL schedule and game result data
+- `stg_play_by_play` - typed shot level play by play events from the NHL API
+- `stg_moneypuck_shots` - MoneyPuck public shot data renamed to NHL conventions
+- `stg_players` - roster data with player names, positions, headshots, and team logos
+- `stg_player_stats` - season level skater stats
 
-**Intermediate** (view)
-- `int_shot_events` — deduplicates MoneyPuck, parses situation codes into strength state (5v5, PP, PK, etc.), computes shot distance and angle from x/y coordinates
+**Intermediate**
+- `int_shot_events` - joins NHL play by play to MoneyPuck shot data, parses strength state, and calculates shot distance and angles
 
-**Marts** (tables)
-- `mart_shot_events` — one row per shot with shooter, game context, geometry, and xG
-- `mart_player_shooting` — one row per player per season with shot totals, xG, points, and league percentile ranks
+**Marts**
+- `mart_shot_events` - one row per shot event with game context, shot metrics, xG, and video links
+- `mart_player_shooting` - one row per player season with goals, shots, xG, shooting rates, and league percentile ranks
+- `mart_players` - player dimension table with bio and roster details
+- `mart_team_games` - one row per team per game from each team's perspective
+- `mart_team_season` - team season totals for record, goals, xG, shooting percentage, and save percentage
 
 **Tests**
-- `not_null`, `unique`, and `accepted_values` on key columns across all layers
+- `not_null`, `unique`, and `accepted_values` on key columns
 - `dbt_utils.unique_combination_of_columns` on composite keys
-- Custom singular tests validating team season SH% falls in 7–16% and SV% in realistic ranges
+- Range checks for xG values, percentile fields, period values, shooting percentage, and team records
 
 ## dbt Lineage
 
@@ -47,60 +59,16 @@ The pipeline runs daily at 07:00 UTC via GitHub Actions. Each run pulls finished
 
 [Live Dashboard](https://nhl-shot-analytics.streamlit.app/)
 
-Browse any team to see a rolling xG / shots / save% game log, win-loss streak grid, and full roster. Click a player to open a player card with season percentile rankings vs. the league and a shot map rendered on a real rink. Click any goal dot on the shot map to watch the highlight video inline.
+Select any team to view season record, goals for and against, xG for and against, rolling xG share, shooting percentage, save percentage, recent games, and roster details.
 
-## Instructions to Run Locally
-
-Download the prebuilt DuckDB database from the [Releases page](https://github.com/bobby-king3/nhl-shot-analytics/releases) and place it in the `data/` folder. No API key or MotherDuck account is needed to run dbt or the dashboard locally.
-
-```bash
-git clone https://github.com/bobby-king3/nhl-shot-analytics.git
-cd nhl-shot-analytics
-
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-> **Note:** dbt requires a profile in `~/.dbt/profiles.yml`. Add the following entry before running `dbt build`:
-> ```yaml
-> nhl_shot_intelligence:
->   target: dev
->   outputs:
->     dev:
->       type: duckdb
->       path: /path/to/nhl-shot-analytics/data/nhl.duckdb
-> ```
-
-```bash
-cd transform/dbt_project
-dbt deps
-dbt build
-
-cd ../..
-streamlit run dashboard/app.py
-```
-
-## Running the Full Pipeline
-
-The NHL API is public and requires no key. To pull fresh data end-to-end:
-
-```bash
-# From the project root
-python -m extract.pipeline
-```
-
-This runs all extractors (games, play-by-play, rosters, skater stats), then `dbt deps && dbt run && dbt test`. Set `MOTHERDUCK_TOKEN` in `.env` to write to the cloud warehouse; otherwise the pipeline writes to `data/nhl.duckdb`.
-
-For goal-video playback in the dashboard, set `ACCOUNT_ID` and `POLICY_KEY` in `.env` for the Brightcove Playback API.
-
-## Planned Future Work
-- MoneyPuck is an amazing resource in hockey analytics.  Per their website, scraping requires special approvals.  I respected their guidelines and manually saved CSV calculations for xG metrics.  I plan to build out a model to make calculations of xG per shot attempt and integrate directly within this pipeline
-    - https://moneypuck.com/data.htm
-- Add a goalie analytics page (save% by zone, high-danger save rate).
-
+Select any player to view a player card with season stats, league percentile rankings, shot type breakdown, game log, career season table, and a rink based shot map. Goal events can be clicked to watch the available goal video.
 
 ## Data Sources
 
-- [NHL API](https://api-web.nhle.com/) — schedule, play-by-play, rosters, stats. Public, no auth.
-- [MoneyPuck](https://moneypuck.com/) — open shot data with pre-computed xG.
+- [NHL API](https://api-web.nhle.com/) - schedule, play by play, rosters, player stats, team logos, and highlight links
+- [MoneyPuck](https://moneypuck.com/data.htm) - public shot data with pre-computed expected goals, rush shot, and rebound shot fields
+
+## Future Work
+
+- Build an expected goals model directly in the pipeline.
+- Add a goalie analytics page with save percentage by zone and high-danger save rate.
