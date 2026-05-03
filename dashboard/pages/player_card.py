@@ -20,7 +20,7 @@ from dashboard.utils.chart_builders import (
     build_game_log_chart, build_shot_map, build_percentile_wheel, build_shot_type_breakdown,
     build_season_stats_table
 )
-from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS
+from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS, COUNTRY_FLAGS
 
 st.markdown("""
 <style>
@@ -262,12 +262,6 @@ st.markdown(f"""
  sweater_number, height_in, weight_lbs, birth_country, shoots_catches,
  birth_date) = stats
 
-COUNTRY_FLAGS = {
-    "CAN": "🇨🇦", "USA": "🇺🇸", "SWE": "🇸🇪", "FIN": "🇫🇮",
-    "RUS": "🇷🇺", "CZE": "🇨🇿", "SVK": "🇸🇰", "GER": "🇩🇪",
-    "AUT": "🇦🇹", "SUI": "🇨🇭", "LVA": "🇱🇻", "BLR": "🇧🇾",
-    "DNK": "🇩🇰", "NOR": "🇳🇴", "FRA": "🇫🇷", "CHE": "🇨🇭",
-}
 
 def format_height(inches):
     if inches is None:
@@ -471,15 +465,14 @@ with wheel_col:
     st.markdown('<div class="chart-card"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
     st.caption("Min. 50 shot attempts")
 
-    categories = ["Goals/GP", "Sh%", "Avg xG/Shot", "xG/GP", "Rebound Shot%", "Shot Distance", "GAX"]
+    categories = ["Goals/GP", "xG/GP", "Avg xG/Shot", "Shot Distance", "GAX", "Sh%"]
     values = [
         round((goals_pctile or 0) * 100),
-        round((sh_pctile or 0) * 100),
-        round((avg_xg_pctile or 0) * 100),
         round((xg_pg_pctile or 0) * 100),
-        round((rebound_pctile or 0) * 100),
+        round((avg_xg_pctile or 0) * 100),
         round((dist_pctile or 0) * 100),
         round((gax_pctile or 0) * 100),
+        round((sh_pctile or 0) * 100),
     ]
 
     fig_wheel = build_percentile_wheel(categories, values, r, g, b, primary)
@@ -604,12 +597,7 @@ with breakdown_col:
 
     st.markdown(
         "<div style='font-size:11px; color:rgba(255,255,255,0.35); margin-top:-8px'>"
-        "Bar: % of shots · "
-        "Dot color: Sh% — "
-        "<span style='color:#FFD700'>●</span> ≥15%  "
-        "<span style='color:#F08030'>●</span> ≥8%  "
-        "<span style='color:#4a90d9'>●</span> &lt;8%  · "
-        "Click a bar to filter the shot map"
+        "Click a shot type to filter the shot map"
         "</div>",
         unsafe_allow_html=True
     )

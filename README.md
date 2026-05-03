@@ -1,106 +1,84 @@
 # NHL Shot Analytics
 
-This project ingests NHL play-by-play, rosters, and shot data from the NHL API and MoneyPuck, models it with dbt, and serves an interactive Streamlit dashboard with team rolling-metric views and player shot maps with click-to-watch goal videos. Built as an ELT pipeline using Python, DuckDB/MotherDuck, and dbt.
+This project builds a cloud ELT pipeline for NHL shot analytics using Python, MotherDuck, dbt, and Streamlit. It combines NHL API play-by-play, roster, schedule, and skater data with MoneyPuck expected goals data to power team and player analysis across the league.
+
+[Streamlit Dashboard](https://nhl-shot-analytics.streamlit.app/)
 
 ## Pipeline
 
-![Pipeline Diagram](pipeline_diagram.png)
+![Pipeline Diagram](assets/pipeline_diagram.svg)
 
-## Background
+## Project Summary
 
-```
-NHL API + MoneyPuck → Python Extract → DuckDB / MotherDuck → dbt Transform → Streamlit Dashboard
-```
+The pipeline runs daily at 07:00 UTC with GitHub Actions. Each run pulls newly finished games from the public [NHL API](https://api-web.nhle.com/), loads the data into MotherDuck, and rebuilds the dbt models used by the dashboard.
 
-The pipeline runs daily at 07:00 UTC via GitHub Actions. Each run pulls finished games, play-by-play events, rosters, and skater stats from the public [NHL API](https://api-web.nhle.com/), then joins the play-by-play to MoneyPuck shot data (which provides pre-computed expected goals values) before running `dbt build`. The warehouse is MotherDuck in production with a local DuckDB fallback for development.
+MoneyPuck is a hockey analytics site that publishes shot-level data and models expected goals. This project uses MoneyPuck's public shot files to enrich NHL play-by-play events with xG, rush shot, and rebound shot fields.
 
-## Dataset
+The modeled shot table covers the 2023-24, 2024-25, and 2025-26 NHL seasons. Each shot is modeled with game context, player/team details, rink location, shot distance and angle, strength state, xG, and goal video links when available.
 
-[X] shot events across [X] games covering the [2023-24], [2024-25], and current [2025-26] NHL seasons, with rosters and skater stats for [X] active players. Each shot event includes shooter, location, distance, angle, strength state, and an xG value joined from MoneyPuck.
+**NHL API**
+- Game schedule, teams, scores, venues, and game outcomes
+- Play by play shot events with period, time, shot type, shooter, goalie, team, score state, and highlight links
+- Player rosters, headshots, positions, sweater numbers, handedness, height, weight, and birth details
+- Season-level skater stats used in player cards and percentile rankings
+
+**MoneyPuck**
+- Shot level expected goals values
+- Rush shot and rebound shot indicators
+- Additional shot context used to enrich the NHL play by play data
 
 ## dbt Models
 
-**Staging** (views, 1:1 with raw)
-- `stg_games` — cleaned game schedule with derived `game_outcome` and `home_win`
-- `stg_play_by_play` — typed play-by-play events
-- `stg_moneypuck_shots` — MoneyPuck shots renamed to NHL conventions
-- `stg_players` — rosters with derived `full_name` and team logo URL
-- `stg_player_stats` — skater season totals
+![dbt lineage graph](assets/dbt_lineage.png)
 
-**Intermediate** (view)
-- `int_shot_events` — deduplicates MoneyPuck, parses situation codes into strength state (5v5, PP, PK, etc.), computes shot distance and angle from x/y coordinates
+**Staging**
+- `stg_games` - cleaned NHL schedule and results
+- `stg_play_by_play` - shot-level NHL play-by-play events
+- `stg_moneypuck_shots` - MoneyPuck shot data aligned to NHL ids
+- `stg_players` - roster and player bio data
+- `stg_player_stats` - season-level skater stats
 
-**Marts** (tables)
-- `mart_shot_events` — one row per shot with shooter, game context, geometry, and xG
-- `mart_player_shooting` — one row per player per season with shot totals, xG, points, and league percentile ranks
+**Intermediate**
+- `int_shot_events` - joins NHL events to MoneyPuck xG, parses strength state, and calculates shot geometry
+
+**Marts**
+- `mart_shot_events` - one row per shot with context, xG, geometry, and video links
+- `mart_player_shooting` - player-season shooting metrics and percentile ranks
+- `mart_team_games` - team-game results, goals, shots, xG, and opponent context
+- `mart_team_season` - team season records, scoring, xG, shooting percentage, and save percentage
+- `mart_players` - player dimension for dashboard filters and profile cards
 
 **Tests**
-- `not_null`, `unique`, and `accepted_values` on key columns across all layers
-- `dbt_utils.unique_combination_of_columns` on composite keys
-- Custom singular tests validating team season SH% falls in 7–16% and SV% in realistic ranges
-
-## dbt Lineage
-
-![dbt lineage graph](dbt_lineage.png)
+- Key column `not_null`, `unique`, and `accepted_values` checks
+- Composite uniqueness tests on player seasons, team games, and team seasons
+- Range checks for xG, percentile fields, periods, shooting percentage, and team records
 
 ## Dashboard
 
-[Live Dashboard](https://nhl-shot-analytics.streamlit.app/)
+The Streamlit app has two main views:
 
-Browse any team to see a rolling xG / shots / save% game log, win-loss streak grid, and full roster. Click a player to open a player card with season percentile rankings vs. the league and a shot map rendered on a real rink. Click any goal dot on the shot map to watch the highlight video inline.
+- **Teams** - season record, goals for and against, xG for and against, rolling xG share, shooting percentage, save percentage, recent games, and roster details
+- **Players** - player cards, league percentile rankings, shot type breakdowns, game logs, career season tables, rink-based shot maps, and click-to-watch goal videos
 
-## Instructions to Run Locally
+**Team View**
 
-Download the prebuilt DuckDB database from the [Releases page](https://github.com/bobby-king3/nhl-shot-analytics/releases) and place it in the `data/` folder. No API key or MotherDuck account is needed to run dbt or the dashboard locally.
+![Team dashboard](assets/screenshots/team_dashboard.png)
 
-```bash
-git clone https://github.com/bobby-king3/nhl-shot-analytics.git
-cd nhl-shot-analytics
+**Player Overview**
 
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+![Player dashboard](assets/screenshots/player_dashboard.png)
 
-> **Note:** dbt requires a profile in `~/.dbt/profiles.yml`. Add the following entry before running `dbt build`:
-> ```yaml
-> nhl_shot_intelligence:
->   target: dev
->   outputs:
->     dev:
->       type: duckdb
->       path: /path/to/nhl-shot-analytics/data/nhl.duckdb
-> ```
+**Shot Map and Percentiles**
 
-```bash
-cd transform/dbt_project
-dbt deps
-dbt build
+![Player shot map and percentile ranks](assets/screenshots/player_shot_map.png)
 
-cd ../..
-streamlit run dashboard/app.py
-```
+**Goal Video Playback**
 
-## Running the Full Pipeline
+Goal events on the shot map can be selected to watch the available NHL highlight video inline.
 
-The NHL API is public and requires no key. To pull fresh data end-to-end:
+![Video player for goals](assets/screenshots/player_shot_video.png)
 
-```bash
-# From the project root
-python -m extract.pipeline
-```
+## Future Work
 
-This runs all extractors (games, play-by-play, rosters, skater stats), then `dbt deps && dbt run && dbt test`. Set `MOTHERDUCK_TOKEN` in `.env` to write to the cloud warehouse; otherwise the pipeline writes to `data/nhl.duckdb`.
-
-For goal-video playback in the dashboard, set `ACCOUNT_ID` and `POLICY_KEY` in `.env` for the Brightcove Playback API.
-
-## Planned Future Work
-- MoneyPuck is an amazing resource in hockey analytics.  Per their website, scraping requires special approvals.  I respected their guidelines and manually saved CSV calculations for xG metrics.  I plan to build out a model to make calculations of xG per shot attempt and integrate directly within this pipeline
-    - https://moneypuck.com/data.htm
-- Add a goalie analytics page (save% by zone, high-danger save rate).
-
-
-## Data Sources
-
-- [NHL API](https://api-web.nhle.com/) — schedule, play-by-play, rosters, stats. Public, no auth.
-- [MoneyPuck](https://moneypuck.com/) — open shot data with pre-computed xG.
+- Build an expected goals model directly integrated in the pipeline. MoneyPuck does not allow scraping/CSV extraction, so the current xG values require a manual CSV download each season in current process.
+- Add a goalie analytics page with save percentage by zone and high-danger save rate.

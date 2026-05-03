@@ -18,6 +18,7 @@ team_games as (
     select
         season,
         game_id,
+        game_type,
         game_date,
         last_period_type,
         home_team_abbrev as team_abbrev,
@@ -35,6 +36,7 @@ team_games as (
     select
         season,
         game_id,
+        game_type,
         game_date,
         last_period_type,
         away_team_abbrev,
@@ -67,6 +69,7 @@ select
     -- identifiers
     tg.season,
     tg.game_id,
+    tg.game_type,
     tg.game_date,
 
     -- team perspective
@@ -82,8 +85,8 @@ select
     tg.won,
     tg.last_period_type,
     case
-        when tg.won                                       then 'W'
-        when not tg.won and tg.last_period_type != 'REG'  then 'OTL'
+        when tg.won then 'W'
+        when not tg.won and tg.last_period_type != 'REG' and tg.game_type = 2 then 'OTL'
         else 'L'
     end as result,
 

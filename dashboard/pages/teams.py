@@ -128,6 +128,7 @@ team_name  = TEAM_NAMES.get(selected_team, selected_team)
 wins       = stats.get("wins", 0) or 0
 losses     = stats.get("losses", 0) or 0
 otl        = stats.get("otl", 0) or 0
+points     = stats.get("points", 0) or 0
 goals_for  = stats.get("goals_for", "—")
 goals_ag   = stats.get("goals_against", "—")
 xg_for     = stats.get("xg_for", "—")
@@ -180,11 +181,11 @@ st.markdown(f"""
       </div>
       <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
         <div style="font-size:18px; font-weight:800; color:{diff_color};">{diff_sign}{xg_diff} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">xG Diff</span>{rank_badge(xg_diff_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">expected goals differential</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">Expected Goals Differential</div>
       </div>
       <div style="padding-left:20px;">
         <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.75);">{sh_pct}% <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">Sh%</span>{rank_badge(sh_pct_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">goals / shots on goal</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">Goals/Shots on Goal</div>
       </div>
     </div>
   </div>
@@ -204,10 +205,15 @@ st.markdown(f"""
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">Losses</div>
     </div>
-    <div style="text-align:center; padding:0 28px;">
+    <div style="text-align:center; padding:0 28px; border-right:1px solid rgba(255,255,255,0.1);">
       <div style="font-size:56px; font-weight:900; color:rgba(255,255,255,0.25); line-height:1;">{otl}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">OTL</div>
+    </div>
+    <div style="text-align:center; padding:0 28px;">
+      <div style="font-size:56px; font-weight:900; color:{primary}; line-height:1;">{points}</div>
+      <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
+                  letter-spacing:2px; margin-top:4px;">PTS</div>
     </div>
   </div>
 </div>

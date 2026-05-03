@@ -32,3 +32,10 @@ TEAM_NAMES = {
     "UTA": "Utah Mammoth", "VAN": "Vancouver Canucks", "VGK": "Vegas Golden Knights",
     "WSH": "Washington Capitals", "WPG": "Winnipeg Jets",
 }
+
+COUNTRY_FLAGS = {
+    "CAN": "🇨🇦", "USA": "🇺🇸", "SWE": "🇸🇪", "FIN": "🇫🇮",
+    "RUS": "🇷🇺", "CZE": "🇨🇿", "SVK": "🇸🇰", "GER": "🇩🇪",
+    "AUT": "🇦🇹", "SUI": "🇨🇭", "LVA": "🇱🇻", "BLR": "🇧🇾",
+    "DNK": "🇩🇰", "NOR": "🇳🇴", "FRA": "🇫🇷", "CHE": "🇨🇭",
+}
