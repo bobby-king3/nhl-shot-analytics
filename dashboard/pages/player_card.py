@@ -604,11 +604,6 @@ with breakdown_col:
 
     st.markdown(
         "<div style='font-size:11px; color:rgba(255,255,255,0.35); margin-top:-8px'>"
-        "Bar: % of shots · "
-        "Dot color: Sh% — "
-        "<span style='color:#FFD700'>●</span> ≥15%  "
-        "<span style='color:#F08030'>●</span> ≥8%  "
-        "<span style='color:#4a90d9'>●</span> &lt;8%  · "
         "Click a bar to filter the shot map"
         "</div>",
         unsafe_allow_html=True

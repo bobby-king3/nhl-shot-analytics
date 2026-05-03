@@ -291,16 +291,11 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
 
 
 def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
-    dot_colors = [
-        get_performance_color(v, {"high": 15, "medium": 8})
-        for v in type_df["sh_pct"]
-    ]
-
     bar_fill_colors = []
     bar_line_colors = []
     for shot_type in type_df["shot_type"]:
         is_selected = shot_type == selected_shot_type
-        fill = f"rgba({r},{g},{b},0.7)" if is_selected else f"rgba({r},{g},{b},0.3)"
+        fill = f"rgba({r},{g},{b},0.8)" if is_selected else f"rgba({r},{g},{b},0.4)"
         line = f"rgba({r},{g},{b},1.0)" if is_selected else f"rgba({r},{g},{b},0.6)"
         bar_fill_colors.append(fill)
         bar_line_colors.append(line)
@@ -308,7 +303,7 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
     fig = go.Figure()
 
     fig.add_trace(go.Bar(
-        x=type_df["shots"],
+        x=type_df["volume_pct"],
         y=type_df["shot_type"],
         orientation="h",
         marker=dict(
@@ -317,18 +312,9 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
         ),
         text=[f"{v}%" for v in type_df["volume_pct"]],
         textposition="outside",
-        textfont=dict(color="rgba(255,255,255,0.6)", size=11),
-        hovertemplate="<b>%{y}</b><br>Shots: %{x}<br>Volume: %{text}<extra></extra>",
-        showlegend=False,
-    ))
-
-    fig.add_trace(go.Scatter(
-        x=type_df["shots"],
-        y=type_df["shot_type"],
-        mode="markers",
-        marker=dict(color=dot_colors, size=10, line=dict(color="white", width=1.5)),
-        customdata=type_df["sh_pct"],
-        hovertemplate="<b>%{y}</b><br>Sh%: %{customdata}%<extra></extra>",
+        textfont=dict(color="rgba(255,255,255,0.7)", size=11),
+        customdata=type_df["shots"],
+        hovertemplate="<b>%{y}</b><br>%{x}% of shots (%{customdata} attempts)<extra></extra>",
         showlegend=False,
     ))
 
