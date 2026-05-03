@@ -11,21 +11,28 @@ MoneyPuck shot files -> dbt Transform
 
 ## Background
 
-The pipeline runs daily at 07:00 UTC with GitHub Actions. Each run pulls newly finished NHL games, play-by-play shot events, rosters, and skater stats from the public [NHL API](https://api-web.nhle.com/).
+The pipeline runs daily at 07:00 UTC using GitHub Actions. Each run pulls newly finished NHL games, play-by-play shot events, rosters, and skater stats from the public [NHL API](https://api-web.nhle.com/).
 
 MoneyPuck is a hockey analytics site that publishes shot level data and models expected goals. This project uses MoneyPuck's public shot files for xG, rush shot, and rebound shot fields.
 
-The production warehouse is hosted in MotherDuck. The Streamlit dashboard reads from dbt mart tables and is deployed as a cloud app.
+The production warehouse is hosted in MotherDuck. The Streamlit dashboard reads from modeled dbt mart tables and is deployed as a cloud app.
 
 ## Dataset
 
-355,344 MoneyPuck shot attempts across the 2023-24, 2024-25, and 2025-26 NHL seasons. The modeled data includes game context, shooter and goalie ids, team, period, time, shot type, rink coordinates, shot distance, shot angle, strength state, rush/rebound flags, expected goals, and highlight video links when available.
+The final analytics layer combines NHL API game data, play-by-play shot events, rosters, skater stats, and MoneyPuck shot-level expected goals data.
 
-| Season | Shot attempts | Games | Shooters |
-| --- | ---: | ---: | ---: |
-| 2023-24 | 122,472 | 1,400 | 909 |
-| 2024-25 | 119,870 | 1,398 | 917 |
-| 2025-26 | 113,002 | 1,323 | 939 |
+The modeled shot table covers 355,344 shot attempts across the 2023-24, 2024-25, and 2025-26 NHL seasons. Each event includes game context, shooter and goalie ids, team, period, time, shot type, rink coordinates, shot distance, shot angle, strength state, expected goals, rush/rebound flags, and highlight video links for all goals scored.
+
+**NHL API**
+- Game schedule, teams, scores, venues, and game outcomes
+- Play by play shot events with period, time, shot type, shooter, goalie, team, score state, and highlight links
+- Player rosters, headshots, positions, sweater numbers, handedness, height, weight, and birth details
+- Season-level skater stats used in player cards and percentile rankings
+
+**MoneyPuck**
+- Shot level expected goals values
+- Rush shot and rebound shot indicators
+- Additional shot context used to enrich the NHL play by play data
 
 ## dbt Models
 
