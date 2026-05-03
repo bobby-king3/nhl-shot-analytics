@@ -2,7 +2,7 @@
 
 This project builds a cloud ELT pipeline for NHL shot analytics using Python, MotherDuck, dbt, and Streamlit. It combines NHL API play-by-play, roster, schedule, and skater data with MoneyPuck expected goals data to power team and player analysis across the league.
 
-[Live Dashboard](https://nhl-shot-analytics.streamlit.app/)
+[Streamlit Dashboard](https://nhl-shot-analytics.streamlit.app/)
 
 ## Pipeline
 
