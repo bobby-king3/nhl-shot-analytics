@@ -181,11 +181,11 @@ st.markdown(f"""
       </div>
       <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
         <div style="font-size:18px; font-weight:800; color:{diff_color};">{diff_sign}{xg_diff} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">xG Diff</span>{rank_badge(xg_diff_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">expected goals differential</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">Expected Goals Differential</div>
       </div>
       <div style="padding-left:20px;">
         <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.75);">{sh_pct}% <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">Sh%</span>{rank_badge(sh_pct_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">goals / shots on goal</div>
+        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">Goals/Shots on Goal</div>
       </div>
     </div>
   </div>
