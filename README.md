@@ -70,6 +70,12 @@ The Streamlit app has two main views:
 
 ![Player shot map and percentile ranks](assets/screenshots/player_shot_map.png)
 
+**Goal Video Playback**
+
+Goal events on the shot map can be selected to watch the available NHL highlight video inline.
+
+![Video player for goals](assets/screenshots/player_shot_video.png)
+
 ## dbt Lineage
 
 ![dbt lineage graph](assets/dbt_lineage.png)
