@@ -471,15 +471,14 @@ with wheel_col:
     st.markdown('<div class="chart-card"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
     st.caption("Min. 50 shot attempts")
 
-    categories = ["Goals/GP", "Sh%", "Avg xG/Shot", "xG/GP", "Rebound Shot%", "Shot Distance", "GAX"]
+    categories = ["Goals/GP", "xG/GP", "Avg xG/Shot", "Shot Distance", "GAX", "Sh%"]
     values = [
         round((goals_pctile or 0) * 100),
-        round((sh_pctile or 0) * 100),
-        round((avg_xg_pctile or 0) * 100),
         round((xg_pg_pctile or 0) * 100),
-        round((rebound_pctile or 0) * 100),
+        round((avg_xg_pctile or 0) * 100),
         round((dist_pctile or 0) * 100),
         round((gax_pctile or 0) * 100),
+        round((sh_pctile or 0) * 100),
     ]
 
     fig_wheel = build_percentile_wheel(categories, values, r, g, b, primary)
@@ -604,7 +603,7 @@ with breakdown_col:
 
     st.markdown(
         "<div style='font-size:11px; color:rgba(255,255,255,0.35); margin-top:-8px'>"
-        "Click a bar to filter the shot map"
+        "Click a shot type to filter the shot map"
         "</div>",
         unsafe_allow_html=True
     )
