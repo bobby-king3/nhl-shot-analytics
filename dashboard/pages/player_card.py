@@ -20,7 +20,7 @@ from dashboard.utils.chart_builders import (
     build_game_log_chart, build_shot_map, build_percentile_wheel, build_shot_type_breakdown,
     build_season_stats_table
 )
-from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS
+from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS, COUNTRY_FLAGS
 
 st.markdown("""
 <style>
@@ -262,12 +262,6 @@ st.markdown(f"""
  sweater_number, height_in, weight_lbs, birth_country, shoots_catches,
  birth_date) = stats
 
-COUNTRY_FLAGS = {
-    "CAN": "🇨🇦", "USA": "🇺🇸", "SWE": "🇸🇪", "FIN": "🇫🇮",
-    "RUS": "🇷🇺", "CZE": "🇨🇿", "SVK": "🇸🇰", "GER": "🇩🇪",
-    "AUT": "🇦🇹", "SUI": "🇨🇭", "LVA": "🇱🇻", "BLR": "🇧🇾",
-    "DNK": "🇩🇰", "NOR": "🇳🇴", "FRA": "🇫🇷", "CHE": "🇨🇭",
-}
 
 def format_height(inches):
     if inches is None:
