@@ -29,6 +29,8 @@ The modeled shot table covers **355,344 shot attempts** across the 2023-24, 2024
 
 ## dbt Models
 
+![dbt lineage graph](assets/dbt_lineage.png)
+
 **Staging**
 - `stg_games` - cleaned NHL schedule and results
 - `stg_play_by_play` - shot-level NHL play-by-play events
@@ -75,10 +77,6 @@ The Streamlit app has two main views:
 Goal events on the shot map can be selected to watch the available NHL highlight video inline.
 
 ![Video player for goals](assets/screenshots/player_shot_video.png)
-
-## dbt Lineage
-
-![dbt lineage graph](assets/dbt_lineage.png)
 
 ## Future Work
 
