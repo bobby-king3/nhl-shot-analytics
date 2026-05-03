@@ -31,7 +31,6 @@ parsed as (
         cast(substr(situation_code, 2, 1) as integer) as away_skaters,
         cast(substr(situation_code, 3, 1) as integer) as home_skaters,
         cast(substr(situation_code, 4, 1) as integer) as home_goalie,
-        case when x_coord >= 0 then 89.0 else -89.0 end as net_x,
         (cast(split_part(time_in_period, ':', 1) as integer) * 60
             + cast(split_part(time_in_period, ':', 2) as integer)) as seconds_in_period
 
@@ -55,6 +54,22 @@ joined as (
         and parsed.shooter_id = mp.shooter_id
         and parsed.period = mp.period
         and ((parsed.period - 1) * 1200) + parsed.seconds_in_period = mp.seconds_elapsed
+),
+
+-- Determine which net the shot is going to based on the shooter's team and side
+with_net as (
+    select
+        joined.*,
+        case
+            when team_id = home_team_id and home_defending_side = 'left'  then  89.0
+            when team_id = home_team_id and home_defending_side = 'right' then -89.0
+            when team_id = away_team_id and home_defending_side = 'left'  then -89.0
+            when team_id = away_team_id and home_defending_side = 'right' then  89.0
+            -- fallback if home_defending_side is missing
+            when x_coord >= 0 then 89.0
+            else -89.0
+        end as net_x
+    from joined
 ),
 
 final as (
@@ -82,8 +97,9 @@ final as (
         home_score,
         highlight_clip_url,
         raw,
+        net_x,
         round(sqrt(power(x_coord - net_x, 2) + power(y_coord, 2)), 2) as shot_distance,
-        round(degrees(atan2(abs(y_coord), abs(abs(x_coord) - 89.0))), 2) as shot_angle,
+        round(degrees(atan2(abs(y_coord), abs(net_x - x_coord))), 2) as shot_angle,
 
         case
             when team_id = home_team_id and away_goalie = 0 then true
@@ -104,7 +120,7 @@ final as (
         is_rush,
         is_rebound
 
-    from joined
+    from with_net
 )
 
 select * from final

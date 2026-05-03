@@ -39,6 +39,7 @@ select
     s.shot_type,
     s.x_coord,
     s.y_coord,
+    s.net_x,
     s.shot_distance,
     s.shot_angle,
     s.is_empty_net,

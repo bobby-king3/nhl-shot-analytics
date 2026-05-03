@@ -15,7 +15,7 @@ def prepare_filtered_shots(shots_df, game_log_df, strength_sel, period_sel, even
         shots_df["event_type"].isin(active_event)
     ].copy()
 
-    mask = filtered["x_coord"] < 0
+    mask = filtered["net_x"] < 0
     filtered.loc[mask, "x_coord"] = -filtered.loc[mask, "x_coord"]
     filtered.loc[mask, "y_coord"] = -filtered.loc[mask, "y_coord"]
 

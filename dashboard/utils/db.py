@@ -119,6 +119,7 @@ def get_player_shots(player_id: int, season: int):
             shot_type,
             x_coord,
             y_coord,
+            net_x,
             shot_distance,
             shot_angle,
             x_goal,
