@@ -1,13 +1,13 @@
 # Dashboard
-streamlit==1.51.0
-plotly==6.3.0
-pandas==2.3.3
-numpy==2.3.5
-matplotlib==3.10.6
+streamlit==1.56.0
+plotly==6.7.0
+pandas==3.0.2
+numpy==2.4.4
+matplotlib==3.10.9
 sportypy==1.0.0
 
 # Storage
-duckdb==1.5.1
+duckdb==1.5.2
 
 # Ingestion
 httpx==0.28.1
