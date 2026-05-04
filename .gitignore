@@ -4,6 +4,7 @@
 
 
 data/*.csv
+data/*.parquet
 
 # Python
 __pycache__/
