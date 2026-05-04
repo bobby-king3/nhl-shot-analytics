@@ -1,8 +1,4 @@
 import streamlit as st
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from dashboard.components.rink import make_rink_figure
 from dashboard.utils.db import (
