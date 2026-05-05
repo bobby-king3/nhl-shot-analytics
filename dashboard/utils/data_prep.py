@@ -61,11 +61,11 @@ def prepare_shot_type_breakdown(filtered_shots):
 def extract_clip_url(customdata):
     n = len(customdata)
     if n == 9:
-        idx = 6   # non-goal (event_type, dist, angle, xg, strength, period, clip_url, date, opp)
+        idx = 6   # non goal selection (event_type, dist, angle, xg, strength, period, clip_url, date, opp)
     elif n == 8:
-        idx = 5   # goal (dist, angle, xg, strength, period, clip_url, date, opp)
+        idx = 5   # goal selection (dist, angle, xg, strength, period, clip_url, date, opp)
     else:
-        return ""  # blocked shot (6 cols) or unknown = no clip URL
+        return "" 
     url = str(customdata[idx])
     if url not in ("", "nan", "None"):
         return url

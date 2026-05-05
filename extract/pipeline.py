@@ -26,7 +26,6 @@ def run_dbt(command):
     result = subprocess.run(
         ["dbt", command, "--profiles-dir", str(DBT_DIR), "--project-dir", str(DBT_DIR)],
         cwd=ROOT,
-        # dbt-duckdb reads motherduck_token (lowercase) from the environment
         env={**os.environ, "motherduck_token": os.environ.get("MOTHERDUCK_TOKEN", "")},
     )
     if result.returncode != 0:
@@ -34,7 +33,7 @@ def run_dbt(command):
 
 
 def main():
-    logger.info("=== NHL Shot Intelligence Pipeline ===")
+    logger.info("NHL Shot Intelligence Pipeline Starting")
 
     section("1/5  Extract games")
     run_extract_games()
@@ -53,7 +52,7 @@ def main():
     run_dbt("run")
     run_dbt("test")
 
-    logger.info("=== Pipeline complete ===")
+    logger.info("Pipeline complete")
 
 
 if __name__ == "__main__":

@@ -141,7 +141,7 @@ diff_color = primary if xg_diff >= 0 else "#e05555"
 
 team_logo_url = roster_df.iloc[0]["team_logo_url"] if not roster_df.empty else ""
 
-# ── HERO HEADER ──────────────────────────────────────────────────────────────
+# MAIN HEADER
 gp = stats.get("games_played") or 1
 gf_pg  = round(goals_for  / gp, 2) if isinstance(goals_for, (int, float)) else "—"
 ga_pg  = round(goals_ag   / gp, 2) if isinstance(goals_ag,  (int, float)) else "—"
@@ -220,10 +220,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ── MAIN CONTENT ─────────────────────────────────────────────────────────────
 st.markdown("<div style='padding-top: 28px;'>", unsafe_allow_html=True)
 
-# ── SEASON FORM + LAST 5 ─────────────────────────────────────────────────────
 form_col, games_col = st.columns([3, 2])
 
 with form_col:
@@ -339,7 +337,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── ROSTER CARD GRID ─────────────────────────────────────────────────────────
+# ROSTER CARD GRID
 SORT_OPTIONS = {"Points": "points", "Goals": "goals", "xG": "total_xg", "Position": "position", "Name": "last_name"}
 sort_label = st.selectbox("Sort roster by", options=list(SORT_OPTIONS.keys()), key="roster_sort")
 sort_col = SORT_OPTIONS[sort_label]

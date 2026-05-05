@@ -52,7 +52,6 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
     </div>
     """
 
-
 def build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, g, b, primary):
     rolling_avg = game_log_df["xg"].rolling(5, min_periods=1).mean()
     goal_games = game_log_df[game_log_df["goals"] > 0]
@@ -328,8 +327,6 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
     return fig
 
 
-
-
 def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
     xg_total = game_log_df["xg_for"] + game_log_df["xg_against"]
     xg_pct = (game_log_df["xg_for"] / xg_total.replace(0, np.nan) * 100).fillna(50)
@@ -372,8 +369,6 @@ def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
     layout = get_dark_layout(height=200, margin_l=50, margin_r=36, margin_t=10, margin_b=30)
     fig.update_layout(**layout)
     return fig
-
-
 
 def build_streak_dots_grid(game_log_df) -> str:
     dots = []
