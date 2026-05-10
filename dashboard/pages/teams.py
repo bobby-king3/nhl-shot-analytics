@@ -191,9 +191,6 @@ st.markdown(f"""
     </div>
   </div>
 
-  <!-- Divider -->
-  <div style="width:1px; height:80px; background:rgba(255,255,255,0.12); flex-shrink:0;"></div>
-
   <!-- W / L / OTL -->
   <div style="display:flex; gap:0; flex-shrink:0;">
     <div style="text-align:center; padding:0 28px; border-right:1px solid rgba(255,255,255,0.1);">
