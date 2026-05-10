@@ -160,7 +160,7 @@ st.markdown(f"""
   margin-bottom: 0;
 ">
   <!-- Logo -->
-  <div style="flex-shrink:0; background:rgba(255,255,255,0.06); border-radius:16px;
+  <div style="flex-shrink:0; background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 100 else 'rgba(255,255,255,0.06)'}; border-radius:16px;
               padding:16px; border:1px solid rgba(255,255,255,0.08);">
     <img src="{team_logo_url}" style="height:100px; width:auto; object-fit:contain;" />
   </div>
@@ -232,7 +232,7 @@ with form_col:
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
         f"background:rgba(255,200,50,0.85); vertical-align:middle; margin-right:4px;'></span>OT/SO Loss &nbsp;&nbsp;"
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
-        f"background:rgba(40,40,55,0.9); border:1.5px solid rgba(120,120,140,0.5);"
+        f"background:#4a4a5a; border:1.5px solid #8B0000;"
         f"vertical-align:middle; margin-right:4px;'></span>Loss"
         f"</div>"
     )
@@ -291,7 +291,7 @@ with form_col:
         st.plotly_chart(fig_xg, use_container_width=True, config={"displayModeBar": False})
 
 with games_col:
-    result_colors = {"W": primary, "OTL": "rgba(255,200,50,0.9)", "L": "rgba(160,60,60,0.8)"}
+    result_colors = {"W": "#4CAF50", "OTL": "rgba(255,200,50,0.9)", "L": "#e05555"}
     col_header = (
         "<div style='display:flex; align-items:center; gap:10px; padding-bottom:6px;"
         "border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:2px;'>"

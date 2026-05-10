@@ -378,7 +378,7 @@ def build_streak_dots_grid(game_log_df) -> str:
         elif row.result == "OTL":
             color, border = "rgba(255,200,50,0.85)", "rgba(255,200,50,0.85)"
         else:
-            color, border = "rgba(40,40,55,0.9)", "rgba(120,120,140,0.5)"
+            color, border = "#4a4a5a", "#8B0000"
         label = f"{row.result} {'vs' if row.is_home else 'at'} {row.opponent} · {int(row.gf)}–{int(row.ga)}"
         dots.append(
             f"<div title='{label}' style='width:12px; height:12px; border-radius:50%;"
