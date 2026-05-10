@@ -160,7 +160,7 @@ st.markdown(f"""
   margin-bottom: 0;
 ">
   <!-- Logo -->
-  <div style="flex-shrink:0; background:rgba(255,255,255,0.06); border-radius:16px;
+  <div style="flex-shrink:0; background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 100 else 'rgba(255,255,255,0.06)'}; border-radius:16px;
               padding:16px; border:1px solid rgba(255,255,255,0.08);">
     <img src="{team_logo_url}" style="height:100px; width:auto; object-fit:contain;" />
   </div>
