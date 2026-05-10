@@ -7,7 +7,7 @@ st.set_page_config(
 )
 
 pg = st.navigation([
-    st.Page("pages/teams.py", title="Teams"),
-    st.Page("pages/player_card.py", title="Players")
+    st.Page("pages/teams.py", title="Teams", url_path="teams"),
+    st.Page("pages/player_card.py", title="Players", url_path="player_card")
 ])
 pg.run()
