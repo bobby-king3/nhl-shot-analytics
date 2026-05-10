@@ -291,7 +291,7 @@ with form_col:
         st.plotly_chart(fig_xg, use_container_width=True, config={"displayModeBar": False})
 
 with games_col:
-    result_colors = {"W": primary, "OTL": "rgba(255,200,50,0.9)", "L": "rgba(160,60,60,0.8)"}
+    result_colors = {"W": "#4CAF50", "OTL": "rgba(255,200,50,0.9)", "L": "#e05555"}
     col_header = (
         "<div style='display:flex; align-items:center; gap:10px; padding-bottom:6px;"
         "border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:2px;'>"
