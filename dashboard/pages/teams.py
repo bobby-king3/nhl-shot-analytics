@@ -232,7 +232,7 @@ with form_col:
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
         f"background:rgba(255,200,50,0.85); vertical-align:middle; margin-right:4px;'></span>OT/SO Loss &nbsp;&nbsp;"
         f"<span style='display:inline-block; width:9px; height:9px; border-radius:50%;"
-        f"background:rgba(40,40,55,0.9); border:1.5px solid rgba(120,120,140,0.5);"
+        f"background:#4a4a5a; border:1.5px solid #8B0000;"
         f"vertical-align:middle; margin-right:4px;'></span>Loss"
         f"</div>"
     )
