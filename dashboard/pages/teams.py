@@ -317,7 +317,7 @@ with games_col:
                 f"<div style='display:flex; align-items:center; gap:10px; padding:9px 0;"
                 f"border-bottom:1px solid rgba(255,255,255,0.05);'>"
                 f"<div style='width:32px; font-size:13px; font-weight:800; color:{res_color};'>{row.result}</div>"
-                f"<div style='flex:1; font-size:13px; color:rgba(255,255,255,0.75);'>{home_away} {row.opponent}</div>"
+                f"<div style='flex:1; font-size:13px; color:rgba(255,255,255,0.75);'>{home_away} <a href='/?team={row.opponent}&season={selected_season}' target='_self' style='color:rgba(255,255,255,0.75); text-decoration:underline; text-underline-offset:3px;'>{row.opponent}</a></div>"
                 f"<div style='font-size:12px; font-family:monospace; color:rgba(255,255,255,0.45); width:48px; text-align:right;'>{int(row.gf)}–{int(row.ga)}</div>"
                 f"<div style='font-size:12px; font-family:monospace; color:{xgf_color}; font-weight:700; width:32px; text-align:right;'>{xgf_val}</div>"
                 f"<div style='font-size:12px; font-family:monospace; color:{xga_color}; font-weight:700; width:32px; text-align:right;'>{xga_val}</div>"

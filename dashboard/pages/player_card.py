@@ -163,6 +163,7 @@ st.markdown("""
   }
   .info-icon:hover::after { opacity: 1; }
   .info-icon:hover { background: var(--team-primary, #C8102E); color: white; }
+  .team-logo-link:hover { opacity: 0.8; border-color: rgba(255,255,255,0.35) !important; }
   div[data-testid="stRadio"] > div { gap: 1px !important; }
   div[data-testid="stRadio"] label {
     padding: 5px 8px !important;
@@ -311,12 +312,16 @@ st.markdown(f"""
       {f'<span style="font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.3px;">{bio_text}</span>' if bio_text else ''}
     </div>''' if (country_str or bio_text) else ''}
   </div>
-  <div style="flex-shrink:0; background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 100 else 'rgba(255,255,255,0.07)'};
-              border:1px solid rgba(255,255,255,0.12);
-              border-radius:12px; padding:12px 18px;
-              display:flex; align-items:center; justify-content:center;">
-    <img src="{team_logo_url}" style="height:90px; width:auto; object-fit:contain; image-rendering:high-quality;" />
-  </div>
+  <a href="/?team={team_abbrev}&season={selected_season}" target="_self" style="text-decoration:none; flex-shrink:0;">
+    <div class="team-logo-link" style="background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 100 else 'rgba(255,255,255,0.07)'};
+                border:1px solid rgba(255,255,255,0.12);
+                border-radius:12px; padding:12px 18px;
+                display:flex; align-items:center; justify-content:center;
+                transition: border-color 0.15s, opacity 0.15s;
+                cursor:pointer;">
+      <img src="{team_logo_url}" style="height:90px; width:auto; object-fit:contain; image-rendering:high-quality;" />
+    </div>
+  </a>
 </div>
 """, unsafe_allow_html=True)
 
