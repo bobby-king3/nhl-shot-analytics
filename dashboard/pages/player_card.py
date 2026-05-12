@@ -313,7 +313,7 @@ st.markdown(f"""
     </div>''' if (country_str or bio_text) else ''}
   </div>
   <a href="/?team={team_abbrev}&season={selected_season}" target="_self" style="text-decoration:none; flex-shrink:0;">
-    <div class="team-logo-link" style="background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 100 else 'rgba(255,255,255,0.07)'};
+    <div class="team-logo-link" style="background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.07)'};
                 border:1px solid rgba(255,255,255,0.12);
                 border-radius:12px; padding:12px 18px;
                 display:flex; align-items:center; justify-content:center;
