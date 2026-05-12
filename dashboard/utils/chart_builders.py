@@ -370,7 +370,7 @@ def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
     fig.update_layout(**layout)
     return fig
 
-def build_streak_dots_grid(game_log_df) -> str:
+def build_streak_dots_grid(game_log_df):
     dots = []
     for row in game_log_df.itertuples():
         if row.result == "W":
