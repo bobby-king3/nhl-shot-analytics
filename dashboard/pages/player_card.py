@@ -333,7 +333,7 @@ stat_cards = [
     ("Sh%",                f"{sh_pct}%",   "Shooting percentage — goals divided by shots on goal"),
     ("xG",                 total_xg,       "Total expected goals — sum of shot quality based on location, type, and context (MoneyPuck model)"),
     ("xG / GP",            xg_per_game,    "Expected goals per game — measures how dangerous a player's shots are on a per game basis"),
-    ("Goals Above xG (GAX)", gax_display,  "Goals above expected — positive means the player is finishing better than their shot quality predicts; negative suggests underperformance or bad luck"),
+    ("Goals Above xG (GAX)", gax_display,  "Goals above expected — positive means the player is finishing better than their shot quality predicts. Negative suggests underperforming relative to shot quality"),
 ]
 
 cards_html = "".join(
