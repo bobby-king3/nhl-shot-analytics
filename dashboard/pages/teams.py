@@ -344,7 +344,7 @@ roster_df = roster_df.sort_values(sort_col, ascending=ascending)
 cards = []
 for row in roster_df.itertuples():
     cards.append(
-        f"<a href='/player_card?player={row.player_id}' target='_self' style='text-decoration:none; color:inherit;'>"
+        f"<a href='player_card?player={row.player_id}' target='_self' style='text-decoration:none; color:inherit;'>"
         f"<div class='player-card' style='background:rgba({r},{g},{b},0.07); border:1px solid rgba({r},{g},{b},0.22);"
         f"border-radius:12px; padding:18px 12px 14px 12px; text-align:center; cursor:pointer;'>"
         f"<img src='{row.headshot_url}' style='width:72px; height:72px; border-radius:50%; object-fit:cover;"
