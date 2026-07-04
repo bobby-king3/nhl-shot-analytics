@@ -17,7 +17,7 @@ jobs:
 
       - name: Install playwright
         run: |
-          pip install playwright
+          pip install playwright==1.60.0
           playwright install --with-deps chromium
 
       - name: Visit dashboard and wake it if asleep
@@ -35,7 +35,7 @@ jobs:
               wake_button = page.get_by_text("get this app back up", exact=False)
               if wake_button.count() > 0:
                   wake_button.first.click()
-                  page.wait_for_timeout(15000)
+                  page.wait_for_selector('[data-testid="stAppViewContainer"]', timeout=90000)
 
               browser.close()
           EOF
