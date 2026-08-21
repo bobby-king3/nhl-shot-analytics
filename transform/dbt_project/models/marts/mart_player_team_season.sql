@@ -49,11 +49,6 @@ select
     row_number() over (
         partition by player_id, season
         order by shot_attempts desc, last_game_date desc
-    ) = 1                                                                   as is_primary_team,
-    string_agg(team_abbrev, '/') over (
-        partition by player_id, season
-        order by first_game_date
-        rows between unbounded preceding and unbounded following
-    )                                                                       as teams_display
+    ) = 1                                                                   as is_primary_team
 
 from stints

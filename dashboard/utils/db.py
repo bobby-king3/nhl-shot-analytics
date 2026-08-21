@@ -77,9 +77,9 @@ def get_player_stats(player_id: int, season: int):
         select
             p.full_name,
             p.position,
-            coalesce(m.primary_team_abbrev, p.current_team_abbrev)     as team_abbrev,
+            m.primary_team_abbrev as team_abbrev,
             p.headshot_url,
-            coalesce(m.primary_team_logo_url, p.current_team_logo_url) as team_logo_url,
+            m.primary_team_logo_url as team_logo_url,
             m.games_played,
             m.goals,
             m.shots_on_goal,
