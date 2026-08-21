@@ -3,11 +3,13 @@ with stg as (
 ),
 
 games as (
+    -- excludes game types 19/20 (4 Nations), credited to national teams
     select
         game_id,
         home_team_id,
         away_team_id
     from {{ ref('stg_games') }}
+    where game_type in (2, 3)
 ),
 
 mp as (
@@ -47,7 +49,7 @@ joined as (
         mp.is_rush,
         mp.is_rebound
     from parsed
-    left join games g
+    join games g
         on g.game_id = parsed.game_id
     left join mp
         on cast(substring(cast(parsed.game_id as varchar), 5) as integer) = mp.mp_game_id
