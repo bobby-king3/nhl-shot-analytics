@@ -97,6 +97,31 @@ with_player_stats as (
     left join {{ ref('stg_player_stats') }} s
         on  s.player_id = p.shooter_id
         and s.season    = p.season
+),
+
+season_teams as (
+    select
+        player_id,
+        season,
+        max(team_abbrev)    filter (where is_primary_team) as primary_team_abbrev,
+        max(team_logo_url)  filter (where is_primary_team) as primary_team_logo_url,
+        max(teams_display)                                 as teams_display,
+        max(team_count)                                    as team_count
+    from {{ ref('mart_player_team_season') }}
+    group by 1, 2
+),
+
+final as (
+    select
+        p.*,
+        t.primary_team_abbrev,
+        t.primary_team_logo_url,
+        t.teams_display,
+        t.team_count
+    from with_player_stats p
+    left join season_teams t
+        on  t.player_id = p.shooter_id
+        and t.season    = p.season
 )
 
-select * from with_player_stats
+select * from final
