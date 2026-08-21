@@ -5,7 +5,9 @@
 }}
 
 with games as (
+    -- excludes game types 19/20 (4 Nations), played by national teams
     select * from {{ ref('stg_games') }}
+    where game_type in (2, 3)
 ),
 
 shots as (

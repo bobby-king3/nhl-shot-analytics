@@ -17,10 +17,10 @@ select
     position,
     shoots_catches,
 
-    -- current team
-    team_id,
-    team_abbrev,
-    team_logo_url,
+    -- contract today; for a played season use mart_player_team_season
+    team_id       as current_team_id,
+    team_abbrev   as current_team_abbrev,
+    team_logo_url as current_team_logo_url,
 
     -- bio
     sweater_number,

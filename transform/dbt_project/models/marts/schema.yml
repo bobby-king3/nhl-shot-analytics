@@ -116,7 +116,7 @@ models:
               expression: ">= 0"
 
   - name: mart_players
-    description: Player dimension — one row per player with bio and current team details.
+    description: Player dimension — one row per player with bio and current contract team.
     columns:
       - name: player_id
         tests:
@@ -125,6 +125,38 @@ models:
       - name: full_name
         tests:
           - not_null
+
+  - name: mart_player_team_season
+    description: One row per player per season per team played for; a trade produces two rows.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [player_id, season, team_id]
+    columns:
+      - name: player_id
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: team_id
+        tests:
+          - not_null
+      - name: team_abbrev
+        tests:
+          - not_null
+      - name: is_primary_team
+        tests:
+          - not_null
+      - name: shot_attempts
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+      - name: sh_pct
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"
+              config:
+                where: "sh_pct is not null"
 
   - name: mart_team_games
     description: One row per team per game from each team's perspective (2 rows per game). Powers mart_team_season and the dashboard team game log.
