@@ -51,7 +51,7 @@ def get_leaderboard(season: int, n: int = 20):
             p.player_id,
             p.full_name,
             p.position,
-            m.teams_display as team_abbrev,
+            m.primary_team_abbrev as team_abbrev,
             p.headshot_url,
             m.primary_team_logo_url as team_logo_url,
             m.games_played,
@@ -77,7 +77,7 @@ def get_player_stats(player_id: int, season: int):
         select
             p.full_name,
             p.position,
-            coalesce(m.teams_display, p.current_team_abbrev)           as team_abbrev,
+            coalesce(m.primary_team_abbrev, p.current_team_abbrev)     as team_abbrev,
             p.headshot_url,
             coalesce(m.primary_team_logo_url, p.current_team_logo_url) as team_logo_url,
             m.games_played,
@@ -99,10 +99,7 @@ def get_player_stats(player_id: int, season: int):
             p.weight_lbs,
             p.birth_country,
             p.shoots_catches,
-            p.birth_date,
-            p.current_team_abbrev,
-            m.primary_team_abbrev,
-            coalesce(m.team_count, 1) as team_count
+            p.birth_date
         from main.mart_player_shooting m
         join main.mart_players p on p.player_id = m.shooter_id
         where m.shooter_id = ? and m.season = ?
@@ -176,22 +173,17 @@ def get_player_game_log(player_id: int, season: int):
 
 @st.cache_data(ttl=3600)
 def get_all_players(season: int):
-    """One row per player per team played for; traded players appear twice."""
     conn = connect()
     df = conn.execute("""
         select
             p.player_id,
             p.full_name,
             p.position,
-            ts.team_abbrev,
-            m.teams_display,
-            ts.shot_attempts
+            m.primary_team_abbrev as team_abbrev
         from main.mart_player_shooting m
         join main.mart_players p on p.player_id = m.shooter_id
-        join main.mart_player_team_season ts
-          on ts.player_id = m.shooter_id and ts.season = m.season
         where m.season = ?
-        order by p.last_name, ts.shot_attempts desc
+        order by p.last_name
     """, [season]).df()
     conn.close()
     return df
@@ -315,8 +307,6 @@ def get_all_team_stats(season: int):
 
 @st.cache_data(ttl=3600)
 def get_team_roster(team_abbrev: str, season: int):
-    """Stats produced for this team. Points are omitted: the NHL API only
-    reports them per season, so they cannot be split across a trade."""
     conn = connect()
     df = conn.execute("""
         select
@@ -325,25 +315,20 @@ def get_team_roster(team_abbrev: str, season: int):
             p.last_name,
             p.position,
             p.headshot_url,
-            ts.team_logo_url,
-            ts.games_played,
-            ts.goals,
-            ts.shots_on_goal,
-            ts.sh_pct,
-            round(ts.total_xg, 1)          as total_xg,
-            ts.goals_above_expected        as gax,
-            round(
-                ts.total_xg / nullif(ts.games_played, 0), 3
-            )                              as xg_per_game,
-            m.teams_display,
-            coalesce(m.team_count, 1)      as team_count
-        from main.mart_player_team_season ts
-        join main.mart_players p
-          on p.player_id = ts.player_id
-        join main.mart_player_shooting m
-          on m.shooter_id = ts.player_id and m.season = ts.season
-        where ts.team_abbrev = ? and ts.season = ?
-        order by ts.total_xg desc
+            m.primary_team_logo_url as team_logo_url,
+            m.games_played,
+            m.goals,
+            coalesce(m.assists, 0)  as assists,
+            coalesce(m.points, 0)  as points,
+            m.shots_on_goal,
+            m.sh_pct,
+            round(m.total_xg, 1) as total_xg,
+            round(m.xg_per_game, 3) as xg_per_game,
+            m.goals_above_expected  as gax
+        from main.mart_player_shooting m
+        join main.mart_players p on p.player_id = m.shooter_id
+        where m.primary_team_abbrev = ? and m.season = ?
+        order by m.total_xg desc
     """, [team_abbrev, season]).df()
     conn.close()
     return df

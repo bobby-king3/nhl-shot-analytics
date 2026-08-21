@@ -335,7 +335,7 @@ st.markdown(
 )
 
 # ROSTER CARD GRID
-SORT_OPTIONS = {"Goals": "goals", "xG": "total_xg", "Shots": "shots_on_goal", "Position": "position", "Name": "last_name"}
+SORT_OPTIONS = {"Points": "points", "Goals": "goals", "xG": "total_xg", "Position": "position", "Name": "last_name"}
 sort_label = st.selectbox("Sort roster by", options=list(SORT_OPTIONS.keys()), key="roster_sort")
 sort_col = SORT_OPTIONS[sort_label]
 ascending = sort_col in ("position", "last_name")
@@ -343,11 +343,6 @@ roster_df = roster_df.sort_values(sort_col, ascending=ascending)
 
 cards = []
 for row in roster_df.itertuples():
-    split_chip = (
-        f"<div style='font-size:9px; color:{primary}; letter-spacing:1px; margin-top:-8px; margin-bottom:8px;'>"
-        f"{row.teams_display} · split</div>"
-        if row.team_count > 1 else ""
-    )
     cards.append(
         f"<a href='player_card?player={row.player_id}' target='_self' style='text-decoration:none; color:inherit;'>"
         f"<div class='player-card' style='background:rgba({r},{g},{b},0.07); border:1px solid rgba({r},{g},{b},0.22);"
@@ -356,12 +351,11 @@ for row in roster_df.itertuples():
         f"border:2px solid rgba({r},{g},{b},0.45); margin-bottom:10px;' />"
         f"<div style='font-size:13px; font-weight:700; color:#FAFAFA; line-height:1.2; margin-bottom:3px;'>{row.full_name}</div>"
         f"<div style='font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px;'>{row.position}</div>"
-        f"{split_chip}"
         f"<div style='display:flex; justify-content:center; gap:18px; margin-bottom:14px;'>"
         f"<div><div style='font-size:22px; font-weight:900; color:{primary}; line-height:1;'>{int(row.goals)}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Goals</div></div>"
-        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.85); line-height:1;'>{int(row.shots_on_goal)}</div>"
-        f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Shots</div></div>"
+        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.85); line-height:1;'>{int(row.points)}</div>"
+        f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Points</div></div>"
         f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.5); line-height:1;'>{row.total_xg}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>xG</div></div>"
         f"</div>"

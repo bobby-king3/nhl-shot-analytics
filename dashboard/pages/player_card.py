@@ -209,10 +209,8 @@ selected_team = st.sidebar.selectbox("Team", options=teams, key="pc_team")
 players_df = get_all_players(selected_season)
 if selected_team != "All Teams":
     players_df = players_df[players_df["team_abbrev"] == selected_team]
-else:
-    players_df = players_df.drop_duplicates(subset="player_id")
 
-player_options = {row.player_id: f"{row.full_name} ({row.teams_display})" for row in players_df.itertuples()}
+player_options = {row.player_id: f"{row.full_name} ({row.team_abbrev})" for row in players_df.itertuples()}
 default_id = url_player_id if (url_player_id and url_player_id in player_options) else st.session_state.get("selected_player_id", players_df["player_id"].iloc[0])
 default_idx = list(player_options.keys()).index(default_id) if default_id in player_options else 0
 
@@ -237,8 +235,7 @@ if stats is None:
     st.warning("No data found for this player in the selected season.")
     st.stop()
 
-# stats[26] is primary_team_abbrev; stats[2] can be "NYR/LAK" after a trade
-primary, secondary = TEAM_COLORS.get(stats[26] or stats[25], DEFAULT_COLORS)
+primary, secondary = TEAM_COLORS.get(stats[2], DEFAULT_COLORS)
 r, g, b = hex_to_rgb(primary)
 
 st.markdown(f"""
@@ -265,16 +262,7 @@ st.markdown(f"""
  rebound_pctile, dist_pctile,
  goals_above_expected, gax_pctile,
  sweater_number, height_in, weight_lbs, birth_country, shoots_catches,
- birth_date, current_team_abbrev, primary_team_abbrev, team_count) = stats
-
-moved_team = (
-    current_team_abbrev
-    if selected_season == seasons[0]
-    and current_team_abbrev
-    and current_team_abbrev != primary_team_abbrev
-    else None
-)
-link_team = primary_team_abbrev or current_team_abbrev
+ birth_date) = stats
 
 
 def format_height(inches):
@@ -318,16 +306,13 @@ st.markdown(f"""
     </div>
     <div style="font-size:14px; color:rgba(255,255,255,0.5); margin-top:5px; letter-spacing:0.5px;">
       {position} · {team_abbrev} · {season_labels[selected_season]}
-      {f'''<span style="margin-left:8px; font-size:11px; font-weight:600; color:{primary};
-                       border:1px solid {primary}66; border-radius:20px; padding:2px 9px;
-                       letter-spacing:0.5px; white-space:nowrap;">now with {moved_team}</span>''' if moved_team else ''}
     </div>
     {f'''<div style="display:flex; align-items:center; gap:5px; margin-top:4px;">
       {f'<span style="font-size:14px;">{country_str}</span>' if country_str else ''}
       {f'<span style="font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.3px;">{bio_text}</span>' if bio_text else ''}
     </div>''' if (country_str or bio_text) else ''}
   </div>
-  <a href="/?team={link_team}&season={selected_season}" target="_self" style="text-decoration:none; flex-shrink:0;">
+  <a href="/?team={team_abbrev}&season={selected_season}" target="_self" style="text-decoration:none; flex-shrink:0;">
     <div class="team-logo-link" style="background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.07)'};
                 border:1px solid rgba(255,255,255,0.12);
                 border-radius:12px; padding:12px 18px;
