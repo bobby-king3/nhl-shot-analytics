@@ -24,7 +24,6 @@ The modeled shot table covers the `2023-24`, `2024-25`, and `2025-26` NHL season
 
 **MoneyPuck**
 - Shot level expected goals values
-- Rush shot and rebound shot indicators
 - Additional shot context used to enrich the NHL play by play data
 - [MoneyPuck](https://moneypuck.com/)
 
