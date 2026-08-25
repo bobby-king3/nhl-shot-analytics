@@ -43,11 +43,12 @@ The modeled shot table covers the `2023-24`, `2024-25`, and `2025-26` NHL season
 - `int_shot_events` - joins NHL events to MoneyPuck xG, parses strength state, and calculates shot metrics
 
 **Marts**
-- `mart_shot_events` - one row per shot with context, xG, postitions, and video links
+- `mart_shot_events` - one row per shot with context, xG, positions, and video links
 - `mart_player_shooting` - player season shooting metrics and percentile ranks
 - `mart_team_games` - team game results, goals, shots, xG, and opponent context
 - `mart_team_season` - team season records, scoring, xG, and shooting percentages
 - `mart_players` - player dimension for dashboard filters and profile cards
+- `mart_player_team_season` - one row per player per season per team played for, so a midseason trade produces two rows
 
 **Tests** - utilized dbt tests to ensure pipeline data quality
 - Key column `not_null`, `unique`, and `accepted_values` checks
