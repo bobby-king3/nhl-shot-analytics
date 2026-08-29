@@ -24,26 +24,6 @@ def connect() -> duckdb.DuckDBPyConnection:
     return duckdb.connect(LOCAL_DB, read_only=True)
 
 @st.cache_data(ttl=3600)
-def get_league_stats(season: int) -> dict:
-    conn = connect()
-    row = conn.execute("""
-        select
-            count(distinct game_id) as games_played,
-            round(avg(goals_per_game) * 2, 2) as avg_goals_per_game,
-            round(avg(xg_per_game) * 2, 3) as avg_xg_per_game,
-            round(avg(sh_pct), 1) as league_sh_pct
-        from main.mart_player_shooting
-        where season = ?
-    """, [season]).fetchone()
-    conn.close()
-    return {
-        "games_played":       row[0],
-        "avg_goals_per_game": row[1],
-        "avg_xg_per_game":    row[2],
-        "league_sh_pct":      row[3],
-    }
-
-@st.cache_data(ttl=3600)
 def get_leaderboard(season: int, n: int = 20):
     conn = connect()
     df = conn.execute("""
