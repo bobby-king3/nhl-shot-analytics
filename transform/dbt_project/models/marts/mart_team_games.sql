@@ -12,7 +12,8 @@ with games as (
 
 shots as (
     select * from {{ ref('mart_shot_events') }}
-    where period < 5
+    -- period 5 in a playoff game is 2OT, not a shootout
+    where not (game_type = 2 and period = 5)
 ),
 
 -- one row per team per game, from that team's perspective
@@ -92,7 +93,7 @@ select
         else 'L'
     end as result,
 
-    -- shot stats (period < 5)
+    -- shot stats (excludes shootout attempts)
     coalesce(ss.shot_attempts_for, 0) as shot_attempts_for,
     coalesce(ss.sog_for, 0) as sog_for,
     coalesce(ss.xg_for, 0) as xg_for,

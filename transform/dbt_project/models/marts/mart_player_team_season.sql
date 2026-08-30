@@ -38,7 +38,8 @@ stints as (
 
     from {{ ref('mart_shot_events') }} s
     join team_map t on t.team_id = s.team_id
-    where s.period < 5
+    -- period 5 in a playoff game is 2OT, not a shootout
+    where not (s.game_type = 2 and s.period = 5)
     group by 1, 2, 3, 4
 )
 

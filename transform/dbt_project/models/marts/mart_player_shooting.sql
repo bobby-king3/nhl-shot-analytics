@@ -7,7 +7,8 @@
 with shots as (
     select * from {{ ref('mart_shot_events') }}
     where shooter_id is not null
-    and period < 5
+    -- period 5 in a playoff game is 2OT, not a shootout
+    and not (game_type = 2 and period = 5)
 ),
 
 player_season as (

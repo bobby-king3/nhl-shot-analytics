@@ -112,7 +112,8 @@ def get_player_shots(player_id: int, season: int):
         from main.mart_shot_events
         where shooter_id = ? and season = ?
           and x_coord is not null and y_coord is not null
-          and period < 5
+          -- period 5 in a playoff game is 2OT, not a shootout
+          and not (game_type = 2 and period = 5)
     """, [player_id, season]).df()
     conn.close()
     return df
@@ -130,7 +131,8 @@ def get_player_game_log(player_id: int, season: int):
                 round(sum(coalesce(x_goal, 0)) filter (where event_type != 'blocked-shot'), 3) as xg
             from main.mart_shot_events
             where shooter_id = ? and season = ?
-              and period < 5
+              -- period 5 in a playoff game is 2OT, not a shootout
+              and not (game_type = 2 and period = 5)
             group by game_id, team_id
         )
         select
