@@ -21,6 +21,13 @@ models:
       - name: game_date
         tests:
           - not_null
+      - name: game_type
+        description: "2 = regular season, 3 = playoffs. 4 Nations games (19/20) are excluded upstream in int_shot_events."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [2, 3]
+              quote: false
       - name: period
         tests:
           - dbt_utils.expression_is_true:

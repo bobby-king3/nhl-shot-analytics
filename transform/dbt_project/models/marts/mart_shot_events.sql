@@ -26,6 +26,7 @@ select
 
     -- game context
     g.game_date,
+    s.game_type,
     s.period,
     s.time_in_period,
     s.seconds_in_period,

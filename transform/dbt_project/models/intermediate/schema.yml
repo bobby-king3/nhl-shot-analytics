@@ -13,6 +13,13 @@ models:
       - name: event_id
         tests:
           - not_null
+      - name: game_type
+        description: "2 = regular season, 3 = playoffs"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [2, 3]
+              quote: false
       - name: shooter_id
         tests:
           - not_null

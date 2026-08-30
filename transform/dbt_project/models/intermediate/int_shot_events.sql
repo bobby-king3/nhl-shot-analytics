@@ -6,6 +6,7 @@ games as (
     -- excludes game types 19/20 (4 Nations), credited to national teams
     select
         game_id,
+        game_type,
         home_team_id,
         away_team_id
     from {{ ref('stg_games') }}
@@ -43,6 +44,7 @@ parsed as (
 joined as (
     select
         parsed.*,
+        g.game_type,
         g.home_team_id,
         g.away_team_id,
         mp.x_goal,
@@ -79,6 +81,7 @@ final as (
         game_id,
         event_id,
         season,
+        game_type,
         period,
         time_in_period,
         seconds_in_period,
