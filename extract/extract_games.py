@@ -9,6 +9,19 @@ logger = logging.getLogger(__name__)
 SEASON_START_DATES = [date(2023, 10, 10), date(2024, 10, 8), date(2025, 10, 7)]
 
 
+def local_game_date(start_time_utc, venue_utc_offset):
+    """Date at the arena. Slicing startTimeUTC gives the UTC date, which rolls
+    over for any game starting at or after 00:00 UTC — 8pm ET, 5pm PT."""
+    if not start_time_utc:
+        return None
+    ts = datetime.fromisoformat(start_time_utc.replace("Z", "+00:00"))
+    if not venue_utc_offset:
+        return ts.date()
+    sign = -1 if venue_utc_offset.startswith("-") else 1
+    hours, minutes = (int(p) for p in venue_utc_offset[1:].split(":"))
+    return ts.astimezone(timezone(sign * timedelta(hours=hours, minutes=minutes))).date()
+
+
 def create_table(con):
     con.execute("""
         CREATE TABLE IF NOT EXISTS raw_games (
@@ -60,7 +73,7 @@ def fetch_all_games(con):
                     away = game.get("awayTeam", {})
                     outcome = game.get("gameOutcome", {})
                     start_time = game.get("startTimeUTC")
-                    game_date = start_time[:10] if start_time else None
+                    game_date = local_game_date(start_time, game.get("venueUTCOffset"))
 
                     rows.append((
                         gid,
