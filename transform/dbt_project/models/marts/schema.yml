@@ -154,7 +154,7 @@ models:
           - dbt_utils.expression_is_true:
               expression: "between 0 and 1"
 
-  - name: mart_team_season_by_phase
+  - name: mart_team_season
     description: Team stats per season and phase (2 = regular season, 3 = playoffs)
     tests:
       - dbt_utils.unique_combination_of_columns:

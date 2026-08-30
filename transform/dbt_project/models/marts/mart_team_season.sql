@@ -4,11 +4,10 @@
     )
 }}
 
--- Regular season only for team page headers
+-- otl, points and so_wins are regular season concepts and are null for playoffs
 
 with team_games as (
     select * from {{ ref('mart_team_games') }}
-    where game_type = 2
 )
 
 select
@@ -16,14 +15,17 @@ select
     season,
     team_abbrev,
     team_id,
+    game_type,
 
     -- record
     count(*)                                                                       as games_played,
     count(*) filter (where result = 'W')                                           as wins,
     count(*) filter (where result = 'L')                                           as losses,
-    count(*) filter (where result = 'OTL')                                         as otl,
-    2 * count(*) filter (where result = 'W')
-      + count(*) filter (where result = 'OTL')                                     as points,
+    case when game_type = 2 then count(*) filter (where result = 'OTL') end        as otl,
+    case when game_type = 2 then 2 * count(*) filter (where result = 'W')
+                               + count(*) filter (where result = 'OTL') end        as points,
+    case when game_type = 2 then count(*) filter (
+             where result = 'W' and last_period_type = 'SO') end                   as so_wins,
 
     -- totals
     sum(gf)                                                                        as goals_for,
@@ -44,11 +46,9 @@ select
     round(sum(xg_for) - sum(xg_against), 1)                                        as xg_differential,
 
     -- shooting / save percentages
-    -- sh_pct_sog = goals / shots-on-goal
-    -- sh_pct = goals / all shot attempts (includes missed and blocked)
     round(sum(gf) * 100.0 / nullif(sum(shot_attempts_for), 0), 1)              as sh_pct,
     round(sum(gf) * 100.0 / nullif(sum(sog_for), 0),           1)              as sh_pct_sog,
     round((1.0 - sum(ga) * 1.0 / nullif(sum(sog_against), 0)) * 100, 1)        as sv_pct
 
 from team_games
-group by season, team_abbrev, team_id
+group by season, team_abbrev, team_id, game_type
