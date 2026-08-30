@@ -3,6 +3,11 @@ name: Daily NHL Data Pipeline
 on:
   schedule:
     - cron: '0 7 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'transform/**'
+      - 'extract/**'
   workflow_dispatch:
 
 jobs:

@@ -20,7 +20,7 @@ def connect() -> duckdb.DuckDBPyConnection:
     token = token or os.environ.get("MOTHERDUCK_TOKEN")
     if token:
         os.environ.setdefault("motherduck_token", token)
-        return duckdb.connect("md:nhl", read_only=True)
+        return duckdb.connect(f"md:{os.environ.get('NHL_DB', 'nhl')}", read_only=True)
     return duckdb.connect(LOCAL_DB, read_only=True)
 
 @st.cache_data(ttl=3600)

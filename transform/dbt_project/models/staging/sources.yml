@@ -3,6 +3,7 @@ version: 2
 sources:
   - name: nhl
     description: Raw tables loaded by the extract scripts
+    database: nhl
     schema: main
     tables:
       - name: raw_play_by_play

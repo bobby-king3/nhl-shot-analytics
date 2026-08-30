@@ -1,7 +1,13 @@
 nhl_shot_intelligence:
-  target: prod
+  # dev is the default so a bare `dbt run` cannot reach production.
+  # Building prod requires an explicit --target prod.
+  target: dev
   outputs:
+    dev:
+      type: duckdb
+      path: md:nhl_dev
+      threads: 4
     prod:
       type: duckdb
-      path: "md:nhl"
+      path: md:nhl
       threads: 4

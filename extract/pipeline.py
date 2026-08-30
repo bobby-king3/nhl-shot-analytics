@@ -24,7 +24,8 @@ def section(label):
 
 def run_dbt(command):
     result = subprocess.run(
-        ["dbt", command, "--profiles-dir", str(DBT_DIR), "--project-dir", str(DBT_DIR)],
+        ["dbt", command, "--target", "prod",
+         "--profiles-dir", str(DBT_DIR), "--project-dir", str(DBT_DIR)],
         cwd=ROOT,
         env={**os.environ, "motherduck_token": os.environ.get("MOTHERDUCK_TOKEN", "")},
     )
