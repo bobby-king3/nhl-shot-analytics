@@ -94,6 +94,66 @@ models:
           - dbt_utils.expression_is_true:
               expression: "between 0 and 1"
 
+  - name: mart_player_shooting_by_phase
+    description: Shooting stats and percentile ranks per player, season and phase (2 = regular season, 3 = playoffs)
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [shooter_id, season, game_type]
+    columns:
+      - name: shooter_id
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: game_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: [2, 3]
+              quote: false
+      - name: shot_attempts
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 20"
+      - name: phase_pool_size
+        tests:
+          - not_null
+      - name: sh_pct
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 100"
+              config:
+                where: "sh_pct is not null"
+      - name: goals_per_game_pctile
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+      - name: xg_per_game_pctile
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+      - name: sh_pct_pctile
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+      - name: avg_xg_per_shot_pctile
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+      - name: rebound_shot_pct_pctile
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+      - name: shot_distance_pctile
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+      - name: goals_above_expected_pctile
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "between 0 and 1"
+
   - name: mart_team_season
     description: "Season level team stats: w/l record, goals/xG for and against, shooting %, save %"
     tests:
