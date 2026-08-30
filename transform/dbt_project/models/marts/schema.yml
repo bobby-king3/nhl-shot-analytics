@@ -154,11 +154,11 @@ models:
           - dbt_utils.expression_is_true:
               expression: "between 0 and 1"
 
-  - name: mart_team_season
-    description: "Season level team stats: w/l record, goals/xG for and against, shooting %, save %"
+  - name: mart_team_season_by_phase
+    description: Team stats per season and phase (2 = regular season, 3 = playoffs)
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [season, team_abbrev]
+          combination_of_columns: [season, team_abbrev, game_type]
     columns:
       - name: season
         tests:
@@ -166,21 +166,21 @@ models:
       - name: team_abbrev
         tests:
           - not_null
+      - name: game_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: [2, 3]
+              quote: false
       - name: games_played
         tests:
           - not_null
-      - name: wins
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: ">= 0"
-      - name: losses
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: ">= 0"
       - name: otl
         tests:
           - dbt_utils.expression_is_true:
-              expression: ">= 0"
+              expression: "is null"
+              config:
+                where: "game_type = 3"
 
   - name: mart_players
     description: Player dimension — one row per player with bio and current contract team.

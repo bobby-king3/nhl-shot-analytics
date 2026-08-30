@@ -14,7 +14,7 @@ exposures:
       - ref('mart_player_shooting')
       - ref('mart_shot_events')
       - ref('mart_team_games')
-      - ref('mart_team_season')
+      - ref('mart_team_season_by_phase')
 
     owner:
       name: Bobby King
