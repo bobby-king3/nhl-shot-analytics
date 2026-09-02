@@ -296,8 +296,9 @@ st.markdown(f"""
   overflow: visible;
 ">
   <div style="flex-shrink:0; width:100px; height:100px; border-radius:50%;
-              border: 3px solid {primary};
-              box-shadow: 0 0 18px {primary}88;
+              border: 2px solid {primary};
+              box-shadow: 0 0 0 3px rgba(255,255,255,0.06),
+                          0 6px 16px rgba(0,0,0,0.35);
               overflow:hidden; background:#111;
               margin-top: 16px;">
     <img src="{headshot_url}" style="width:100%; height:110%; object-fit:cover; object-position: center 20%;" />
