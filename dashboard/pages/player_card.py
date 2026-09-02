@@ -21,7 +21,7 @@ from dashboard.utils.chart_builders import (
     build_game_log_chart, build_shot_map, build_percentile_wheel, build_shot_type_breakdown,
     build_season_stats_table
 )
-from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS, COUNTRY_FLAGS
+from dashboard.utils.colors import TEAM_COLORS, TEAM_NAMES, DEFAULT_COLORS, COUNTRY_FLAGS
 
 st.markdown("""
 <style>
@@ -163,7 +163,8 @@ st.markdown("""
   }
   .info-icon:hover::after { opacity: 1; }
   .info-icon:hover { background: var(--team-primary, #C8102E); color: white; }
-  .team-logo-link:hover { opacity: 0.8; border-color: rgba(255,255,255,0.35) !important; }
+  .team-logo-link:hover { border-color: var(--team-primary) !important; transform: translateY(-2px); }
+  .team-page-link:focus-visible .team-logo-link { outline: 2px solid var(--team-primary); outline-offset: 3px; }
   div[data-testid="stRadio"] > div { gap: 1px !important; }
   div[data-testid="stRadio"] label {
     padding: 5px 8px !important;
@@ -280,6 +281,7 @@ dob_str = f"DOB: {birth_date.strftime('%m/%d/%Y')}" if birth_date else None
 
 text_parts = [x for x in [number_str, height_str, weight_str, dob_str, hand_str] if x]
 bio_text   = " · ".join(text_parts)
+team_name  = TEAM_NAMES.get(team_abbrev, team_abbrev)
 
 st.markdown(f"""
 <div style="
@@ -294,8 +296,9 @@ st.markdown(f"""
   overflow: visible;
 ">
   <div style="flex-shrink:0; width:100px; height:100px; border-radius:50%;
-              border: 3px solid {primary};
-              box-shadow: 0 0 18px {primary}88;
+              border: 2px solid {primary};
+              box-shadow: 0 0 0 3px rgba(255,255,255,0.06),
+                          0 6px 16px rgba(0,0,0,0.35);
               overflow:hidden; background:#111;
               margin-top: 16px;">
     <img src="{headshot_url}" style="width:100%; height:110%; object-fit:cover; object-position: center 20%;" />
@@ -312,14 +315,20 @@ st.markdown(f"""
       {f'<span style="font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.3px;">{bio_text}</span>' if bio_text else ''}
     </div>''' if (country_str or bio_text) else ''}
   </div>
-  <a href="/?team={team_abbrev}&season={selected_season}" target="_self" style="text-decoration:none; flex-shrink:0;">
+  <a href="/?team={team_abbrev}&season={selected_season}" target="_self"
+     class="team-page-link" aria-label="View {team_name} team page"
+     style="text-decoration:none; flex-shrink:0;">
     <div class="team-logo-link" style="background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.07)'};
                 border:1px solid rgba(255,255,255,0.12);
                 border-radius:12px; padding:12px 18px;
-                display:flex; align-items:center; justify-content:center;
-                transition: border-color 0.15s, opacity 0.15s;
+                display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+                transition: border-color 0.15s, transform 0.15s;
                 cursor:pointer;">
-      <img src="{team_logo_url}" style="height:90px; width:auto; object-fit:contain; image-rendering:high-quality;" />
+      <img src="{team_logo_url}" alt="{team_name} logo"
+           style="height:90px; width:auto; object-fit:contain; image-rendering:high-quality;" />
+      <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.75); white-space:nowrap;">
+        View {team_name} →
+      </div>
     </div>
   </a>
 </div>
