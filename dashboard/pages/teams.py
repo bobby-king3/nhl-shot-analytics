@@ -45,6 +45,33 @@ st.markdown("""
     border-radius: 8px;
     padding: 18px;
   }
+  .roster-section {
+    background: transparent;
+    border: 0;
+    padding: 0 0 8px;
+  }
+  .player-card-chevron {
+    position: absolute;
+    top: 9px;
+    right: 11px;
+    color: rgba(255,255,255,0.22);
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 1;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .player-position {
+    display: inline-block;
+    flex-shrink: 0;
+    padding: 1px 5px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+    color: rgba(255,255,255,0.46);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+  }
   @media (max-width: 1400px) {
     .team-record {
       width: 100%;
@@ -102,8 +129,12 @@ st.markdown(f"""
   }}
   .player-card:hover {{
     transform: translateY(-1px);
-    background: var(--surface-raised) !important;
+    background: #1d2430 !important;
     border-color: rgba({r},{g},{b},0.45) !important;
+  }}
+  .player-card:hover .player-card-chevron {{
+    color: {primary};
+    transform: translateX(2px);
   }}
 </style>
 """, unsafe_allow_html=True)
@@ -361,14 +392,18 @@ roster_df = roster_df.sort_values(sort_col, ascending=ascending)
 cards = []
 for row in roster_df.itertuples():
     cards.append(
-        f"<a href='player_card?player={row.player_id}' target='_self' style='text-decoration:none; color:inherit;'>"
-        f"<div class='player-card' style='background:#141922; border:1px solid rgba(255,255,255,0.08);"
-        f"border-radius:8px; padding:18px 12px 14px 12px; text-align:center; cursor:pointer;'>"
-        f"<img src='{row.headshot_url}' style='width:72px; height:72px; border-radius:50%; object-fit:cover;"
-        f"border:1px solid rgba(255,255,255,0.12); margin-bottom:10px;' />"
-        f"<div style='font-size:13px; font-weight:700; color:#FAFAFA; line-height:1.2; margin-bottom:3px;'>{row.full_name}</div>"
-        f"<div style='font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px;'>{row.position}</div>"
-        f"<div style='display:flex; justify-content:center; gap:18px; margin-bottom:14px;'>"
+        f"<a href='player_card?player={row.player_id}' target='_self' style='display:block; height:100%; text-decoration:none; color:inherit;'>"
+        f"<div class='player-card' style='position:relative; height:100%; box-sizing:border-box; background:#191f29;"
+        f"border:1px solid rgba(255,255,255,0.09); border-top:2px solid rgba({r},{g},{b},0.5);"
+        f"border-radius:7px; padding:18px 12px 17px; text-align:center; cursor:pointer;'>"
+        f"<span class='player-card-chevron' aria-hidden='true'>›</span>"
+        f"<img src='{row.headshot_url}' style='width:80px; height:80px; border-radius:50%; object-fit:cover;"
+        f"border:1px solid rgba(255,255,255,0.12); margin-bottom:11px;' />"
+        f"<div style='display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; min-height:34px; margin-bottom:12px;'>"
+        f"<span style='font-size:13px; font-weight:700; color:#FAFAFA; line-height:1.25;'>{row.full_name}</span>"
+        f"<span class='player-position'>{row.position}</span>"
+        f"</div>"
+        f"<div style='display:flex; justify-content:center; gap:18px;'>"
         f"<div><div style='font-size:22px; font-weight:700; color:{primary}; line-height:1;'>{int(row.goals)}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Goals</div></div>"
         f"<div><div style='font-size:22px; font-weight:700; color:rgba(255,255,255,0.85); line-height:1;'>{int(row.points)}</div>"
@@ -376,13 +411,11 @@ for row in roster_df.itertuples():
         f"<div><div style='font-size:22px; font-weight:700; color:rgba(255,255,255,0.5); line-height:1;'>{row.total_xg}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>xG</div></div>"
         f"</div>"
-        f"<div style='font-size:11px; font-weight:600; color:{primary}; border-top:1px solid rgba(255,255,255,0.08);"
-        f"padding:8px 0 0;'>View Player Card →</div>"
         f"</div></a>"
     )
 
 st.markdown(
-    "<div class='chart-card'><div class='section-header'>Roster</div>"
+    "<div class='roster-section'><div class='section-header'>Roster</div>"
     "<div style='display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:14px;'>"
     + "".join(cards)
     + "</div></div>",
