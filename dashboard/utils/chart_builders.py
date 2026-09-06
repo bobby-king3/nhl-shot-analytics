@@ -10,12 +10,12 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
         s = str(int(s))
         return f"{s[:4]}-{s[4:]}"
 
-    def fmt_gax(v):
+    def fmt_goal_diff(v):
         if v is None:
             return "—"
         return f"+{v}" if v > 0 else str(v)
 
-    header_cols = ["Season", "GP", "G", "SOG", "Sh%", "xG", "xG/GP", "GAX"]
+    header_cols = ["Season", "GP", "G", "A", "PTS", "SOG", "Sh%", "xG", "xG/GP", "G − xG"]
     header_html = "".join(
         f"<th style='padding:6px 12px; color:rgba(255,255,255,0.45); font-size:11px; "
         f"text-transform:uppercase; letter-spacing:1px; font-weight:600; "
@@ -32,8 +32,9 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
         color = "rgba(255,255,255,0.95)" if is_current else "rgba(255,255,255,0.6)"
         cells = [
             fmt_season(row["season"]), int(row["games_played"]), int(row["goals"]),
-            int(row["shots_on_goal"]), f"{row['sh_pct']}%", row["total_xg"],
-            row["xg_per_game"], fmt_gax(row["goals_above_expected"]),
+            int(row["assists"]), int(row["points"]), int(row["shots_on_goal"]),
+            f"{row['sh_pct']}%", row["total_xg"], row["xg_per_game"],
+            fmt_goal_diff(row["goals_above_expected"]),
         ]
         cells_html = "".join(
             f"<td style='padding:7px 12px; text-align:{'left' if i == 0 else 'right'}; "
@@ -45,10 +46,12 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
     return f"""
     <div class="chart-card" style="margin-bottom:8px;">
       <div class="section-header">Season Stats</div>
-      <table style="width:100%; border-collapse:collapse;">
-        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">{header_html}</tr></thead>
-        <tbody>{rows_html}</tbody>
-      </table>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; min-width:760px; border-collapse:collapse;">
+          <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">{header_html}</tr></thead>
+          <tbody>{rows_html}</tbody>
+        </table>
+      </div>
     </div>
     """
 
@@ -389,5 +392,4 @@ def build_streak_dots_grid(game_log_df):
         + "".join(dots)
         + "</div>"
     )
-
 

@@ -210,6 +210,8 @@ def get_player_season_log(player_id: int):
             season,
             games_played,
             goals,
+            coalesce(assists, 0) as assists,
+            coalesce(points, 0) as points,
             shots_on_goal,
             sh_pct,
             round(total_xg, 1) as total_xg,
