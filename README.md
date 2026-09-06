@@ -63,7 +63,7 @@ The Streamlit app has two main views:
 
 **Team View**
 
-![Team dashboard](assets/screenshots/team_dashboard.png)
+![Team dashboard](assets/screenshots/team_dashboard_1.png)(assets/screenshots/team_dashboard_2.png) 
 
 **Player Overview**
 
