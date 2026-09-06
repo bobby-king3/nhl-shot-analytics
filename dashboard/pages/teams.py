@@ -45,6 +45,47 @@ st.markdown("""
     border-radius: 8px;
     padding: 18px;
   }
+  .team-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .team-metric {
+    min-width: 0;
+    padding: 0 20px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .team-metric:first-child {
+    padding-left: 0;
+  }
+  .team-metric:last-child {
+    padding-right: 0;
+    border-right: 0;
+  }
+  .team-metric-value {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+  .team-metric-label {
+    display: flex;
+    align-items: center;
+    min-height: 22px;
+    color: rgba(255,255,255,0.45);
+    font-size: 13px;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .team-metric-context {
+    margin-top: 1px;
+    color: rgba(255,255,255,0.35);
+    font-size: 11px;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
   .roster-section {
     background: transparent;
     border: 0;
@@ -219,22 +260,26 @@ st.markdown(f"""
                 letter-spacing:-0.5px;">{team_name}</div>
     <div style="font-size:13px; color:rgba(255,255,255,0.4); margin-top:4px;
                 letter-spacing:0.8px;">{season_labels[selected_season]}</div>
-    <div style="display:flex; gap:0; margin-top:14px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
-      <div style="padding-right:20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:{primary};">{goals_for} <span style="font-size:13px; color:rgba(255,255,255,0.5); font-weight:400;">GF</span>{rank_badge(gf_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">{xg_for} xG · {gf_pg}/GP</div>
+    <div class="team-metrics">
+      <div class="team-metric">
+        <div class="team-metric-value" style="color:{primary};">{goals_for}</div>
+        <div class="team-metric-label">GF{rank_badge(gf_rank)}</div>
+        <div class="team-metric-context">{xg_for} xG · {gf_pg}/GP</div>
       </div>
-      <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.65);">{goals_ag} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">GA</span>{rank_badge(ga_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">{xg_ag} xG · {ga_pg}/GP</div>
+      <div class="team-metric">
+        <div class="team-metric-value" style="color:rgba(255,255,255,0.65);">{goals_ag}</div>
+        <div class="team-metric-label">GA{rank_badge(ga_rank)}</div>
+        <div class="team-metric-context">{xg_ag} xG · {ga_pg}/GP</div>
       </div>
-      <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:{diff_color};">{diff_sign}{xg_diff} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">xG Diff</span>{rank_badge(xg_diff_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">Expected Goals Differential</div>
+      <div class="team-metric">
+        <div class="team-metric-value" style="color:{diff_color};">{diff_sign}{xg_diff}</div>
+        <div class="team-metric-label">xG Diff{rank_badge(xg_diff_rank)}</div>
+        <div class="team-metric-context">xGF − xGA</div>
       </div>
-      <div style="padding-left:20px;">
-        <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.75);">{sh_pct}% <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">Sh%</span>{rank_badge(sh_pct_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">Goals/Shots on Goal</div>
+      <div class="team-metric">
+        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{sh_pct}%</div>
+        <div class="team-metric-label">Sh%{rank_badge(sh_pct_rank)}</div>
+        <div class="team-metric-context">Goals/Shots on Goal</div>
       </div>
     </div>
   </div>
