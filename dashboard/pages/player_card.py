@@ -543,7 +543,7 @@ with wheel_col:
     st.markdown('<div class="chart-card chart-card--compact"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
     st.caption("Min. 50 shot attempts")
 
-    categories = ["Goals/GP", "xG/GP", "Avg xG/Shot", "Shot Distance", "GAX", "Sh%"]
+    categories = ["Goals/GP", "xG/GP", "Avg xG/Shot", "Shot Distance", "G − xG", "Sh%"]
     values = [
         round((goals_pctile or 0) * 100),
         round((xg_pg_pctile or 0) * 100),
