@@ -69,17 +69,17 @@ The Streamlit app has two main views:
 
 **Player Overview**
 
-![Player dashboard](assets/screenshots/player_dashboard.png)
+![Player dashboard](assets/screenshots/player_dashboard_1.png)
 
 **Shot Map and Percentiles**
 
-![Player shot map and percentile ranks](assets/screenshots/player_shot_map.png)
+![Player shot map and percentile ranks](assets/screenshots/player_dashboard_2.png)
 
 **Goal Video Playback**
 
 Goal events on the shot map can be selected to watch the available NHL highlight video inline.
 
-![Video player for goals](assets/screenshots/player_shot_video.png)
+![Video player for goals](assets/screenshots/player_dashboard_3.png)
 
 ## Future Work
 
