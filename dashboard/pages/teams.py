@@ -10,7 +10,11 @@ from dashboard.utils.db import (
     get_team_stats, get_team_game_log, get_team_roster, get_all_team_stats,
 )
 from dashboard.utils.styling import hex_to_rgb
-from dashboard.utils.chart_builders import build_streak_dots_grid, build_team_rolling_xgpct
+from dashboard.utils.chart_builders import (
+    build_streak_dots_grid,
+    build_team_rank_profile,
+    build_team_rolling_xgpct,
+)
 from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS, TEAM_NAMES
 
 st.markdown("""
@@ -204,6 +208,26 @@ gf_rank      = get_rank("gf_per_game")
 ga_rank      = get_rank("ga_per_game", ascending=True)
 xg_diff_rank = get_rank("xg_diff_per_game")
 sh_pct_rank  = get_rank("sh_pct_sog")
+
+team_profile_categories = ["Points %", "GF/GP", "xGF/GP", "xG%", "xGA/GP", "GA/GP"]
+team_profile_ranks = [
+    get_rank("points_pct"),
+    get_rank("gf_per_game"),
+    get_rank("xg_for_per_game"),
+    get_rank("xg_pct"),
+    get_rank("xg_against_per_game", ascending=True),
+    get_rank("ga_per_game", ascending=True),
+]
+
+selected_team_stats = all_stats_df[all_stats_df["team_abbrev"] == selected_team].iloc[0]
+team_profile_actuals = [
+    f"{selected_team_stats['points_pct']:.1f}%",
+    f"{selected_team_stats['gf_per_game']:.2f}",
+    f"{selected_team_stats['xg_for_per_game']:.2f}",
+    f"{selected_team_stats['xg_pct']:.1f}%",
+    f"{selected_team_stats['xg_against_per_game']:.2f}",
+    f"{selected_team_stats['ga_per_game']:.2f}",
+]
 
 def rank_badge(rank):
     if not isinstance(rank, int):
@@ -427,6 +451,28 @@ with games_col:
         + "</div>",
         unsafe_allow_html=True,
     )
+
+st.markdown(
+    "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
+    "<div class='section-header'>League Rank Profile</div></div>",
+    unsafe_allow_html=True,
+)
+st.caption(
+    f"{season_labels[selected_season]} regular season · lower defensive rates earn better ranks"
+)
+
+team_rank_profile = build_team_rank_profile(
+    team_profile_categories,
+    team_profile_ranks,
+    team_profile_actuals,
+    primary,
+    n_teams,
+)
+st.plotly_chart(
+    team_rank_profile,
+    use_container_width=True,
+    config={"displayModeBar": False},
+)
 
 st.markdown(
     "<div style='height:1px; background:rgba(255,255,255,0.06); margin-top:28px; margin-bottom:28px;'></div>",

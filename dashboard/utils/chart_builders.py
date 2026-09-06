@@ -292,6 +292,106 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
     return wheel
 
 
+def build_team_rank_profile(categories, ranks, actuals, primary, n_teams):
+    def ordinal(value):
+        if 10 < value % 100 < 14:
+            suffix = "th"
+        else:
+            suffix = {1: "st", 2: "nd", 3: "rd"}.get(value % 10, "th")
+        return f"{value}{suffix}"
+
+    y_positions = list(range(len(categories)))
+    rank_labels = [ordinal(rank) for rank in ranks]
+    text_positions = [
+        "middle left" if rank >= n_teams - 3 else "middle right"
+        for rank in ranks
+    ]
+
+    fig = go.Figure()
+
+    for y in y_positions:
+        fig.add_shape(
+            type="line",
+            x0=1,
+            x1=n_teams,
+            y0=y,
+            y1=y,
+            line=dict(color="rgba(255,255,255,0.13)", width=2),
+            layer="below",
+        )
+
+    tick_values = [
+        1,
+        round(n_teams / 4),
+        round(n_teams / 2),
+        round(3 * n_teams / 4),
+        n_teams,
+    ]
+    for x in [1, round(n_teams / 2), n_teams]:
+        fig.add_shape(
+            type="line",
+            x0=x,
+            x1=x,
+            y0=-0.45,
+            y1=len(categories) - 0.55,
+            line=dict(color="rgba(255,255,255,0.08)", width=1),
+            layer="below",
+        )
+
+    customdata = np.column_stack((categories, actuals))
+    fig.add_trace(go.Scatter(
+        x=ranks,
+        y=y_positions,
+        mode="markers+text",
+        marker=dict(
+            size=13,
+            color=primary,
+            line=dict(color="white", width=1.5),
+        ),
+        text=rank_labels,
+        textposition=text_positions,
+        textfont=dict(color="white", size=12, family="monospace"),
+        customdata=customdata,
+        hovertemplate=(
+            "<b>%{customdata[0]}</b><br>"
+            "Value: %{customdata[1]}<br>"
+            f"League rank: %{{text}} of {n_teams}<extra></extra>"
+        ),
+        showlegend=False,
+    ))
+
+    fig.update_xaxes(
+        range=[0.5, n_teams + 0.5],
+        tickmode="array",
+        tickvals=tick_values,
+        ticktext=[ordinal(value) for value in tick_values],
+        title=dict(
+            text="League rank · 1st is best",
+            font=dict(color="rgba(255,255,255,0.4)", size=11),
+        ),
+        showgrid=False,
+        zeroline=False,
+        fixedrange=True,
+        tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
+    )
+    fig.update_yaxes(
+        tickmode="array",
+        tickvals=y_positions,
+        ticktext=categories,
+        autorange="reversed",
+        showgrid=False,
+        zeroline=False,
+        fixedrange=True,
+        tickfont=dict(color="rgba(255,255,255,0.65)", size=11),
+    )
+    fig.update_layout(
+        **get_dark_layout(height=300, margin_l=82, margin_r=54, margin_t=8, margin_b=44),
+        hoverlabel=dict(bgcolor="rgba(15,20,35,0.97)", font_color="white"),
+    )
+
+    return fig
+
+
 def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
     bar_fill_colors = []
     bar_line_colors = []
@@ -392,4 +492,3 @@ def build_streak_dots_grid(game_log_df):
         + "".join(dots)
         + "</div>"
     )
-

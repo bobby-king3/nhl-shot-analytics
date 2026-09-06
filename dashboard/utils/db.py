@@ -293,10 +293,12 @@ def get_all_team_stats(season: int):
         select
             team_abbrev,
             games_played,
+            round(points * 100.0 / nullif(games_played * 2, 0), 1) as points_pct,
             gf_per_game,
             ga_per_game,
             xg_for_per_game,
             xg_against_per_game,
+            round(xg_for * 100.0 / nullif(xg_for + xg_against, 0), 1) as xg_pct,
             xg_diff_per_game,
             sh_pct,
             sh_pct_sog,
