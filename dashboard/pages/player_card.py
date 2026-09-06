@@ -391,7 +391,7 @@ stat_cards = [
     ("Sh%",        f"{sh_pct}%",  "Goals divided by shots on goal."),
     ("xG",         total_xg,      "Estimated goal probability of each shot, summed across all shots."),
     ("xG/GP",      xg_per_game,   "Total expected goals divided by games played."),
-    ("Goals − xG", gax_display,   "Goals minus expected goals, also called GAX. Positive values mean the player scored more goals than expected from their shot quality."),
+    ("Goals − xG", gax_display,   "Goals minus expected goals (GAX). Positive values mean the player scored more goals than expected from their shot quality."),
 ]
 
 def build_stat_card(label, value, tooltip, align_start=False):
