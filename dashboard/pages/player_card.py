@@ -52,6 +52,12 @@ st.markdown("""
     font-weight: 700;
     color: #FAFAFA;
   }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
   .metric-info {
     appearance: none;
     position: absolute;
@@ -214,6 +220,11 @@ st.markdown("""
     color: rgba(255,255,255,0.95) !important;
     font-weight: 600 !important;
   }
+  @media (max-width: 1100px) {
+    .stat-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
 </style>
 """, unsafe_allow_html=True)
 
@@ -285,7 +296,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 (full_name, position, team_abbrev, headshot_url, team_logo_url,
- games_played, goals, shots_on_goal, sh_pct, total_xg, xg_per_game,
+ games_played, goals, assists, points, shots_on_goal, sh_pct, total_xg, xg_per_game,
  goals_pctile, sh_pctile, avg_xg_pctile, xg_pg_pctile,
  rebound_pctile, dist_pctile,
  goals_above_expected, gax_pctile,
@@ -368,11 +379,13 @@ gax_display = f"+{goals_above_expected}" if goals_above_expected and goals_above
 
 stat_cards = [
     ("Goals",      goals,         "Total goals scored, excluding shootouts."),
+    ("Assists",    assists,       "Primary and secondary assists credited on goals."),
+    ("PTS",        points,        "Goals plus assists."),
     ("SOG",        shots_on_goal, "Shots that resulted in a goal or required a save."),
     ("Sh%",        f"{sh_pct}%",  "Goals divided by shots on goal."),
     ("xG",         total_xg,      "Estimated goal probability of each shot, summed across all shots."),
     ("xG/GP",      xg_per_game,   "Total expected goals divided by games played."),
-    ("Goals − xG", gax_display,   "Goals minus expected goals. Positive values mean the player scored more goals than expected from their shot quality."),
+    ("Goals − xG", gax_display,   "Goals minus expected goals, also called GAX. Positive values mean the player scored more goals than expected from their shot quality."),
 ]
 
 def build_stat_card(label, value, tooltip, align_start=False):
@@ -394,7 +407,7 @@ cards_html = "".join(
     for index, card in enumerate(stat_cards)
 )
 st.markdown(
-    f"<div style='display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; width:100%;'>{cards_html}</div>",
+    f"<div class='stat-grid'>{cards_html}</div>",
     unsafe_allow_html=True,
 )
 

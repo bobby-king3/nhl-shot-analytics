@@ -82,6 +82,8 @@ def get_player_stats(player_id: int, season: int):
             m.primary_team_logo_url as team_logo_url,
             m.games_played,
             m.goals,
+            coalesce(m.assists, 0) as assists,
+            coalesce(m.points, 0) as points,
             m.shots_on_goal,
             m.sh_pct,
             round(m.total_xg, 1) as total_xg,
