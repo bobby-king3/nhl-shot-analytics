@@ -52,50 +52,68 @@ st.markdown("""
     font-weight: 700;
     color: #FAFAFA;
   }
-  .stat-card::before {
-    content: "i";
+  .metric-info {
+    appearance: none;
     position: absolute;
     top: 6px;
     right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 14px;
     height: 14px;
+    margin: 0;
+    padding: 0;
+    border: 0;
     border-radius: 50%;
     background: rgba(255,255,255,0.15);
     color: rgba(255,255,255,0.5);
     font-size: 9px;
     font-weight: 700;
-    font-style: italic;
-    font-family: serif;
+    font-style: normal;
+    font-family: inherit;
     line-height: 14px;
     text-align: center;
+    cursor: help;
     transition: background 0.15s, color 0.15s;
   }
-  .stat-card:hover::before {
+  .metric-info:hover,
+  .metric-info:focus-visible {
     background: var(--team-primary, #C8102E);
     color: white;
+    outline: none;
   }
-  .stat-card::after {
-    content: attr(data-tooltip);
+  .metric-tooltip {
     position: absolute;
     bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
+    right: -2px;
+    width: 220px;
     background: rgba(15,20,35,0.97);
     border: 1px solid rgba(255,255,255,0.15);
     color: rgba(255,255,255,0.85);
     padding: 7px 11px;
     border-radius: 6px;
     font-size: 11px;
+    font-weight: 400;
+    font-style: normal;
+    font-family: sans-serif;
     line-height: 1.4;
     white-space: normal;
-    width: 200px;
+    text-align: left;
     z-index: 9999;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s;
+    visibility: hidden;
+    transition: opacity 0.15s, visibility 0.15s;
   }
-  .stat-card:hover::after {
+  .metric-info:hover .metric-tooltip,
+  .metric-info:focus-visible .metric-tooltip {
     opacity: 1;
+    visibility: visible;
+  }
+  .metric-info--start .metric-tooltip {
+    right: auto;
+    left: -120px;
   }
   .section-header {
     display: flex;
@@ -282,15 +300,22 @@ def format_height(inches):
 
 number_str  = f"#{sweater_number}" if sweater_number else None
 height_str  = format_height(height_in)
-weight_str  = f"{weight_lbs} lbs" if weight_lbs else None
+weight_str  = f"{weight_lbs} lb" if weight_lbs else None
 country_str = COUNTRY_FLAGS.get(birth_country, birth_country) if birth_country else None
-hand_str    = f"Shoots {shoots_catches}" if shoots_catches else None
+hand_str    = {"L": "Shoots Left", "R": "Shoots Right"}.get(shoots_catches, f"Shoots {shoots_catches}" if shoots_catches else None)
 
-dob_str = f"DOB: {birth_date.strftime('%m/%d/%Y')}" if birth_date else None
+born_str = None
+if birth_date:
+    born_date = birth_date.strftime("%b %d, %Y").replace(" 0", " ")
+    born_str = f"Born {born_date}"
 
-text_parts = [x for x in [number_str, height_str, weight_str, dob_str, hand_str] if x]
-bio_text   = " · ".join(text_parts)
 team_name  = TEAM_NAMES.get(team_abbrev, team_abbrev)
+identity_text = " · ".join(
+    x for x in [position, number_str, team_abbrev, season_labels[selected_season]] if x
+)
+bio_text = " · ".join(
+    x for x in [height_str, weight_str, hand_str, born_str, country_str] if x
+)
 
 st.markdown(f"""
 <div style="
@@ -308,8 +333,7 @@ st.markdown(f"""
   <div style="flex-shrink:0; width:100px; height:100px; border-radius:50%;
               border: 2px solid {primary};
               box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-              overflow:hidden; background:#111;
-              margin-top: 16px;">
+              overflow:hidden; background:#111;">
     <img src="{headshot_url}" style="width:100%; height:110%; object-fit:cover; object-position: center 20%;" />
   </div>
   <div style="flex:1; min-width:0;">
@@ -317,26 +341,23 @@ st.markdown(f"""
       {full_name}
     </div>
     <div style="font-size:14px; color:rgba(255,255,255,0.5); margin-top:5px; letter-spacing:0.5px;">
-      {position} · {team_abbrev} · {season_labels[selected_season]}
+      {identity_text}
     </div>
-    {f'''<div style="display:flex; align-items:center; gap:5px; margin-top:4px;">
-      {f'<span style="font-size:14px;">{country_str}</span>' if country_str else ''}
-      {f'<span style="font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.3px;">{bio_text}</span>' if bio_text else ''}
-    </div>''' if (country_str or bio_text) else ''}
+    {f'<div style="font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.2px; margin-top:4px;">{bio_text}</div>' if bio_text else ''}
   </div>
   <a href="/?team={team_abbrev}&season={selected_season}" target="_self"
      class="team-page-link" aria-label="View {team_name} team page"
      style="text-decoration:none; flex-shrink:0;">
     <div class="team-logo-link" style="background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.07)'};
                 border:1px solid rgba(255,255,255,0.12);
-                border-radius:8px; padding:12px 18px;
+                border-radius:8px; padding:10px 14px;
                 display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
                 transition: border-color 0.15s, transform 0.15s;
                 cursor:pointer;">
       <img src="{team_logo_url}" alt="{team_name} logo"
-           style="height:90px; width:auto; object-fit:contain; image-rendering:high-quality;" />
-      <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.75); white-space:nowrap;">
-        View {team_name} →
+           style="height:72px; width:auto; object-fit:contain; image-rendering:high-quality;" />
+      <div style="font-size:10px; font-weight:700; color:rgba(255,255,255,0.7); white-space:nowrap;">
+        Team page →
       </div>
     </div>
   </a>
@@ -346,17 +367,31 @@ st.markdown(f"""
 gax_display = f"+{goals_above_expected}" if goals_above_expected and goals_above_expected > 0 else str(goals_above_expected)
 
 stat_cards = [
-    ("Goals",              goals,          "Total goals scored (excludes shootout)"),
-    ("SOG",                shots_on_goal,  "Shots on goal — shots that required a save or resulted in a goal"),
-    ("Sh%",                f"{sh_pct}%",   "Shooting percentage — goals divided by shots on goal"),
-    ("xG",                 total_xg,       "Total expected goals — sum of shot quality based on location, type, and context (MoneyPuck model)"),
-    ("xG / GP",            xg_per_game,    "Expected goals per game — measures how dangerous a player's shots are on a per game basis"),
-    ("Goals Above xG (GAX)", gax_display,  "Goals above expected — positive means the player is finishing better than their shot quality predicts. Negative suggests underperforming relative to shot quality"),
+    ("Goals",      goals,         "Total goals scored, excluding shootouts."),
+    ("SOG",        shots_on_goal, "Shots that resulted in a goal or required a save."),
+    ("Sh%",        f"{sh_pct}%",  "Goals divided by shots on goal."),
+    ("xG",         total_xg,      "Estimated goal probability of each shot, summed across all shots."),
+    ("xG/GP",      xg_per_game,   "Total expected goals divided by games played."),
+    ("Goals − xG", gax_display,   "Goals minus expected goals. Positive values mean the player scored more goals than expected from their shot quality."),
 ]
 
+def build_stat_card(label, value, tooltip, align_start=False):
+    info_html = ""
+    if tooltip:
+        info_class = "metric-info metric-info--start" if align_start else "metric-info"
+        info_html = (
+            f'<button type="button" class="{info_class}" aria-label="{label}: {tooltip}">i'
+            f'<span class="metric-tooltip" role="tooltip">{tooltip}</span>'
+            f'</button>'
+        )
+    return (
+        f'<div class="stat-card">{info_html}'
+        f'<div class="label">{label}</div><div class="value">{value}</div></div>'
+    )
+
 cards_html = "".join(
-    f'<div class="stat-card" data-tooltip="{tooltip}"><div class="label">{label}</div><div class="value">{value}</div></div>'
-    for label, value, tooltip in stat_cards
+    build_stat_card(*card, align_start=(index == 0))
+    for index, card in enumerate(stat_cards)
 )
 st.markdown(
     f"<div style='display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; width:100%;'>{cards_html}</div>",
