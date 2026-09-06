@@ -165,11 +165,6 @@ st.markdown(f"""
 <style>
   :root {{
     --team-primary: {primary};
-    --team-primary-faint: rgba({r},{g},{b},0.08);
-    --team-primary-border: rgba({r},{g},{b},0.3);
-    --surface: #141922;
-    --surface-raised: #191f29;
-    --border-subtle: rgba(255,255,255,0.08);
   }}
   [data-testid="stSidebar"] {{
     background: #10141b;
@@ -196,13 +191,13 @@ roster_df   = get_team_roster(selected_team, selected_season)
 
 all_stats_df = get_all_team_stats(selected_season).copy()
 n_teams = len(all_stats_df)
+selected_team_stats_df = all_stats_df[all_stats_df["team_abbrev"] == selected_team]
 
 def get_rank(col, ascending=False):
     ranked = all_stats_df[col].rank(ascending=ascending, method="min")
-    row = all_stats_df[all_stats_df["team_abbrev"] == selected_team]
-    if row.empty:
+    if selected_team_stats_df.empty:
         return "—"
-    return int(ranked[row.index[0]])
+    return int(ranked[selected_team_stats_df.index[0]])
 
 gf_rank      = get_rank("gf_per_game")
 ga_rank      = get_rank("ga_per_game", ascending=True)
@@ -210,24 +205,27 @@ xg_diff_rank = get_rank("xg_diff_per_game")
 sh_pct_rank  = get_rank("sh_pct_sog")
 
 team_profile_categories = ["Points %", "GF/GP", "xGF/GP", "xG%", "xGA/GP", "GA/GP"]
-team_profile_ranks = [
-    get_rank("points_pct"),
-    get_rank("gf_per_game"),
-    get_rank("xg_for_per_game"),
-    get_rank("xg_pct"),
-    get_rank("xg_against_per_game", ascending=True),
-    get_rank("ga_per_game", ascending=True),
-]
+team_profile_ranks = []
+team_profile_actuals = []
+if not selected_team_stats_df.empty:
+    team_profile_ranks = [
+        get_rank("points_pct"),
+        get_rank("gf_per_game"),
+        get_rank("xg_for_per_game"),
+        get_rank("xg_pct"),
+        get_rank("xg_against_per_game", ascending=True),
+        get_rank("ga_per_game", ascending=True),
+    ]
 
-selected_team_stats = all_stats_df[all_stats_df["team_abbrev"] == selected_team].iloc[0]
-team_profile_actuals = [
-    f"{selected_team_stats['points_pct']:.1f}%",
-    f"{selected_team_stats['gf_per_game']:.2f}",
-    f"{selected_team_stats['xg_for_per_game']:.2f}",
-    f"{selected_team_stats['xg_pct']:.1f}%",
-    f"{selected_team_stats['xg_against_per_game']:.2f}",
-    f"{selected_team_stats['ga_per_game']:.2f}",
-]
+    selected_team_stats = selected_team_stats_df.iloc[0]
+    team_profile_actuals = [
+        f"{selected_team_stats['points_pct']:.1f}%",
+        f"{selected_team_stats['gf_per_game']:.2f}",
+        f"{selected_team_stats['xg_for_per_game']:.2f}",
+        f"{selected_team_stats['xg_pct']:.1f}%",
+        f"{selected_team_stats['xg_against_per_game']:.2f}",
+        f"{selected_team_stats['ga_per_game']:.2f}",
+    ]
 
 def rank_badge(rank):
     if not isinstance(rank, int):
@@ -452,24 +450,27 @@ with games_col:
         unsafe_allow_html=True,
     )
 
-st.markdown(
-    "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
-    "<div class='section-header'>League Ranks</div></div>",
-    unsafe_allow_html=True,
-)
+if selected_team_stats_df.empty:
+    st.info("League ranks are unavailable for this team and season.")
+else:
+    st.markdown(
+        "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
+        "<div class='section-header'>League Ranks</div></div>",
+        unsafe_allow_html=True,
+    )
 
-team_rank_profile = build_team_rank_profile(
-    team_profile_categories,
-    team_profile_ranks,
-    team_profile_actuals,
-    primary,
-    n_teams,
-)
-st.plotly_chart(
-    team_rank_profile,
-    use_container_width=True,
-    config={"displayModeBar": False},
-)
+    team_rank_profile = build_team_rank_profile(
+        team_profile_categories,
+        team_profile_ranks,
+        team_profile_actuals,
+        primary,
+        n_teams,
+    )
+    st.plotly_chart(
+        team_rank_profile,
+        use_container_width=True,
+        config={"displayModeBar": False},
+    )
 
 st.markdown(
     "<div style='height:1px; background:rgba(255,255,255,0.06); margin-top:28px; margin-bottom:28px;'></div>",

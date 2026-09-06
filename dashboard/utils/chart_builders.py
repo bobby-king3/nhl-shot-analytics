@@ -13,7 +13,11 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
     def fmt_goal_diff(v):
         if v is None:
             return "—"
-        return f"+{v}" if v > 0 else str(v)
+        if v > 0:
+            return f"+{v}"
+        if v < 0:
+            return f"−{abs(v)}"
+        return str(v)
 
     header_cols = ["Season", "GP", "G", "A", "PTS", "SOG", "Sh%", "xG", "xG/GP", "G − xG"]
     header_html = "".join(

@@ -285,10 +285,6 @@ st.markdown(f"""
   :root {{
     --team-primary: {primary};
     --team-primary-faint: rgba({r},{g},{b},0.08);
-    --team-primary-border: rgba({r},{g},{b},0.3);
-    --surface: #141922;
-    --surface-raised: #191f29;
-    --border-subtle: rgba(255,255,255,0.08);
   }}
   [data-testid="stSidebar"] {{
     background: #10141b;
