@@ -365,7 +365,7 @@ st.markdown(f"""
   <a href="/?team={team_abbrev}&season={selected_season}" target="_self"
      class="team-page-link" aria-label="View {team_name} team page"
      style="text-decoration:none; flex-shrink:0;">
-    <div class="team-logo-link" style="background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.07)'};
+    <div class="team-logo-link" style="background:rgba(255,255,255,0.07);
                 border:1px solid rgba(255,255,255,0.12);
                 border-radius:8px; padding:10px 14px;
                 display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
