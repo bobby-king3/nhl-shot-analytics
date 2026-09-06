@@ -145,6 +145,12 @@ st.markdown("""
     border-radius: 8px;
     padding: 18px;
   }
+  .chart-card--compact {
+    padding: 12px 16px;
+  }
+  .chart-card--compact .section-header {
+    margin-bottom: 0;
+  }
   .info-icon {
     display: inline-flex;
     align-items: center;
@@ -493,7 +499,7 @@ selected_shot_type = st.session_state.get("selected_shot_type")
 map_goals_df, map_blocked_df, map_nongoals_df = apply_shot_type_filter(goals_df, blocked_df, nongoals_df, selected_shot_type)
 
 st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
-st.markdown('<div class="chart-card"><div class="section-header">Game Log</div>', unsafe_allow_html=True)
+st.markdown('<div class="chart-card chart-card--compact"><div class="section-header">Game Log</div>', unsafe_allow_html=True)
 
 fig_log = build_game_log_chart(game_log_df, selected_game_ids, game_filter_active, r, g, b, primary)
 st.plotly_chart(fig_log, use_container_width=True, on_select="rerun", key="game_log_chart")
@@ -506,7 +512,7 @@ map_col, wheel_col = st.columns([2, 2])
 with map_col:
     header_suffix = f" · {selected_shot_type} only" if selected_shot_type else ""
     st.markdown(
-        f'<div class="chart-card"><div class="section-header">'
+        f'<div class="chart-card chart-card--compact"><div class="section-header">'
         f'Shot Map — {len(filtered_shots):,} shots · {len(goals_df)} goals{header_suffix}'
         f'<span class="info-icon" data-tooltip="Click any shot for details · goals include highlight video · double-click to reset">i</span>'
         f'</div>',
@@ -534,7 +540,7 @@ with map_col:
             st.session_state["shot_selected"] = False
 
 with wheel_col:
-    st.markdown('<div class="chart-card"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-card chart-card--compact"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
     st.caption("Min. 50 shot attempts")
 
     categories = ["Goals/GP", "xG/GP", "Avg xG/Shot", "Shot Distance", "GAX", "Sh%"]
@@ -577,7 +583,7 @@ st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
 highlight_col, breakdown_col = st.columns([2, 2])
 
 with highlight_col:
-    st.markdown('<div class="chart-card"><div class="section-header">Goal Highlight</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-card chart-card--compact"><div class="section-header">Goal Highlight</div>', unsafe_allow_html=True)
 
     goal_clips = (
         shots_df[
@@ -661,7 +667,7 @@ with highlight_col:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with breakdown_col:
-    st.markdown('<div class="chart-card"><div class="section-header">Shot Type Breakdown</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-card chart-card--compact"><div class="section-header">Shot Type Breakdown</div>', unsafe_allow_html=True)
 
     type_df = prepare_shot_type_breakdown(filtered_shots)
     fig_types = build_shot_type_breakdown(type_df, selected_shot_type, r, g, b)
