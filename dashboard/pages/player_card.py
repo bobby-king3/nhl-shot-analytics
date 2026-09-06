@@ -360,7 +360,7 @@ st.markdown(f"""
     <div style="font-size:14px; color:rgba(255,255,255,0.5); margin-top:5px; letter-spacing:0.5px;">
       {identity_text}
     </div>
-    {f'<div style="font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.2px; margin-top:4px;">{bio_text}</div>' if bio_text else ''}
+    {f'<div style="font-size:12px; color:rgba(255,255,255,0.45); letter-spacing:0.2px; margin-top:4px;">{bio_text}</div>' if bio_text else ''}
   </div>
   <a href="/?team={team_abbrev}&season={selected_season}" target="_self"
      class="team-page-link" aria-label="View {team_name} team page"
