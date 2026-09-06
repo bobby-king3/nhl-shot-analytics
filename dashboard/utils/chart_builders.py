@@ -365,10 +365,6 @@ def build_team_rank_profile(categories, ranks, actuals, primary, n_teams):
         tickmode="array",
         tickvals=tick_values,
         ticktext=[ordinal(value) for value in tick_values],
-        title=dict(
-            text="League rank · 1st is best",
-            font=dict(color="rgba(255,255,255,0.4)", size=11),
-        ),
         showgrid=False,
         zeroline=False,
         fixedrange=True,

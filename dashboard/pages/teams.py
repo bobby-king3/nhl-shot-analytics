@@ -454,11 +454,8 @@ with games_col:
 
 st.markdown(
     "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
-    "<div class='section-header'>League Rank Profile</div></div>",
+    "<div class='section-header'>League Ranks</div></div>",
     unsafe_allow_html=True,
-)
-st.caption(
-    f"{season_labels[selected_season]} regular season · lower defensive rates earn better ranks"
 )
 
 team_rank_profile = build_team_rank_profile(
