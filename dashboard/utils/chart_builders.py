@@ -10,12 +10,16 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
         s = str(int(s))
         return f"{s[:4]}-{s[4:]}"
 
-    def fmt_gax(v):
+    def fmt_goal_diff(v):
         if v is None:
             return "—"
-        return f"+{v}" if v > 0 else str(v)
+        if v > 0:
+            return f"+{v}"
+        if v < 0:
+            return f"−{abs(v)}"
+        return str(v)
 
-    header_cols = ["Season", "GP", "G", "SOG", "Sh%", "xG", "xG/GP", "GAX"]
+    header_cols = ["Season", "GP", "G", "A", "PTS", "SOG", "Sh%", "xG", "xG/GP", "G − xG"]
     header_html = "".join(
         f"<th style='padding:6px 12px; color:rgba(255,255,255,0.45); font-size:11px; "
         f"text-transform:uppercase; letter-spacing:1px; font-weight:600; "
@@ -32,8 +36,9 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
         color = "rgba(255,255,255,0.95)" if is_current else "rgba(255,255,255,0.6)"
         cells = [
             fmt_season(row["season"]), int(row["games_played"]), int(row["goals"]),
-            int(row["shots_on_goal"]), f"{row['sh_pct']}%", row["total_xg"],
-            row["xg_per_game"], fmt_gax(row["goals_above_expected"]),
+            int(row["assists"]), int(row["points"]), int(row["shots_on_goal"]),
+            f"{row['sh_pct']}%", row["total_xg"], row["xg_per_game"],
+            fmt_goal_diff(row["goals_above_expected"]),
         ]
         cells_html = "".join(
             f"<td style='padding:7px 12px; text-align:{'left' if i == 0 else 'right'}; "
@@ -45,10 +50,12 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
     return f"""
     <div class="chart-card" style="margin-bottom:8px;">
       <div class="section-header">Season Stats</div>
-      <table style="width:100%; border-collapse:collapse;">
-        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">{header_html}</tr></thead>
-        <tbody>{rows_html}</tbody>
-      </table>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; min-width:760px; border-collapse:collapse;">
+          <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">{header_html}</tr></thead>
+          <tbody>{rows_html}</tbody>
+        </table>
+      </div>
     </div>
     """
 
@@ -289,6 +296,102 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
     return wheel
 
 
+def build_team_rank_profile(categories, ranks, actuals, primary, n_teams):
+    def ordinal(value):
+        if 10 < value % 100 < 14:
+            suffix = "th"
+        else:
+            suffix = {1: "st", 2: "nd", 3: "rd"}.get(value % 10, "th")
+        return f"{value}{suffix}"
+
+    y_positions = list(range(len(categories)))
+    rank_labels = [ordinal(rank) for rank in ranks]
+    text_positions = [
+        "middle left" if rank >= n_teams - 3 else "middle right"
+        for rank in ranks
+    ]
+
+    fig = go.Figure()
+
+    for y in y_positions:
+        fig.add_shape(
+            type="line",
+            x0=1,
+            x1=n_teams,
+            y0=y,
+            y1=y,
+            line=dict(color="rgba(255,255,255,0.13)", width=2),
+            layer="below",
+        )
+
+    tick_values = [
+        1,
+        round(n_teams / 4),
+        round(n_teams / 2),
+        round(3 * n_teams / 4),
+        n_teams,
+    ]
+    for x in [1, round(n_teams / 2), n_teams]:
+        fig.add_shape(
+            type="line",
+            x0=x,
+            x1=x,
+            y0=-0.45,
+            y1=len(categories) - 0.55,
+            line=dict(color="rgba(255,255,255,0.08)", width=1),
+            layer="below",
+        )
+
+    customdata = np.column_stack((categories, actuals))
+    fig.add_trace(go.Scatter(
+        x=ranks,
+        y=y_positions,
+        mode="markers+text",
+        marker=dict(
+            size=13,
+            color=primary,
+            line=dict(color="white", width=1.5),
+        ),
+        text=rank_labels,
+        textposition=text_positions,
+        textfont=dict(color="white", size=12, family="monospace"),
+        customdata=customdata,
+        hovertemplate=(
+            "<b>%{customdata[0]}</b><br>"
+            "Value: %{customdata[1]}<br>"
+            f"League rank: %{{text}} of {n_teams}<extra></extra>"
+        ),
+        showlegend=False,
+    ))
+
+    fig.update_xaxes(
+        range=[0.5, n_teams + 0.5],
+        tickmode="array",
+        tickvals=tick_values,
+        ticktext=[ordinal(value) for value in tick_values],
+        showgrid=False,
+        zeroline=False,
+        fixedrange=True,
+        tickfont=dict(color="rgba(255,255,255,0.4)", size=10),
+    )
+    fig.update_yaxes(
+        tickmode="array",
+        tickvals=y_positions,
+        ticktext=categories,
+        autorange="reversed",
+        showgrid=False,
+        zeroline=False,
+        fixedrange=True,
+        tickfont=dict(color="rgba(255,255,255,0.65)", size=11),
+    )
+    fig.update_layout(
+        **get_dark_layout(height=300, margin_l=82, margin_r=54, margin_t=8, margin_b=44),
+        hoverlabel=dict(bgcolor="rgba(15,20,35,0.97)", font_color="white"),
+    )
+
+    return fig
+
+
 def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
     bar_fill_colors = []
     bar_line_colors = []
@@ -389,5 +492,3 @@ def build_streak_dots_grid(game_log_df):
         + "".join(dots)
         + "</div>"
     )
-
-

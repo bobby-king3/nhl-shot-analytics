@@ -10,7 +10,11 @@ from dashboard.utils.db import (
     get_team_stats, get_team_game_log, get_team_roster, get_all_team_stats,
 )
 from dashboard.utils.styling import hex_to_rgb
-from dashboard.utils.chart_builders import build_streak_dots_grid, build_team_rolling_xgpct
+from dashboard.utils.chart_builders import (
+    build_streak_dots_grid,
+    build_team_rank_profile,
+    build_team_rolling_xgpct,
+)
 from dashboard.utils.colors import TEAM_COLORS, DEFAULT_COLORS, TEAM_NAMES
 
 st.markdown("""
@@ -22,21 +26,109 @@ st.markdown("""
     max-width: 100% !important;
   }
   .section-header {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 12px;
-    font-weight: 700;
-    background: linear-gradient(90deg, var(--team-primary, #C8102E), rgba(255,255,255,0.6));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    letter-spacing: 0.4px;
+    margin-bottom: 14px;
+    font-weight: 650;
+    color: rgba(255,255,255,0.88);
+  }
+  .section-header::before {
+    content: "";
+    display: block;
+    width: 3px;
+    height: 14px;
+    border-radius: 1px;
+    background: var(--team-primary, #C8102E);
   }
   .chart-card {
-    background: linear-gradient(160deg, var(--team-primary-faint, rgba(200,16,46,0.06)) 0%, rgba(13,27,53,0.6) 100%);
-    border: 1px solid var(--team-primary-border, rgba(200,16,46,0.25));
-    border-radius: 12px;
-    padding: 16px;
+    background: #141922;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .chart-card--compact {
+    padding: 12px 16px;
+  }
+  .chart-card--compact .section-header {
+    margin-bottom: 0;
+  }
+  .team-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .team-metric {
+    min-width: 0;
+    padding: 0 20px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .team-metric:first-child {
+    padding-left: 0;
+  }
+  .team-metric:last-child {
+    padding-right: 0;
+    border-right: 0;
+  }
+  .team-metric-value {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+  .team-metric-label {
+    display: flex;
+    align-items: center;
+    min-height: 22px;
+    color: rgba(255,255,255,0.45);
+    font-size: 13px;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .team-metric-context {
+    margin-top: 1px;
+    color: rgba(255,255,255,0.35);
+    font-size: 11px;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+  .roster-section {
+    background: transparent;
+    border: 0;
+    padding: 0 0 8px;
+  }
+  .player-card-chevron {
+    position: absolute;
+    top: 9px;
+    right: 11px;
+    color: rgba(255,255,255,0.22);
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 1;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .player-position {
+    display: inline-block;
+    flex-shrink: 0;
+    padding: 1px 5px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+    color: rgba(255,255,255,0.46);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+  }
+  @media (max-width: 1400px) {
+    .team-record {
+      width: 100%;
+      justify-content: flex-end;
+      padding-top: 8px;
+    }
   }
 </style>
 """, unsafe_allow_html=True)
@@ -66,27 +158,29 @@ selected_team = st.sidebar.selectbox(
 st.query_params["team"]   = selected_team
 st.query_params["season"] = str(selected_season)
 
-primary, secondary = TEAM_COLORS.get(selected_team, DEFAULT_COLORS)
+primary, _secondary = TEAM_COLORS.get(selected_team, DEFAULT_COLORS)
 r, g, b = hex_to_rgb(primary)
 
 st.markdown(f"""
 <style>
   :root {{
     --team-primary: {primary};
-    --team-primary-faint: rgba({r},{g},{b},0.08);
-    --team-primary-border: rgba({r},{g},{b},0.3);
   }}
   [data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, rgba({r},{g},{b},0.18) 0%, #0E1117 60%);
-    border-right: 1px solid rgba({r},{g},{b},0.3);
+    background: #10141b;
+    border-right: 1px solid rgba(255,255,255,0.08);
   }}
   .player-card {{
     transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   }}
   .player-card:hover {{
-    transform: translateY(-3px);
-    background: rgba({r},{g},{b},0.15) !important;
-    border-color: rgba({r},{g},{b},0.55) !important;
+    transform: translateY(-1px);
+    background: #1d2430 !important;
+    border-color: rgba({r},{g},{b},0.45) !important;
+  }}
+  .player-card:hover .player-card-chevron {{
+    color: {primary};
+    transform: translateX(2px);
   }}
 </style>
 """, unsafe_allow_html=True)
@@ -97,18 +191,41 @@ roster_df   = get_team_roster(selected_team, selected_season)
 
 all_stats_df = get_all_team_stats(selected_season).copy()
 n_teams = len(all_stats_df)
+selected_team_stats_df = all_stats_df[all_stats_df["team_abbrev"] == selected_team]
 
 def get_rank(col, ascending=False):
     ranked = all_stats_df[col].rank(ascending=ascending, method="min")
-    row = all_stats_df[all_stats_df["team_abbrev"] == selected_team]
-    if row.empty:
+    if selected_team_stats_df.empty:
         return "—"
-    return int(ranked[row.index[0]])
+    return int(ranked[selected_team_stats_df.index[0]])
 
 gf_rank      = get_rank("gf_per_game")
 ga_rank      = get_rank("ga_per_game", ascending=True)
 xg_diff_rank = get_rank("xg_diff_per_game")
 sh_pct_rank  = get_rank("sh_pct_sog")
+
+team_profile_categories = ["Points %", "GF/GP", "xGF/GP", "xG%", "xGA/GP", "GA/GP"]
+team_profile_ranks = []
+team_profile_actuals = []
+if not selected_team_stats_df.empty:
+    team_profile_ranks = [
+        get_rank("points_pct"),
+        get_rank("gf_per_game"),
+        get_rank("xg_for_per_game"),
+        get_rank("xg_pct"),
+        get_rank("xg_against_per_game", ascending=True),
+        get_rank("ga_per_game", ascending=True),
+    ]
+
+    selected_team_stats = selected_team_stats_df.iloc[0]
+    team_profile_actuals = [
+        f"{selected_team_stats['points_pct']:.1f}%",
+        f"{selected_team_stats['gf_per_game']:.2f}",
+        f"{selected_team_stats['xg_for_per_game']:.2f}",
+        f"{selected_team_stats['xg_pct']:.1f}%",
+        f"{selected_team_stats['xg_against_per_game']:.2f}",
+        f"{selected_team_stats['ga_per_game']:.2f}",
+    ]
 
 def rank_badge(rank):
     if not isinstance(rank, int):
@@ -147,9 +264,9 @@ gf_pg  = round(goals_for  / gp, 2) if isinstance(goals_for, (int, float)) else "
 ga_pg  = round(goals_ag   / gp, 2) if isinstance(goals_ag,  (int, float)) else "—"
 
 st.markdown(f"""
-<div style="
-  background: linear-gradient(135deg, #0A0E1A 0%, rgba({r},{g},{b},0.25) 50%, {secondary}99 100%);
-  border-bottom: 3px solid {primary};
+<div class="team-hero" style="
+  background: linear-gradient(90deg, #11151d 0%, rgba({r},{g},{b},0.10) 100%);
+  border-bottom: 2px solid {primary};
   padding: 24px calc(20px + 1.5rem) 20px calc(20px + 1.5rem);
   margin-left: -1.5rem;
   margin-right: -1.5rem;
@@ -160,56 +277,60 @@ st.markdown(f"""
   margin-bottom: 0;
 ">
   <!-- Logo -->
-  <div style="flex-shrink:0; background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.06)'}; border-radius:16px;
+  <div style="flex-shrink:0; background:{'rgba(255,255,255,0.22)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.04)'}; border-radius:8px;
               padding:16px; border:1px solid rgba(255,255,255,0.08);">
     <img src="{team_logo_url}" style="height:100px; width:auto; object-fit:contain;" />
   </div>
 
   <!-- Name + season + key stats -->
-  <div style="flex:1; min-width:0;">
-    <div style="font-size:42px; font-weight:900; color:#FAFAFA; line-height:1.05;
-                letter-spacing:-1px;">{team_name}</div>
+  <div class="team-identity" style="flex:1; min-width:0;">
+    <div style="font-size:36px; font-weight:700; color:#FAFAFA; line-height:1.1;
+                letter-spacing:-0.5px;">{team_name}</div>
     <div style="font-size:13px; color:rgba(255,255,255,0.4); margin-top:4px;
-                letter-spacing:2px; text-transform:uppercase;">{season_labels[selected_season]}</div>
-    <div style="display:flex; gap:0; margin-top:14px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
-      <div style="padding-right:20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:{primary};">{goals_for} <span style="font-size:13px; color:rgba(255,255,255,0.5); font-weight:400;">GF</span>{rank_badge(gf_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">{xg_for} xG · {gf_pg}/GP</div>
+                letter-spacing:0.8px;">{season_labels[selected_season]}</div>
+    <div class="team-metrics">
+      <div class="team-metric">
+        <div class="team-metric-value" style="color:{primary};">{goals_for}</div>
+        <div class="team-metric-label">GF{rank_badge(gf_rank)}</div>
+        <div class="team-metric-context">{xg_for} xG · {gf_pg}/GP</div>
       </div>
-      <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.65);">{goals_ag} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">GA</span>{rank_badge(ga_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">{xg_ag} xG · {ga_pg}/GP</div>
+      <div class="team-metric">
+        <div class="team-metric-value" style="color:rgba(255,255,255,0.65);">{goals_ag}</div>
+        <div class="team-metric-label">GA{rank_badge(ga_rank)}</div>
+        <div class="team-metric-context">{xg_ag} xG · {ga_pg}/GP</div>
       </div>
-      <div style="padding:0 20px; border-right:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:18px; font-weight:800; color:{diff_color};">{diff_sign}{xg_diff} <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">xG Diff</span>{rank_badge(xg_diff_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">Expected Goals Differential</div>
+      <div class="team-metric">
+        <div class="team-metric-value" style="color:{diff_color};">{diff_sign}{xg_diff}</div>
+        <div class="team-metric-label">xG Diff{rank_badge(xg_diff_rank)}</div>
+        <div class="team-metric-context">xGF − xGA</div>
       </div>
-      <div style="padding-left:20px;">
-        <div style="font-size:18px; font-weight:800; color:rgba(255,255,255,0.75);">{sh_pct}% <span style="font-size:13px; color:rgba(255,255,255,0.4); font-weight:400;">Sh%</span>{rank_badge(sh_pct_rank)}</div>
-        <div style="font-size:11px; color:rgba(255,255,255,0.35); margin-top:1px;">Goals/Shots on Goal</div>
+      <div class="team-metric">
+        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{sh_pct}%</div>
+        <div class="team-metric-label">Sh%{rank_badge(sh_pct_rank)}</div>
+        <div class="team-metric-context">Goals/Shots on Goal</div>
       </div>
     </div>
   </div>
 
   <!-- W / L / OTL -->
-  <div style="display:flex; gap:0; flex-shrink:0;">
+  <div class="team-record" style="display:flex; gap:0; flex-shrink:0;">
     <div style="text-align:center; padding:0 28px; border-right:1px solid rgba(255,255,255,0.1);">
-      <div style="font-size:56px; font-weight:900; color:{primary}; line-height:1;">{wins}</div>
+      <div style="font-size:44px; font-weight:700; color:{primary}; line-height:1;">{wins}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">Wins</div>
     </div>
     <div style="text-align:center; padding:0 28px; border-right:1px solid rgba(255,255,255,0.1);">
-      <div style="font-size:56px; font-weight:900; color:rgba(255,255,255,0.45); line-height:1;">{losses}</div>
+      <div style="font-size:44px; font-weight:700; color:rgba(255,255,255,0.55); line-height:1;">{losses}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">Losses</div>
     </div>
     <div style="text-align:center; padding:0 28px; border-right:1px solid rgba(255,255,255,0.1);">
-      <div style="font-size:56px; font-weight:900; color:rgba(255,255,255,0.25); line-height:1;">{otl}</div>
+      <div style="font-size:44px; font-weight:700; color:rgba(255,255,255,0.4); line-height:1;">{otl}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">OTL</div>
     </div>
     <div style="text-align:center; padding:0 28px;">
-      <div style="font-size:56px; font-weight:900; color:{primary}; line-height:1;">{points}</div>
+      <div style="font-size:44px; font-weight:700; color:{primary}; line-height:1;">{points}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">PTS</div>
     </div>
@@ -281,7 +402,7 @@ with form_col:
 
         fig_xg = build_team_rolling_xgpct(game_log_df, r, g, b, primary)
         st.markdown(
-            "<div class='chart-card' style='margin-top:14px;'>"
+            "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
             "<div class='section-header'>Rolling xG% (10-game avg)</div>",
             unsafe_allow_html=True,
         )
@@ -329,6 +450,28 @@ with games_col:
         unsafe_allow_html=True,
     )
 
+if selected_team_stats_df.empty:
+    st.info("League ranks are unavailable for this team and season.")
+else:
+    st.markdown(
+        "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
+        "<div class='section-header'>League Ranks</div></div>",
+        unsafe_allow_html=True,
+    )
+
+    team_rank_profile = build_team_rank_profile(
+        team_profile_categories,
+        team_profile_ranks,
+        team_profile_actuals,
+        primary,
+        n_teams,
+    )
+    st.plotly_chart(
+        team_rank_profile,
+        use_container_width=True,
+        config={"displayModeBar": False},
+    )
+
 st.markdown(
     "<div style='height:1px; background:rgba(255,255,255,0.06); margin-top:28px; margin-bottom:28px;'></div>",
     unsafe_allow_html=True,
@@ -344,28 +487,30 @@ roster_df = roster_df.sort_values(sort_col, ascending=ascending)
 cards = []
 for row in roster_df.itertuples():
     cards.append(
-        f"<a href='player_card?player={row.player_id}' target='_self' style='text-decoration:none; color:inherit;'>"
-        f"<div class='player-card' style='background:rgba({r},{g},{b},0.07); border:1px solid rgba({r},{g},{b},0.22);"
-        f"border-radius:12px; padding:18px 12px 14px 12px; text-align:center; cursor:pointer;'>"
-        f"<img src='{row.headshot_url}' style='width:72px; height:72px; border-radius:50%; object-fit:cover;"
-        f"border:2px solid rgba({r},{g},{b},0.45); margin-bottom:10px;' />"
-        f"<div style='font-size:13px; font-weight:700; color:#FAFAFA; line-height:1.2; margin-bottom:3px;'>{row.full_name}</div>"
-        f"<div style='font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px;'>{row.position}</div>"
-        f"<div style='display:flex; justify-content:center; gap:18px; margin-bottom:14px;'>"
-        f"<div><div style='font-size:22px; font-weight:900; color:{primary}; line-height:1;'>{int(row.goals)}</div>"
+        f"<a href='player_card?player={row.player_id}' target='_self' style='display:block; height:100%; text-decoration:none; color:inherit;'>"
+        f"<div class='player-card' style='position:relative; height:100%; box-sizing:border-box; background:#191f29;"
+        f"border:1px solid rgba(255,255,255,0.09); border-top:2px solid rgba({r},{g},{b},0.5);"
+        f"border-radius:7px; padding:18px 12px 17px; text-align:center; cursor:pointer;'>"
+        f"<span class='player-card-chevron' aria-hidden='true'>›</span>"
+        f"<img src='{row.headshot_url}' style='width:80px; height:80px; border-radius:50%; object-fit:cover;"
+        f"border:1px solid rgba(255,255,255,0.12); margin-bottom:11px;' />"
+        f"<div style='display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; min-height:34px; margin-bottom:12px;'>"
+        f"<span style='font-size:13px; font-weight:700; color:#FAFAFA; line-height:1.25;'>{row.full_name}</span>"
+        f"<span class='player-position'>{row.position}</span>"
+        f"</div>"
+        f"<div style='display:flex; justify-content:center; gap:18px;'>"
+        f"<div><div style='font-size:22px; font-weight:700; color:{primary}; line-height:1;'>{int(row.goals)}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Goals</div></div>"
-        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.85); line-height:1;'>{int(row.points)}</div>"
+        f"<div><div style='font-size:22px; font-weight:700; color:rgba(255,255,255,0.85); line-height:1;'>{int(row.points)}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Points</div></div>"
-        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.5); line-height:1;'>{row.total_xg}</div>"
+        f"<div><div style='font-size:22px; font-weight:700; color:rgba(255,255,255,0.5); line-height:1;'>{row.total_xg}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>xG</div></div>"
         f"</div>"
-        f"<div style='font-size:11px; font-weight:600; color:{primary}; border:1px solid rgba({r},{g},{b},0.4);"
-        f"border-radius:5px; padding:5px 0;'>View Player Card →</div>"
         f"</div></a>"
     )
 
 st.markdown(
-    "<div class='chart-card'><div class='section-header'>Roster</div>"
+    "<div class='roster-section'><div class='section-header'>Roster</div>"
     "<div style='display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:14px;'>"
     + "".join(cards)
     + "</div></div>",
