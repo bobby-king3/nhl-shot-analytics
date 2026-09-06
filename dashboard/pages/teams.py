@@ -45,6 +45,12 @@ st.markdown("""
     border-radius: 8px;
     padding: 18px;
   }
+  .chart-card--compact {
+    padding: 12px 16px;
+  }
+  .chart-card--compact .section-header {
+    margin-bottom: 0;
+  }
   .team-metrics {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -374,7 +380,7 @@ with form_col:
 
         fig_xg = build_team_rolling_xgpct(game_log_df, r, g, b, primary)
         st.markdown(
-            "<div class='chart-card' style='margin-top:14px;'>"
+            "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
             "<div class='section-header'>Rolling xG% (10-game avg)</div>",
             unsafe_allow_html=True,
         )
