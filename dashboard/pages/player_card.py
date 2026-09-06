@@ -32,10 +32,9 @@ st.markdown("""
     max-width: 100% !important;
   }
   .stat-card {
-    background: linear-gradient(135deg, var(--team-primary-faint, rgba(200,16,46,0.08)) 0%, rgba(255,255,255,0.03) 100%);
+    background: #141922;
     border: 1px solid rgba(255,255,255,0.08);
-    border-left: 3px solid var(--team-primary, #C8102E);
-    border-radius: 10px;
+    border-radius: 7px;
     padding: 14px 18px;
     text-align: center;
     position: relative;
@@ -99,21 +98,28 @@ st.markdown("""
     opacity: 1;
   }
   .section-header {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-    background: linear-gradient(90deg, var(--team-primary, #C8102E), rgba(255,255,255,0.6));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    letter-spacing: 0.4px;
+    margin-bottom: 10px;
+    color: rgba(255,255,255,0.88);
+    font-weight: 650;
+  }
+  .section-header::before {
+    content: "";
+    display: block;
+    width: 3px;
+    height: 14px;
+    border-radius: 1px;
+    background: var(--team-primary, #C8102E);
   }
   .chart-card {
-    background: linear-gradient(160deg, var(--team-primary-faint, rgba(200,16,46,0.06)) 0%, rgba(13,27,53,0.6) 100%);
-    border: 1px solid var(--team-primary-border, rgba(200,16,46,0.25));
-    border-radius: 12px;
-    padding: 16px;
+    background: #141922;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 18px;
   }
   .info-icon {
     display: inline-flex;
@@ -236,7 +242,7 @@ if stats is None:
     st.warning("No data found for this player in the selected season.")
     st.stop()
 
-primary, secondary = TEAM_COLORS.get(stats[2], DEFAULT_COLORS)
+primary, _secondary = TEAM_COLORS.get(stats[2], DEFAULT_COLORS)
 r, g, b = hex_to_rgb(primary)
 
 st.markdown(f"""
@@ -245,14 +251,17 @@ st.markdown(f"""
     --team-primary: {primary};
     --team-primary-faint: rgba({r},{g},{b},0.08);
     --team-primary-border: rgba({r},{g},{b},0.3);
+    --surface: #141922;
+    --surface-raised: #191f29;
+    --border-subtle: rgba(255,255,255,0.08);
   }}
   [data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, rgba({r},{g},{b},0.15) 0%, #0E1117 60%);
-    border-right: 1px solid rgba({r},{g},{b},0.3);
+    background: #10141b;
+    border-right: 1px solid rgba(255,255,255,0.08);
   }}
   [data-baseweb="tag"] {{
-    background-color: rgba({r},{g},{b},0.35) !important;
-    border: 1px solid rgba({r},{g},{b},0.7) !important;
+    background-color: rgba({r},{g},{b},0.18) !important;
+    border: 1px solid rgba({r},{g},{b},0.4) !important;
   }}
 </style>
 """, unsafe_allow_html=True)
@@ -285,9 +294,10 @@ team_name  = TEAM_NAMES.get(team_abbrev, team_abbrev)
 
 st.markdown(f"""
 <div style="
-  background: linear-gradient(135deg, {secondary}cc 0%, {primary}55 50%, #0A0E1A 100%);
-  border: 1px solid {primary}55;
-  border-radius: 14px;
+  background: linear-gradient(90deg, #11151d 0%, rgba({r},{g},{b},0.10) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid {primary};
+  border-radius: 8px;
   padding: 20px 28px 20px 20px;
   display: flex;
   align-items: center;
@@ -297,14 +307,13 @@ st.markdown(f"""
 ">
   <div style="flex-shrink:0; width:100px; height:100px; border-radius:50%;
               border: 2px solid {primary};
-              box-shadow: 0 0 0 3px rgba(255,255,255,0.06),
-                          0 6px 16px rgba(0,0,0,0.35);
+              box-shadow: 0 4px 12px rgba(0,0,0,0.25);
               overflow:hidden; background:#111;
               margin-top: 16px;">
     <img src="{headshot_url}" style="width:100%; height:110%; object-fit:cover; object-position: center 20%;" />
   </div>
   <div style="flex:1; min-width:0;">
-    <div style="font-size:30px; font-weight:800; color:#FAFAFA; line-height:1.15;">
+    <div style="font-size:28px; font-weight:700; color:#FAFAFA; line-height:1.15;">
       {full_name}
     </div>
     <div style="font-size:14px; color:rgba(255,255,255,0.5); margin-top:5px; letter-spacing:0.5px;">
@@ -320,7 +329,7 @@ st.markdown(f"""
      style="text-decoration:none; flex-shrink:0;">
     <div class="team-logo-link" style="background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.07)'};
                 border:1px solid rgba(255,255,255,0.12);
-                border-radius:12px; padding:12px 18px;
+                border-radius:8px; padding:12px 18px;
                 display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
                 transition: border-color 0.15s, transform 0.15s;
                 cursor:pointer;">

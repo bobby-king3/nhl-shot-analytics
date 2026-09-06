@@ -22,21 +22,35 @@ st.markdown("""
     max-width: 100% !important;
   }
   .section-header {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 12px;
-    font-weight: 700;
-    background: linear-gradient(90deg, var(--team-primary, #C8102E), rgba(255,255,255,0.6));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    letter-spacing: 0.4px;
+    margin-bottom: 14px;
+    font-weight: 650;
+    color: rgba(255,255,255,0.88);
+  }
+  .section-header::before {
+    content: "";
+    display: block;
+    width: 3px;
+    height: 14px;
+    border-radius: 1px;
+    background: var(--team-primary, #C8102E);
   }
   .chart-card {
-    background: linear-gradient(160deg, var(--team-primary-faint, rgba(200,16,46,0.06)) 0%, rgba(13,27,53,0.6) 100%);
-    border: 1px solid var(--team-primary-border, rgba(200,16,46,0.25));
-    border-radius: 12px;
-    padding: 16px;
+    background: #141922;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  @media (max-width: 1400px) {
+    .team-record {
+      width: 100%;
+      justify-content: flex-end;
+      padding-top: 8px;
+    }
   }
 </style>
 """, unsafe_allow_html=True)
@@ -66,7 +80,7 @@ selected_team = st.sidebar.selectbox(
 st.query_params["team"]   = selected_team
 st.query_params["season"] = str(selected_season)
 
-primary, secondary = TEAM_COLORS.get(selected_team, DEFAULT_COLORS)
+primary, _secondary = TEAM_COLORS.get(selected_team, DEFAULT_COLORS)
 r, g, b = hex_to_rgb(primary)
 
 st.markdown(f"""
@@ -75,18 +89,21 @@ st.markdown(f"""
     --team-primary: {primary};
     --team-primary-faint: rgba({r},{g},{b},0.08);
     --team-primary-border: rgba({r},{g},{b},0.3);
+    --surface: #141922;
+    --surface-raised: #191f29;
+    --border-subtle: rgba(255,255,255,0.08);
   }}
   [data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, rgba({r},{g},{b},0.18) 0%, #0E1117 60%);
-    border-right: 1px solid rgba({r},{g},{b},0.3);
+    background: #10141b;
+    border-right: 1px solid rgba(255,255,255,0.08);
   }}
   .player-card {{
     transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   }}
   .player-card:hover {{
-    transform: translateY(-3px);
-    background: rgba({r},{g},{b},0.15) !important;
-    border-color: rgba({r},{g},{b},0.55) !important;
+    transform: translateY(-1px);
+    background: var(--surface-raised) !important;
+    border-color: rgba({r},{g},{b},0.45) !important;
   }}
 </style>
 """, unsafe_allow_html=True)
@@ -147,9 +164,9 @@ gf_pg  = round(goals_for  / gp, 2) if isinstance(goals_for, (int, float)) else "
 ga_pg  = round(goals_ag   / gp, 2) if isinstance(goals_ag,  (int, float)) else "—"
 
 st.markdown(f"""
-<div style="
-  background: linear-gradient(135deg, #0A0E1A 0%, rgba({r},{g},{b},0.25) 50%, {secondary}99 100%);
-  border-bottom: 3px solid {primary};
+<div class="team-hero" style="
+  background: linear-gradient(90deg, #11151d 0%, rgba({r},{g},{b},0.10) 100%);
+  border-bottom: 2px solid {primary};
   padding: 24px calc(20px + 1.5rem) 20px calc(20px + 1.5rem);
   margin-left: -1.5rem;
   margin-right: -1.5rem;
@@ -160,17 +177,17 @@ st.markdown(f"""
   margin-bottom: 0;
 ">
   <!-- Logo -->
-  <div style="flex-shrink:0; background:{'rgba(255,255,255,0.35)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.06)'}; border-radius:16px;
+  <div style="flex-shrink:0; background:{'rgba(255,255,255,0.22)' if (0.299*r + 0.587*g + 0.114*b) < 115 else 'rgba(255,255,255,0.04)'}; border-radius:8px;
               padding:16px; border:1px solid rgba(255,255,255,0.08);">
     <img src="{team_logo_url}" style="height:100px; width:auto; object-fit:contain;" />
   </div>
 
   <!-- Name + season + key stats -->
-  <div style="flex:1; min-width:0;">
-    <div style="font-size:42px; font-weight:900; color:#FAFAFA; line-height:1.05;
-                letter-spacing:-1px;">{team_name}</div>
+  <div class="team-identity" style="flex:1; min-width:0;">
+    <div style="font-size:36px; font-weight:700; color:#FAFAFA; line-height:1.1;
+                letter-spacing:-0.5px;">{team_name}</div>
     <div style="font-size:13px; color:rgba(255,255,255,0.4); margin-top:4px;
-                letter-spacing:2px; text-transform:uppercase;">{season_labels[selected_season]}</div>
+                letter-spacing:0.8px;">{season_labels[selected_season]}</div>
     <div style="display:flex; gap:0; margin-top:14px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
       <div style="padding-right:20px; border-right:1px solid rgba(255,255,255,0.1);">
         <div style="font-size:18px; font-weight:800; color:{primary};">{goals_for} <span style="font-size:13px; color:rgba(255,255,255,0.5); font-weight:400;">GF</span>{rank_badge(gf_rank)}</div>
@@ -192,24 +209,24 @@ st.markdown(f"""
   </div>
 
   <!-- W / L / OTL -->
-  <div style="display:flex; gap:0; flex-shrink:0;">
+  <div class="team-record" style="display:flex; gap:0; flex-shrink:0;">
     <div style="text-align:center; padding:0 28px; border-right:1px solid rgba(255,255,255,0.1);">
-      <div style="font-size:56px; font-weight:900; color:{primary}; line-height:1;">{wins}</div>
+      <div style="font-size:44px; font-weight:700; color:{primary}; line-height:1;">{wins}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">Wins</div>
     </div>
     <div style="text-align:center; padding:0 28px; border-right:1px solid rgba(255,255,255,0.1);">
-      <div style="font-size:56px; font-weight:900; color:rgba(255,255,255,0.45); line-height:1;">{losses}</div>
+      <div style="font-size:44px; font-weight:700; color:rgba(255,255,255,0.55); line-height:1;">{losses}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">Losses</div>
     </div>
     <div style="text-align:center; padding:0 28px; border-right:1px solid rgba(255,255,255,0.1);">
-      <div style="font-size:56px; font-weight:900; color:rgba(255,255,255,0.25); line-height:1;">{otl}</div>
+      <div style="font-size:44px; font-weight:700; color:rgba(255,255,255,0.4); line-height:1;">{otl}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">OTL</div>
     </div>
     <div style="text-align:center; padding:0 28px;">
-      <div style="font-size:56px; font-weight:900; color:{primary}; line-height:1;">{points}</div>
+      <div style="font-size:44px; font-weight:700; color:{primary}; line-height:1;">{points}</div>
       <div style="font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase;
                   letter-spacing:2px; margin-top:4px;">PTS</div>
     </div>
@@ -345,22 +362,22 @@ cards = []
 for row in roster_df.itertuples():
     cards.append(
         f"<a href='player_card?player={row.player_id}' target='_self' style='text-decoration:none; color:inherit;'>"
-        f"<div class='player-card' style='background:rgba({r},{g},{b},0.07); border:1px solid rgba({r},{g},{b},0.22);"
-        f"border-radius:12px; padding:18px 12px 14px 12px; text-align:center; cursor:pointer;'>"
+        f"<div class='player-card' style='background:#141922; border:1px solid rgba(255,255,255,0.08);"
+        f"border-radius:8px; padding:18px 12px 14px 12px; text-align:center; cursor:pointer;'>"
         f"<img src='{row.headshot_url}' style='width:72px; height:72px; border-radius:50%; object-fit:cover;"
-        f"border:2px solid rgba({r},{g},{b},0.45); margin-bottom:10px;' />"
+        f"border:1px solid rgba(255,255,255,0.12); margin-bottom:10px;' />"
         f"<div style='font-size:13px; font-weight:700; color:#FAFAFA; line-height:1.2; margin-bottom:3px;'>{row.full_name}</div>"
         f"<div style='font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px;'>{row.position}</div>"
         f"<div style='display:flex; justify-content:center; gap:18px; margin-bottom:14px;'>"
-        f"<div><div style='font-size:22px; font-weight:900; color:{primary}; line-height:1;'>{int(row.goals)}</div>"
+        f"<div><div style='font-size:22px; font-weight:700; color:{primary}; line-height:1;'>{int(row.goals)}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Goals</div></div>"
-        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.85); line-height:1;'>{int(row.points)}</div>"
+        f"<div><div style='font-size:22px; font-weight:700; color:rgba(255,255,255,0.85); line-height:1;'>{int(row.points)}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Points</div></div>"
-        f"<div><div style='font-size:22px; font-weight:900; color:rgba(255,255,255,0.5); line-height:1;'>{row.total_xg}</div>"
+        f"<div><div style='font-size:22px; font-weight:700; color:rgba(255,255,255,0.5); line-height:1;'>{row.total_xg}</div>"
         f"<div style='font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>xG</div></div>"
         f"</div>"
-        f"<div style='font-size:11px; font-weight:600; color:{primary}; border:1px solid rgba({r},{g},{b},0.4);"
-        f"border-radius:5px; padding:5px 0;'>View Player Card →</div>"
+        f"<div style='font-size:11px; font-weight:600; color:{primary}; border-top:1px solid rgba(255,255,255,0.08);"
+        f"padding:8px 0 0;'>View Player Card →</div>"
         f"</div></a>"
     )
 
