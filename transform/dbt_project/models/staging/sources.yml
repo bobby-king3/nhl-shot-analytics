@@ -13,5 +13,10 @@ sources:
         description: Player metadata fetched from the NHL API including name, position, headshot URL, and current team
       - name: raw_games
         description: Game metadata from the NHL schedule API including date, teams, scores, and outcome
+        columns:
+          - name: ingested_at
+            description: Timestamp when the game was first stored
+          - name: updated_at
+            description: Timestamp when the stored game data last changed
       - name: raw_player_stats
         description: Season level skater stats from the NHL API including goals, assists, points, and TOI

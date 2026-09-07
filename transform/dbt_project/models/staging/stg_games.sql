@@ -22,6 +22,7 @@ select
         when last_period_type = 'SO'  then 'Shootout'
     end as game_outcome,
     home_score > away_score as home_win,
-    ingested_at
+    ingested_at,
+    updated_at
 
 from source

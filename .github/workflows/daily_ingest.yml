@@ -3,7 +3,17 @@ name: Daily NHL Data Pipeline
 on:
   schedule:
     - cron: '0 7 * * *'
+    - cron: '0 8 * * 0'
   workflow_dispatch:
+    inputs:
+      full_schedule_backfill:
+        description: Scan all schedule history instead of the recent daily window
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-ingest
+  cancel-in-progress: false
 
 jobs:
   pipeline:
@@ -24,4 +34,5 @@ jobs:
       - name: Run pipeline
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          FULL_SCHEDULE_BACKFILL: ${{ inputs.full_schedule_backfill || github.event.schedule == '0 8 * * 0' }}
         run: python -m extract.pipeline
