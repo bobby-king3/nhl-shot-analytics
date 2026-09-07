@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 7 * * *'
   workflow_dispatch:
+    inputs:
+      full_schedule_backfill:
+        description: Scan all schedule history instead of the recent daily window
+        type: boolean
+        default: false
 
 jobs:
   pipeline:
@@ -24,4 +29,5 @@ jobs:
       - name: Run pipeline
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          FULL_SCHEDULE_BACKFILL: ${{ github.event_name == 'workflow_dispatch' && inputs.full_schedule_backfill || false }}
         run: python -m extract.pipeline
