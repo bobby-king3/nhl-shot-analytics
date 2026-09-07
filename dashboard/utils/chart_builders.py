@@ -5,7 +5,7 @@ from dashboard.utils.plotly_config import get_dark_layout, get_dark_xaxes, get_d
 from dashboard.utils.styling import get_performance_color
 
 
-def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
+def build_season_stats_table(season_log_df, selected_season, player_id, primary, r, g, b):
     def fmt_season(s):
         s = str(int(s))
         return f"{s[:4]}-{s[4:]}"
@@ -29,13 +29,21 @@ def build_season_stats_table(season_log_df, selected_season, primary, r, g, b):
 
     rows_html = ""
     for _, row in season_log_df.iterrows():
-        is_current = row["season"] == selected_season
+        season = int(row["season"])
+        season_label = fmt_season(season)
+        is_current = season == selected_season
         bg = f"rgba({r},{g},{b},0.12)" if is_current else "transparent"
         border = f"border-left: 3px solid {primary};" if is_current else "border-left: 3px solid transparent;"
         weight = "700" if is_current else "400"
         color = "rgba(255,255,255,0.95)" if is_current else "rgba(255,255,255,0.6)"
+        season_cell = season_label if is_current else (
+            f'<a href="?player={int(player_id)}&amp;season={season}" target="_self" '
+            f'aria-label="View {season_label} season" '
+            f'style="color:{color}; font-weight:{weight}; text-decoration:underline; '
+            f'text-underline-offset:3px; cursor:pointer;">{season_label}</a>'
+        )
         cells = [
-            fmt_season(row["season"]), int(row["games_played"]), int(row["goals"]),
+            season_cell, int(row["games_played"]), int(row["goals"]),
             int(row["assists"]), int(row["points"]), int(row["shots_on_goal"]),
             f"{row['sh_pct']}%", row["total_xg"], row["xg_per_game"],
             fmt_goal_diff(row["goals_above_expected"]),
