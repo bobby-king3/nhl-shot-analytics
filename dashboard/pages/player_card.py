@@ -244,7 +244,17 @@ except (ValueError, TypeError):
 seasons = get_available_seasons()
 season_labels = {s: f"{str(s)[:4]}-{str(s)[4:]}" for s in seasons}
 
-selected_season = st.sidebar.selectbox("Season", options=seasons, format_func=lambda s: season_labels[s], key="pc_season")
+url_season = None
+try:
+    url_season = int(st.query_params.get("season", ""))
+except (ValueError, TypeError):
+    pass
+
+selected_season = st.sidebar.selectbox(
+    "Season", options=seasons, format_func=lambda s: season_labels[s],
+    index=seasons.index(url_season) if url_season in seasons else 0,
+    key="pc_season",
+)
 teams = ["All Teams"] + get_teams(selected_season)
 selected_team = st.sidebar.selectbox("Team", options=teams, key="pc_team")
 
@@ -263,6 +273,7 @@ selected_player_id = st.sidebar.selectbox(
 )
 
 st.query_params["player"] = str(selected_player_id)
+st.query_params["season"] = str(selected_season)
 
 if detect_change("prev_player_id", selected_player_id):
     st.session_state.pop("pc_games", None)
@@ -417,7 +428,12 @@ st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 
 season_log_df = get_player_season_log(selected_player_id)
 if len(season_log_df) > 1:
-    st.markdown(build_season_stats_table(season_log_df, selected_season, primary, r, g, b), unsafe_allow_html=True)
+    st.markdown(
+        build_season_stats_table(
+            season_log_df, selected_season, selected_player_id, primary, r, g, b
+        ),
+        unsafe_allow_html=True,
+    )
 
 total_games = len(game_log_df)
 if total_games > 1:
