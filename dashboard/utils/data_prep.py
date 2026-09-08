@@ -44,6 +44,13 @@ def apply_shot_type_filter(goals_df, blocked_df, nongoals_df, selected_shot_type
         )
     return goals_df, blocked_df, nongoals_df
 
+def validate_selected_shot_type(filtered_shots, selected_shot_type):
+    if selected_shot_type is None:
+        return None
+
+    available_shot_types = set(filtered_shots["shot_type"].dropna())
+    return selected_shot_type if selected_shot_type in available_shot_types else None
+
 def prepare_shot_type_breakdown(filtered_shots):
     breakdown = (
         filtered_shots[filtered_shots["shot_type"].notna()]
@@ -51,8 +58,10 @@ def prepare_shot_type_breakdown(filtered_shots):
         .agg(shots=("event_type", "count"), goals=("event_type", lambda x: (x == "goal").sum()))
         .reset_index()
         .assign(
-            sh_pct=lambda d: (d["goals"] / d["shots"] * 100).round(1),
-            volume_pct=lambda d: (d["shots"] / d["shots"].sum() * 100).round(1),
+            shots=lambda d: d["shots"].astype(int),
+            goals=lambda d: d["goals"].astype(int),
+            sh_pct=lambda d: (d["goals"].astype(float) / d["shots"].astype(float) * 100).round(1),
+            volume_pct=lambda d: (d["shots"].astype(float) / d["shots"].sum() * 100).round(1),
         )
         .sort_values("shots", ascending=True)
     )
