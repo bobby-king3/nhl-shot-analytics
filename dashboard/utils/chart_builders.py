@@ -304,9 +304,7 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
     return wheel
 
 
-def build_team_rank_profile(
-    categories, ranks, actuals, explanations, directions, primary, n_teams
-):
+def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n_teams):
     def ordinal(value):
         if 10 < value % 100 < 14:
             suffix = "th"
@@ -352,7 +350,7 @@ def build_team_rank_profile(
             layer="below",
         )
 
-    customdata = np.column_stack((categories, actuals, explanations, directions))
+    customdata = np.column_stack((categories, actuals, explanations))
     fig.add_trace(go.Scatter(
         x=ranks,
         y=y_positions,
@@ -370,8 +368,7 @@ def build_team_rank_profile(
             "<b>%{customdata[0]}</b><br>"
             "%{customdata[2]}<br>"
             "Value: %{customdata[1]}<br>"
-            f"League rank: %{{text}} of {n_teams}<br>"
-            "<i>%{customdata[3]}</i><extra></extra>"
+            f"League rank: %{{text}} of {n_teams}<extra></extra>"
         ),
         showlegend=False,
     ))
