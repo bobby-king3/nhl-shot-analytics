@@ -260,14 +260,6 @@ team_profile_explanations = [
     "Expected goals allowed per game based on opponent shot quantity and quality.",
     "Actual goals allowed per game.",
 ]
-team_profile_directions = [
-    "Higher is better",
-    "Higher is better",
-    "Higher is better",
-    "Higher is better",
-    "Lower is better",
-    "Lower is better",
-]
 team_profile_ranks = []
 team_profile_actuals = []
 if not selected_team_stats_df.empty:
@@ -531,7 +523,6 @@ else:
         team_profile_ranks,
         team_profile_actuals,
         team_profile_explanations,
-        team_profile_directions,
         primary,
         n_teams,
     )
