@@ -55,6 +55,53 @@ st.markdown("""
   .chart-card--compact .section-header {
     margin-bottom: 0;
   }
+  .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+    font: italic 700 9px/14px serif;
+    cursor: help;
+    position: relative;
+  }
+  .info-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    padding: 7px 11px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    background: rgba(15,20,35,0.97);
+    color: rgba(255,255,255,0.85);
+    font: 400 11px/1.4 sans-serif;
+    letter-spacing: 0;
+    text-align: left;
+    text-transform: none;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s, visibility 0.15s;
+    z-index: 9999;
+  }
+  .info-icon:hover,
+  .info-icon:focus-visible {
+    background: var(--team-primary, #C8102E);
+    color: white;
+    outline: none;
+  }
+  .info-icon:hover .info-tooltip,
+  .info-icon:focus-visible .info-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
   .team-metrics {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -205,6 +252,14 @@ xg_diff_rank = get_rank("xg_diff_per_game")
 sh_pct_rank  = get_rank("sh_pct_sog")
 
 team_profile_categories = ["Points %", "GF/GP", "xGF/GP", "xG%", "xGA/GP", "GA/GP"]
+team_profile_explanations = [
+    "Share of available standings points earned.",
+    "Goals scored per game.",
+    "Expected goals created per game from shot volume and quality.",
+    "Share of expected goals. Above 50% means creating more than allowing.",
+    "Expected goals allowed per game from opponent shot volume and quality.",
+    "Goals allowed per game.",
+]
 team_profile_ranks = []
 team_profile_actuals = []
 if not selected_team_stats_df.empty:
@@ -455,7 +510,11 @@ if selected_team_stats_df.empty:
 else:
     st.markdown(
         "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
-        "<div class='section-header'>League Ranks</div></div>",
+        "<div class='section-header'>League Ranks"
+        "<button type='button' class='info-icon' aria-label='League ranks help'>i"
+        "<span class='info-tooltip' role='tooltip'>"
+        "Hover over a marker for definition and actual value. Rankings run from 1st (best) team to 32nd (worst) team."
+        "</span></button></div></div>",
         unsafe_allow_html=True,
     )
 
@@ -463,6 +522,7 @@ else:
         team_profile_categories,
         team_profile_ranks,
         team_profile_actuals,
+        team_profile_explanations,
         primary,
         n_teams,
     )
