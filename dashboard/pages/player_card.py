@@ -15,7 +15,7 @@ from dashboard.utils.styling import hex_to_rgb, get_performance_color
 from dashboard.utils.state import detect_change
 from dashboard.utils.data_prep import (
     prepare_filtered_shots, split_shots_by_type, apply_shot_type_filter,
-    prepare_shot_type_breakdown, extract_clip_url
+    validate_selected_shot_type, prepare_shot_type_breakdown, extract_clip_url
 )
 from dashboard.utils.chart_builders import (
     build_game_log_chart, build_shot_map, build_percentile_wheel, build_shot_type_breakdown,
@@ -507,7 +507,10 @@ if detect_change("shot_type_prev", widget_type):
         else:
             st.session_state["selected_shot_type"] = widget_type
 
-selected_shot_type = st.session_state.get("selected_shot_type")
+stored_shot_type = st.session_state.get("selected_shot_type")
+selected_shot_type = validate_selected_shot_type(filtered_shots, stored_shot_type)
+if selected_shot_type != stored_shot_type:
+    st.session_state["selected_shot_type"] = selected_shot_type
 map_goals_df, map_blocked_df, map_nongoals_df = apply_shot_type_filter(goals_df, blocked_df, nongoals_df, selected_shot_type)
 
 st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
@@ -682,13 +685,22 @@ with breakdown_col:
     st.markdown('<div class="chart-card chart-card--compact"><div class="section-header">Shot Type Breakdown</div>', unsafe_allow_html=True)
 
     type_df = prepare_shot_type_breakdown(filtered_shots)
-    fig_types = build_shot_type_breakdown(type_df, selected_shot_type, r, g, b)
-    st.plotly_chart(fig_types, use_container_width=True, on_select="rerun", key="shot_type_chart")
+    if type_df.empty:
+        st.markdown(
+            "<div style='height:280px; display:flex; align-items:center; justify-content:center; "
+            "color:rgba(255,255,255,0.4); font-size:13px; text-align:center;'>"
+            "Shot type is not available for blocked shots."
+            "</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        fig_types = build_shot_type_breakdown(type_df, selected_shot_type, r, g, b)
+        st.plotly_chart(fig_types, use_container_width=True, on_select="rerun", key="shot_type_chart")
 
-    st.markdown(
-        "<div style='font-size:11px; color:rgba(255,255,255,0.35); margin-top:-8px'>"
-        "Click a shot type to filter the shot map"
-        "</div>",
-        unsafe_allow_html=True
-    )
+        st.markdown(
+            "<div style='font-size:11px; color:rgba(255,255,255,0.35); margin-top:-8px'>"
+            "Click a shot type to filter the shot map"
+            "</div>",
+            unsafe_allow_html=True
+        )
     st.markdown('</div>', unsafe_allow_html=True)

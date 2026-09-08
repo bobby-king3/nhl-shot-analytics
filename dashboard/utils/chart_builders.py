@@ -180,9 +180,10 @@ def build_shot_map(map_nongoals_df, map_blocked_df, map_goals_df, primary):
             mode="markers",
             marker=dict(
                 symbol="x",
-                color="rgba(255,255,255,0.25)",
-                size=6,
-                line=dict(width=1, color="rgba(255,255,255,0.25)"),
+                color="#374151",
+                size=8,
+                opacity=0.85,
+                line=dict(width=1, color="#111827"),
             ),
             customdata=np.column_stack([
                 map_blocked_df["shot_distance"].round(1),
