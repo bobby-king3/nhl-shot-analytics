@@ -253,12 +253,12 @@ sh_pct_rank  = get_rank("sh_pct_sog")
 
 team_profile_categories = ["Points %", "GF/GP", "xGF/GP", "xG%", "xGA/GP", "GA/GP"]
 team_profile_explanations = [
-    "Standings points earned as a percentage of all possible points.",
-    "Actual goals scored per game.",
-    "Expected goals created per game based on shot quantity and quality.",
-    "Share of total expected goals; above 50% means the team controls more quality chances than it allows.",
-    "Expected goals allowed per game based on opponent shot quantity and quality.",
-    "Actual goals allowed per game.",
+    "Share of available standings points earned.",
+    "Goals scored per game.",
+    "Expected goals created per game from shot volume and quality.",
+    "Share of expected goals. Above 50% means creating more than allowing.",
+    "Expected goals allowed per game from opponent shot volume and quality.",
+    "Goals allowed per game.",
 ]
 team_profile_ranks = []
 team_profile_actuals = []
