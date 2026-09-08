@@ -513,7 +513,7 @@ else:
         "<div class='section-header'>League Ranks"
         "<button type='button' class='info-icon' aria-label='League ranks help'>i"
         "<span class='info-tooltip' role='tooltip'>"
-        "Hover over a rank marker for its definition and actual value. Rankings run from 1st (best) to 32nd (worst)."
+        "Hover over a marker for definition and actual value. Rankings run from 1st (best) team to 32nd (worst) team."
         "</span></button></div></div>",
         unsafe_allow_html=True,
     )
