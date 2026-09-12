@@ -529,7 +529,7 @@ with map_col:
     st.markdown(
         f'<div class="chart-card chart-card--compact"><div class="section-header">'
         f'Shot Map — {len(filtered_shots):,} shots · {len(goals_df)} goals{header_suffix}'
-        f'<span class="info-icon" data-tooltip="Click any shot for details · goals include highlight video · double-click to reset">i</span>'
+        f'<span class="info-icon" data-tooltip="Click any shot for details · goals open highlight in video player · double-click to reset">i</span>'
         f'</div>',
         unsafe_allow_html=True,
     )
