@@ -34,5 +34,6 @@ jobs:
       - name: Run pipeline
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          MONEYPUCK_SHOTS_URL: ${{ vars.MONEYPUCK_SHOTS_URL }}
           FULL_SCHEDULE_BACKFILL: ${{ inputs.full_schedule_backfill || github.event.schedule == '0 8 * * 0' }}
         run: python -m extract.pipeline
