@@ -31,22 +31,22 @@
   <text x="85" y="82" text-anchor="middle" font-size="13" font-weight="600" fill="#1D4ED8">NHL API</text>
   <text x="85" y="100" text-anchor="middle" font-size="10" fill="#3B82F6">api-web.nhle.com</text>
 
-  <!-- MoneyPuck box: center (85, 159), dashed = manual load -->
-  <rect x="15" y="133" width="140" height="52" rx="8" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5" stroke-dasharray="6,3" filter="url(#sh)"/>
+  <!-- MoneyPuck box: center (85, 159) -->
+  <rect x="15" y="133" width="140" height="52" rx="8" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5" filter="url(#sh)"/>
   <text x="85" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#15803D">MoneyPuck</text>
-  <text x="85" y="173" text-anchor="middle" font-size="10" fill="#16A34A">CSV by season</text>
+  <text x="85" y="173" text-anchor="middle" font-size="10" fill="#16A34A">shot level xG data</text>
 
   <!-- Arrows: sources → Python -->
   <line x1="155" y1="86"  x2="184" y2="120" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="155" y1="159" x2="184" y2="128" stroke="#16A34A" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-g)"/>
+  <line x1="155" y1="159" x2="184" y2="128" stroke="#16A34A" stroke-width="1.5" marker-end="url(#arr-g)"/>
 
   <!-- Python / GitHub Actions box: center (265, 123) -->
   <rect x="185" y="65" width="160" height="115" rx="8" fill="#F8FAFC" stroke="#475569" stroke-width="1.5" filter="url(#sh)"/>
   <text x="265" y="89"  text-anchor="middle" font-size="13" font-weight="600" fill="#0F172A">Python</text>
   <text x="265" y="107" text-anchor="middle" font-size="10" fill="#475569">GitHub Actions</text>
   <text x="265" y="123" text-anchor="middle" font-size="10" fill="#64748B">daily · 07:00 UTC</text>
-  <text x="265" y="139" text-anchor="middle" font-size="10" fill="#64748B">play by play · players</text>
-  <text x="265" y="155" text-anchor="middle" font-size="10" fill="#64748B">dbt run · dbt test</text>
+  <text x="265" y="139" text-anchor="middle" font-size="10" fill="#64748B">NHL API + MoneyPuck ZIP</text>
+  <text x="265" y="155" text-anchor="middle" font-size="10" fill="#64748B">validate CSV · load raw</text>
 
   <!-- Arrow: Python → MotherDuck -->
   <line x1="345" y1="123" x2="373" y2="123" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#arr)"/>
