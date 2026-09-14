@@ -3,11 +3,12 @@
 import hashlib
 import io
 import logging
-import os
 import re
 import tempfile
 import zipfile
 from datetime import datetime, timezone
+from pathlib import Path
+from urllib.parse import urlsplit
 
 import duckdb
 import httpx
@@ -16,10 +17,8 @@ from extract.connection import get_connection
 from extract.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
+URL_FILE = Path(__file__).resolve().parent.parent / "config" / "moneypuck_url.txt"
 
-# Update the repository variable when a new season's ZIP appears on the data page.
-DEFAULT_URL = "https://peter-tanner.com/moneypuck/downloads/shots_2025.zip"
-URL_PATTERN = r"https://peter-tanner\.com/moneypuck/downloads/shots_(\d{4})\.zip"
 SHOT_COLUMNS = (
     "game_id", "shotID", "shooterPlayerId", "shooterName", "period", "time",
     "xCordAdjusted", "yCordAdjusted", "shotType", "event", "xGoal",
@@ -28,9 +27,10 @@ SHOT_COLUMNS = (
 
 
 def refresh(con, url):
-    match = re.fullmatch(URL_PATTERN, url)
-    if not match:
-        raise ValueError("MONEYPUCK_SHOTS_URL must be a shots_YYYY.zip download URL")
+    parsed = urlsplit(url)
+    match = re.fullmatch(r"shots_(\d{4})\.zip", Path(parsed.path).name)
+    if parsed.scheme != "https" or not parsed.netloc or not match:
+        raise ValueError("config/moneypuck_url.txt must contain an HTTPS shots_YYYY.zip download URL")
     season = int(match.group(1))
 
     con.execute("""
@@ -61,18 +61,19 @@ def refresh(con, url):
     if latest_season and latest_season > season:
         raise ValueError(
             f"NHL shots include {latest_season}, but MoneyPuck URL is for {season}; "
-            "update MONEYPUCK_SHOTS_URL after the new ZIP is published"
+            "update config/moneypuck_url.txt after the new ZIP is published"
         )
 
     previous = con.execute("""
-        SELECT etag, last_modified, sha256 FROM raw_moneypuck_imports WHERE season = ?
+        SELECT source_url, etag, last_modified, sha256
+        FROM raw_moneypuck_imports WHERE season = ?
     """, [season]).fetchone()
     headers = {}
-    if previous:
-        if previous[0]:
-            headers["If-None-Match"] = previous[0]
+    if previous and previous[0] == url:
         if previous[1]:
-            headers["If-Modified-Since"] = previous[1]
+            headers["If-None-Match"] = previous[1]
+        if previous[2]:
+            headers["If-Modified-Since"] = previous[2]
 
     response = httpx.get(url, headers=headers, timeout=120, follow_redirects=True)
     if response.status_code == 304:
@@ -81,7 +82,7 @@ def refresh(con, url):
     response.raise_for_status()
     etag, modified = response.headers.get("ETag"), response.headers.get("Last-Modified")
     digest = hashlib.sha256(response.content).hexdigest()
-    if previous and digest == previous[2]:
+    if previous and digest == previous[3]:
         con.execute("""
             UPDATE raw_moneypuck_imports
             SET source_url = ?, etag = ?, last_modified = ? WHERE season = ?
@@ -137,9 +138,12 @@ def refresh(con, url):
 
 
 def main():
+    url = URL_FILE.read_text(encoding="utf-8").strip()
+    if not url:
+        raise ValueError("Set config/moneypuck_url.txt to the ZIP link from MoneyPuck's data page")
     con = get_connection()
     try:
-        refresh(con, os.environ.get("MONEYPUCK_SHOTS_URL", DEFAULT_URL))
+        refresh(con, url)
     finally:
         con.close()
 
