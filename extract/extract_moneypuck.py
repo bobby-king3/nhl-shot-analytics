@@ -3,11 +3,11 @@
 import hashlib
 import io
 import logging
+import os
 import re
 import tempfile
 import zipfile
 from datetime import datetime, timezone
-from pathlib import Path
 from urllib.parse import urlsplit
 
 import duckdb
@@ -17,7 +17,6 @@ from extract.connection import get_connection
 from extract.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
-URL_FILE = Path(__file__).resolve().parent.parent / "config" / "moneypuck_url.txt"
 
 SHOT_COLUMNS = (
     "game_id", "shotID", "shooterPlayerId", "shooterName", "period", "time",
@@ -28,9 +27,9 @@ SHOT_COLUMNS = (
 
 def refresh(con, url):
     parsed = urlsplit(url)
-    match = re.fullmatch(r"shots_(\d{4})\.zip", Path(parsed.path).name)
+    match = re.fullmatch(r"shots_(\d{4})\.zip", parsed.path.rsplit("/", 1)[-1])
     if parsed.scheme != "https" or not parsed.netloc or not match:
-        raise ValueError("config/moneypuck_url.txt must contain an HTTPS shots_YYYY.zip download URL")
+        raise ValueError("MONEYPUCK_SHOTS_URL must be an HTTPS shots_YYYY.zip download URL")
     season = int(match.group(1))
 
     con.execute("""
@@ -61,7 +60,7 @@ def refresh(con, url):
     if latest_season and latest_season > season:
         raise ValueError(
             f"NHL shots include {latest_season}, but MoneyPuck URL is for {season}; "
-            "update config/moneypuck_url.txt after the new ZIP is published"
+            "update MONEYPUCK_SHOTS_URL after the new ZIP is published"
         )
 
     previous = con.execute("""
@@ -138,9 +137,9 @@ def refresh(con, url):
 
 
 def main():
-    url = URL_FILE.read_text(encoding="utf-8").strip()
+    url = os.environ.get("MONEYPUCK_SHOTS_URL")
     if not url:
-        raise ValueError("Set config/moneypuck_url.txt to the ZIP link from MoneyPuck's data page")
+        raise ValueError("Set MONEYPUCK_SHOTS_URL to the ZIP link from MoneyPuck's data page")
     con = get_connection()
     try:
         refresh(con, url)
