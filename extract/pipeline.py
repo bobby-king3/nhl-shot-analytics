@@ -11,6 +11,7 @@ from extract.extract_games import main as run_extract_games
 from extract.extract_play_by_play import main as run_extract_play_by_play
 from extract.extract_players import main as run_extract_players
 from extract.extract_skater_stats import main as run_extract_skater_stats
+from extract.extract_moneypuck import main as run_extract_moneypuck
 
 ROOT = Path(__file__).parent.parent
 DBT_DIR = ROOT / "transform" / "dbt_project"
@@ -35,19 +36,22 @@ def run_dbt(command):
 def main():
     logger.info("NHL Shot Intelligence Pipeline Starting")
 
-    section("1/5  Extract games")
+    section("1/6  Extract games")
     run_extract_games()
 
-    section("2/5  Extract play-by-play")
+    section("2/6  Extract play-by-play")
     run_extract_play_by_play()
 
-    section("3/5  Extract players")
+    section("3/6  Extract players")
     run_extract_players()
 
-    section("4/5  Extract skater stats")
+    section("4/6  Extract skater stats")
     run_extract_skater_stats()
 
-    section("5/5  dbt (deps → run → test)")
+    section("5/6  Extract MoneyPuck shots")
+    run_extract_moneypuck()
+
+    section("6/6  dbt (deps → run → test)")
     run_dbt("deps")
     run_dbt("run")
     run_dbt("test")
