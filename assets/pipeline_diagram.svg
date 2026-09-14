@@ -34,7 +34,7 @@
   <!-- MoneyPuck box: center (85, 159) -->
   <rect x="15" y="133" width="140" height="52" rx="8" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.5" filter="url(#sh)"/>
   <text x="85" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#15803D">MoneyPuck</text>
-  <text x="85" y="173" text-anchor="middle" font-size="10" fill="#16A34A">public season ZIP</text>
+  <text x="85" y="173" text-anchor="middle" font-size="10" fill="#16A34A">shot level xG data</text>
 
   <!-- Arrows: sources → Python -->
   <line x1="155" y1="86"  x2="184" y2="120" stroke="#94A3B8" stroke-width="1.5" marker-end="url(#arr)"/>
