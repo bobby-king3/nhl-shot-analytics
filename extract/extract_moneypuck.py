@@ -56,7 +56,7 @@ def refresh(con, url):
             WHERE substr(CAST(game_id AS VARCHAR), 5, 2) IN ('02', '03')
         """).fetchone()[0]
     except duckdb.CatalogException:
-        latest_season = None 
+        latest_season = None
     if latest_season and latest_season > season:
         raise ValueError(
             f"NHL shots include {latest_season}, but MoneyPuck URL is for {season}; "
