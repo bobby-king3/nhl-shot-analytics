@@ -16,6 +16,8 @@ def create_table(con):
             position        VARCHAR,
             games_played    INTEGER,
             playoff_games_played INTEGER,
+            playoff_assists INTEGER,
+            playoff_points  INTEGER,
             goals           INTEGER,
             assists         INTEGER,
             points          INTEGER,
@@ -32,6 +34,8 @@ def create_table(con):
         )
     """)
     con.execute("ALTER TABLE raw_player_stats ADD COLUMN IF NOT EXISTS playoff_games_played INTEGER")
+    con.execute("ALTER TABLE raw_player_stats ADD COLUMN IF NOT EXISTS playoff_assists INTEGER")
+    con.execute("ALTER TABLE raw_player_stats ADD COLUMN IF NOT EXISTS playoff_points INTEGER")
 
 
 def get_seasons(con):
@@ -47,12 +51,16 @@ def is_season_complete(season_id):
 
 def extract_season(con, season_id):
     if is_season_complete(season_id):
-        existing, missing_playoff_gp = con.execute(
-            """SELECT COUNT(*), COUNT(*) FILTER (WHERE playoff_games_played IS NULL)
+        existing, missing_playoff_stats = con.execute(
+            """SELECT COUNT(*), COUNT(*) FILTER (
+                   WHERE playoff_games_played IS NULL
+                      OR playoff_assists IS NULL
+                      OR playoff_points IS NULL
+               )
                FROM raw_player_stats WHERE season_id = ?""",
             [season_id],
         ).fetchone()
-        if existing > 0 and missing_playoff_gp == 0:
+        if existing > 0 and missing_playoff_stats == 0:
             logger.info("Season %d: skipped (%d skaters cached)", season_id, existing)
             return None
 
@@ -77,6 +85,8 @@ def extract_season(con, season_id):
             player_info.get("positionCode", ""),
             regular_stats.get("gamesPlayed", 0),
             playoff_stats.get("gamesPlayed", 0),
+            playoff_stats.get("assists", 0),
+            playoff_stats.get("points", 0),
             regular_stats.get("goals", 0),
             regular_stats.get("assists", 0),
             regular_stats.get("points", 0),
@@ -98,10 +108,11 @@ def extract_season(con, season_id):
             """
             INSERT INTO raw_player_stats (
                 player_id, season_id, team_abbrev, position,
-                games_played, playoff_games_played, goals, assists, points, plus_minus,
+                games_played, playoff_games_played, playoff_assists, playoff_points,
+                goals, assists, points, plus_minus,
                 pp_goals, pp_points, sh_goals, sh_points,
                 shots, shooting_pct, toi_per_game, ingested_at
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             rows,
         )

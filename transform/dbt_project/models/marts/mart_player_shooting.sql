@@ -58,8 +58,8 @@ with_player_stats as (
         s.total_games_played as games_played,
         round(p.goals * 1.0 / nullif(s.total_games_played, 0), 3) as goals_per_game,
         round(p.total_xg / nullif(s.total_games_played, 0), 3) as xg_per_game,
-        s.assists,
-        s.points,
+        s.total_assists as assists,
+        s.total_points as points,
         s.plus_minus,
         s.pp_points,
         s.toi_per_game_min
