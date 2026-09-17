@@ -84,6 +84,9 @@ select
     -- score / result
     tg.gf,
     tg.ga,
+    -- Shootout winners get one extra marker in the final score, not counting this towards team GF/GA.
+    tg.gf - case when tg.last_period_type = 'SO' and tg.won then 1 else 0 end as goals_for,
+    tg.ga - case when tg.last_period_type = 'SO' and not tg.won then 1 else 0 end as goals_against,
     tg.won,
     tg.last_period_type,
     case
