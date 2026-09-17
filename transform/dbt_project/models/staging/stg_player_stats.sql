@@ -8,6 +8,8 @@ select
     team_abbrev,
     position,
     games_played,
+    playoff_games_played,
+    games_played + playoff_games_played as total_games_played,
     goals,
     assists,
     points,

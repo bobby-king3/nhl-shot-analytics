@@ -25,9 +25,10 @@ stints as (
         count(*)                                                         as shot_attempts,
         count(*) filter (where s.event_type in ('shot-on-goal', 'goal')) as shots_on_goal,
         count(*) filter (where s.event_type = 'goal')                    as goals,
-        round(sum(s.x_goal), 3)                                          as total_xg,
+        round(sum(s.x_goal) filter (where s.event_type != 'blocked-shot'), 3) as total_xg,
         round(
-            count(*) filter (where s.event_type = 'goal') - sum(s.x_goal), 2
+            count(*) filter (where s.event_type = 'goal')
+            - sum(s.x_goal) filter (where s.event_type != 'blocked-shot'), 2
         )                                                                as goals_above_expected,
         round(
             100.0 * count(*) filter (where s.event_type = 'goal')
