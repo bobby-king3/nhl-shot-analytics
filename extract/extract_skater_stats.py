@@ -15,6 +15,7 @@ def create_table(con):
             team_abbrev     VARCHAR,
             position        VARCHAR,
             games_played    INTEGER,
+            playoff_games_played INTEGER,
             goals           INTEGER,
             assists         INTEGER,
             points          INTEGER,
@@ -30,6 +31,7 @@ def create_table(con):
             PRIMARY KEY (player_id, season_id)
         )
     """)
+    con.execute("ALTER TABLE raw_player_stats ADD COLUMN IF NOT EXISTS playoff_games_played INTEGER")
 
 
 def get_seasons(con):
@@ -45,54 +47,68 @@ def is_season_complete(season_id):
 
 def extract_season(con, season_id):
     if is_season_complete(season_id):
-        existing = con.execute(
-            "SELECT COUNT(*) FROM raw_player_stats WHERE season_id = ?", [season_id]
-        ).fetchone()[0]
-        if existing > 0:
+        existing, missing_playoff_gp = con.execute(
+            """SELECT COUNT(*), COUNT(*) FILTER (WHERE playoff_games_played IS NULL)
+               FROM raw_player_stats WHERE season_id = ?""",
+            [season_id],
+        ).fetchone()
+        if existing > 0 and missing_playoff_gp == 0:
             logger.info("Season %d: skipped (%d skaters cached)", season_id, existing)
             return None
 
-    data = get_stats(
-        f"/skater/summary?limit=-1&isAggregate=true&cayenneExp=seasonId={season_id}"
-    )
-    skaters = data.get("data", [])
+    regular = get_stats(
+        f"/skater/summary?limit=-1&isAggregate=true&cayenneExp=seasonId={season_id}%20and%20gameTypeId=2"
+    ).get("data", [])
+    playoffs = get_stats(
+        f"/skater/summary?limit=-1&isAggregate=true&cayenneExp=seasonId={season_id}%20and%20gameTypeId=3"
+    ).get("data", [])
+    regular_by_id = {s["playerId"]: s for s in regular}
+    playoff_by_id = {s["playerId"]: s for s in playoffs}
 
-    con.execute("DELETE FROM raw_player_stats WHERE season_id = ?", [season_id])
-
-    rows = [
-        (
-            s["playerId"],
+    rows = []
+    for player_id in sorted(regular_by_id.keys() | playoff_by_id.keys()):
+        regular_stats = regular_by_id.get(player_id, {})
+        playoff_stats = playoff_by_id.get(player_id, {})
+        player_info = regular_stats or playoff_stats
+        rows.append((
+            player_id,
             season_id,
-            s.get("teamAbbrevs", ""),
-            s.get("positionCode", ""),
-            s.get("gamesPlayed", 0),
-            s.get("goals", 0),
-            s.get("assists", 0),
-            s.get("points", 0),
-            s.get("plusMinus", 0),
-            s.get("ppGoals", 0),
-            s.get("ppPoints", 0),
-            s.get("shGoals", 0),
-            s.get("shPoints", 0),
-            s.get("shots", 0),
-            s.get("shootingPct"),
-            s.get("timeOnIcePerGame"),
+            player_info.get("teamAbbrevs", ""),
+            player_info.get("positionCode", ""),
+            regular_stats.get("gamesPlayed", 0),
+            playoff_stats.get("gamesPlayed", 0),
+            regular_stats.get("goals", 0),
+            regular_stats.get("assists", 0),
+            regular_stats.get("points", 0),
+            regular_stats.get("plusMinus", 0),
+            regular_stats.get("ppGoals", 0),
+            regular_stats.get("ppPoints", 0),
+            regular_stats.get("shGoals", 0),
+            regular_stats.get("shPoints", 0),
+            regular_stats.get("shots", 0),
+            regular_stats.get("shootingPct"),
+            regular_stats.get("timeOnIcePerGame"),
             datetime.now(timezone.utc),
-        )
-        for s in skaters
-    ]
+        ))
 
-    con.executemany(
-        """
-        INSERT INTO raw_player_stats (
-            player_id, season_id, team_abbrev, position,
-            games_played, goals, assists, points, plus_minus,
-            pp_goals, pp_points, sh_goals, sh_points,
-            shots, shooting_pct, toi_per_game, ingested_at
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """,
-        rows,
-    )
+    con.execute("BEGIN")
+    try:
+        con.execute("DELETE FROM raw_player_stats WHERE season_id = ?", [season_id])
+        con.executemany(
+            """
+            INSERT INTO raw_player_stats (
+                player_id, season_id, team_abbrev, position,
+                games_played, playoff_games_played, goals, assists, points, plus_minus,
+                pp_goals, pp_points, sh_goals, sh_points,
+                shots, shooting_pct, toi_per_game, ingested_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            rows,
+        )
+        con.execute("COMMIT")
+    except Exception:
+        con.execute("ROLLBACK")
+        raise
     return len(rows)
 
 

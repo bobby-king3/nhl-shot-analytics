@@ -45,9 +45,9 @@ joined as (
         parsed.*,
         g.home_team_id,
         g.away_team_id,
-        mp.x_goal,
-        mp.is_rush,
-        mp.is_rebound
+        case when parsed.event_type != 'blocked-shot' then mp.x_goal end as x_goal,
+        case when parsed.event_type != 'blocked-shot' then mp.is_rush end as is_rush,
+        case when parsed.event_type != 'blocked-shot' then mp.is_rebound end as is_rebound
     from parsed
     join games g
         on g.game_id = parsed.game_id

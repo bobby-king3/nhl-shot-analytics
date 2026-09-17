@@ -16,14 +16,13 @@ player_season as (
         season,
 
         -- volume
-        count(distinct game_id)                                                         as games_played,
         count(*)                                                                        as shot_attempts,
         count(*) filter (where event_type in ('shot-on-goal', 'goal'))                  as shots_on_goal,
         count(*) filter (where event_type = 'goal')                                     as goals,
 
         -- xG (only on shots where MoneyPuck has a value — excludes blocked shots)
-        round(sum(x_goal), 3)                                                           as total_xg,
-        round(avg(x_goal), 4)                                                           as avg_xg_per_shot,
+        round(sum(x_goal) filter (where event_type != 'blocked-shot'), 3)              as total_xg,
+        round(avg(x_goal) filter (where event_type != 'blocked-shot'), 4)              as avg_xg_per_shot,
 
         -- shot quality
         round(avg(shot_distance), 1)                                                    as avg_shot_distance,
@@ -37,16 +36,6 @@ player_season as (
             / nullif(count(*), 0), 1
         )                                                                               as rebound_shot_pct,
 
-        -- per_game rates
-        round(
-            count(*) filter (where event_type = 'goal')
-            * 1.0 / nullif(count(distinct game_id), 0), 3
-        )                                                                               as goals_per_game,
-        round(
-            sum(x_goal)
-            / nullif(count(distinct game_id), 0), 3
-        )                                                                               as xg_per_game,
-
         -- shooting percentage
         round(
             100.0 * count(*) filter (where event_type = 'goal')
@@ -55,17 +44,35 @@ player_season as (
 
         -- goals above expected
         round(
-            count(*) filter (where event_type = 'goal') - sum(x_goal), 2
+            count(*) filter (where event_type = 'goal')
+            - sum(x_goal) filter (where event_type != 'blocked-shot'), 2
         )                                                                               as goals_above_expected
 
     from shots
     group by 1, 2
 ),
 
+with_player_stats as (
+    select
+        p.*,
+        s.total_games_played as games_played,
+        round(p.goals * 1.0 / nullif(s.total_games_played, 0), 3) as goals_per_game,
+        round(p.total_xg / nullif(s.total_games_played, 0), 3) as xg_per_game,
+        s.assists,
+        s.points,
+        s.plus_minus,
+        s.pp_points,
+        s.toi_per_game_min
+    from player_season p
+    left join {{ ref('stg_player_stats') }} s
+        on  s.player_id = p.shooter_id
+        and s.season    = p.season
+),
+
 -- only rank players with meaningful sample sizes
 qualified as (
     select *
-    from player_season
+    from with_player_stats
     where shot_attempts >= 50
 ),
 
@@ -85,20 +92,6 @@ with_percentiles as (
     from qualified
 ),
 
-with_player_stats as (
-    select
-        p.*,
-        s.assists,
-        s.points,
-        s.plus_minus,
-        s.pp_points,
-        s.toi_per_game_min
-    from with_percentiles p
-    left join {{ ref('stg_player_stats') }} s
-        on  s.player_id = p.shooter_id
-        and s.season    = p.season
-),
-
 season_teams as (
     select
         player_id,
@@ -114,7 +107,7 @@ final as (
         p.*,
         t.primary_team_abbrev,
         t.primary_team_logo_url
-    from with_player_stats p
+    from with_percentiles p
     left join season_teams t
         on  t.player_id = p.shooter_id
         and t.season    = p.season

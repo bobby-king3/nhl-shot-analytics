@@ -39,6 +39,10 @@ models:
               expression: "between 0 and 1"
               config:
                 where: "x_goal is not null"
+          - dbt_utils.expression_is_true:
+              expression: "is null"
+              config:
+                where: "event_type = 'blocked-shot'"
 
   - name: mart_player_shooting
     description: Season-level shooting stats and percentile ranks per player
@@ -50,6 +54,9 @@ models:
         tests:
           - not_null
       - name: season
+        tests:
+          - not_null
+      - name: games_played
         tests:
           - not_null
       - name: sh_pct
@@ -180,4 +187,3 @@ models:
         tests:
           - accepted_values:
               values: ['W', 'L', 'OTL']
-
