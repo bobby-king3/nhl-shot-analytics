@@ -16,6 +16,7 @@ player_season as (
         season,
 
         -- volume
+        count(distinct game_id)                                                         as games_with_shot,
         count(*)                                                                        as shot_attempts,
         count(*) filter (where event_type in ('shot-on-goal', 'goal'))                  as shots_on_goal,
         count(*) filter (where event_type = 'goal')                                     as goals,
@@ -54,10 +55,10 @@ player_season as (
 
 with_player_stats as (
     select
-        p.*,
-        s.total_games_played as games_played,
-        round(p.goals * 1.0 / nullif(s.total_games_played, 0), 3) as goals_per_game,
-        round(p.total_xg / nullif(s.total_games_played, 0), 3) as xg_per_game,
+        p.* exclude (games_with_shot),
+        coalesce(s.total_games_played, p.games_with_shot) as games_played,
+        round(p.goals * 1.0 / nullif(coalesce(s.total_games_played, p.games_with_shot), 0), 3) as goals_per_game,
+        round(p.total_xg / nullif(coalesce(s.total_games_played, p.games_with_shot), 0), 3) as xg_per_game,
         s.total_assists as assists,
         s.total_points as points,
         s.plus_minus,
@@ -69,16 +70,11 @@ with_player_stats as (
         and s.season    = p.season
 ),
 
--- only rank players with meaningful sample sizes
-qualified as (
-    select *
-    from with_player_stats
-    where shot_attempts >= 50
-),
-
-with_percentiles as (
+-- Rank meaningful samples, then join the ranks back to every player.
+percentiles as (
     select
-        *,
+        shooter_id,
+        season,
 
         -- percentile ranks (0-1 scale, higher = better)
         round(percent_rank() over (partition by season order by goals_per_game),        3)  as goals_per_game_pctile,
@@ -89,7 +85,8 @@ with_percentiles as (
         round(percent_rank() over (partition by season order by avg_shot_distance desc), 3)  as shot_distance_pctile,
         round(percent_rank() over (partition by season order by goals_above_expected),   3)  as goals_above_expected_pctile
 
-    from qualified
+    from with_player_stats
+    where shot_attempts >= 50
 ),
 
 season_teams as (
@@ -105,9 +102,19 @@ season_teams as (
 final as (
     select
         p.*,
+        pct.goals_per_game_pctile,
+        pct.sh_pct_pctile,
+        pct.avg_xg_per_shot_pctile,
+        pct.xg_per_game_pctile,
+        pct.rebound_shot_pct_pctile,
+        pct.shot_distance_pctile,
+        pct.goals_above_expected_pctile,
         t.primary_team_abbrev,
         t.primary_team_logo_url
-    from with_percentiles p
+    from with_player_stats p
+    left join percentiles pct
+        on  pct.shooter_id = p.shooter_id
+        and pct.season     = p.season
     left join season_teams t
         on  t.player_id = p.shooter_id
         and t.season    = p.season

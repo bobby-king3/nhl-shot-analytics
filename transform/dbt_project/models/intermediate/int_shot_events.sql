@@ -16,6 +16,7 @@ mp as (
     -- Deduplicate MoneyPuck: saw rare cases where same player shoots twice in same second
     select
         mp_game_id,
+        mp_season,
         shooter_id,
         period,
         seconds_elapsed,
@@ -23,7 +24,7 @@ mp as (
         max(is_rush)    as is_rush,
         max(is_rebound) as is_rebound
     from {{ ref('stg_moneypuck_shots') }}
-    group by 1, 2, 3, 4
+    group by 1, 2, 3, 4, 5
 ),
 
 parsed as (
@@ -53,6 +54,7 @@ joined as (
         on g.game_id = parsed.game_id
     left join mp
         on cast(substring(cast(parsed.game_id as varchar), 5) as integer) = mp.mp_game_id
+        and cast(left(cast(parsed.season as varchar), 4) as integer) = mp.mp_season
         and parsed.shooter_id = mp.shooter_id
         and parsed.period = mp.period
         and ((parsed.period - 1) * 1200) + parsed.seconds_in_period = mp.seconds_elapsed
