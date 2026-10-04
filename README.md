@@ -10,7 +10,7 @@ This project builds an ELT pipeline for NHL shot analytics using Python, MotherD
 
 ## Project Summary
 
-The pipeline runs daily at 07:00 UTC using GitHub Actions. Each run pulls new games from the public [NHL API](https://api-web.nhle.com/), loads the data into MotherDuck, and rebuilds the dbt models used by the dashboard.
+The pipeline runs daily at 07:00 UTC using GitHub Actions. Each run pulls new games from the public NHL API, loads the data into MotherDuck, and rebuilds the dbt models used by the dashboard.
 
 MoneyPuck is a hockey analytics site that publishes shot level data and models expected goals. This project uses MoneyPuck's public shot files to add value with xG, rush shot, and rebound shot fields.
 
