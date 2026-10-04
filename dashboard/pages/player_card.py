@@ -558,6 +558,7 @@ with wheel_col:
     st.markdown('<div class="chart-card chart-card--compact"><div class="section-header">Percentile Ranks vs. League</div>', unsafe_allow_html=True)
     st.caption("Min. 50 shot attempts")
 
+    percentiles_available = goals_pctile is not None
     categories = ["Goals/GP", "xG/GP", "Avg xG/Shot", "Shot Distance", "G − xG", "Sh%"]
     values = [
         round((goals_pctile or 0) * 100),
@@ -568,11 +569,14 @@ with wheel_col:
         round((sh_pctile or 0) * 100),
     ]
 
-    fig_wheel = build_percentile_wheel(categories, values, r, g, b, primary)
-    st.plotly_chart(fig_wheel, use_container_width=True)
+    if percentiles_available:
+        fig_wheel = build_percentile_wheel(categories, values, r, g, b, primary)
+        st.plotly_chart(fig_wheel, use_container_width=True)
+    else:
+        st.info("Percentile ranks will appear after this player reaches 50 shot attempts.")
 
-    bar_cols = st.columns(3)
-    for i, (cat, val) in enumerate(zip(categories, values)):
+    bar_cols = st.columns(3) if percentiles_available else []
+    for i, (cat, val) in enumerate(zip(categories, values) if percentiles_available else []):
         filled = round(val / 10)
         color = get_performance_color(val, {"high": 67, "medium": 34})
         empty_bg = f"repeating-conic-gradient({color} 0% 25%, transparent 0% 50%) 0 0 / 3px 3px"
