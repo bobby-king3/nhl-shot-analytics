@@ -49,6 +49,7 @@ def create_table(con):
     """)
     con.execute("ALTER TABLE raw_games ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP")
     con.execute("UPDATE raw_games SET updated_at = ingested_at WHERE updated_at IS NULL")
+    con.execute("CREATE UNIQUE INDEX IF NOT EXISTS raw_games_game_id_idx ON raw_games(game_id)")
 
 
 def get_last_game_date(con):
