@@ -22,7 +22,10 @@ player_season as (
         count(*) filter (where event_type = 'goal')                                     as goals,
 
         -- xG (only on shots where MoneyPuck has a value — excludes blocked shots)
-        round(sum(x_goal) filter (where event_type != 'blocked-shot'), 3)              as total_xg,
+        case
+            when count(*) filter (where event_type != 'blocked-shot') = 0 then 0.0
+            else round(sum(x_goal) filter (where event_type != 'blocked-shot'), 3)
+        end                                                                             as total_xg,
         round(avg(x_goal) filter (where event_type != 'blocked-shot'), 4)              as avg_xg_per_shot,
 
         -- shot quality
