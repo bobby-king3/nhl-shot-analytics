@@ -2,9 +2,9 @@ name: Daily NHL Data Pipeline
 
 on:
   schedule:
-    - cron: '15 3 * * 1-6'
+    - cron: '15 0 * * 1-6'
       timezone: 'America/Chicago'
-    - cron: '15 3 * * 0'
+    - cron: '15 0 * * 0'
       timezone: 'America/Chicago'
   workflow_dispatch:
     inputs:
@@ -37,5 +37,5 @@ jobs:
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           MONEYPUCK_SHOTS_URL: ${{ vars.MONEYPUCK_SHOTS_URL }}
-          FULL_SCHEDULE_BACKFILL: ${{ inputs.full_schedule_backfill || github.event.schedule == '15 3 * * 0' }}
+          FULL_SCHEDULE_BACKFILL: ${{ inputs.full_schedule_backfill || github.event.schedule == '15 0 * * 0' }}
         run: python -m extract.pipeline
