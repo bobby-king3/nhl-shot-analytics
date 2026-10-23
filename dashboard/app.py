@@ -16,7 +16,10 @@ pg.run()
 
 last_refresh = get_last_successful_refresh()
 if last_refresh:
-    display_date = f"{last_refresh:%b} {last_refresh.day}, {last_refresh.year}"
+    display_date = (
+        f"{last_refresh:%b} {last_refresh.day}, {last_refresh.year} · "
+        f"{last_refresh.hour % 12 or 12}:{last_refresh:%M %p %Z}"
+    )
     st.sidebar.markdown(
         '<div style="margin-top:1.5rem; padding-top:0.6rem; '
         'border-top:1px solid rgba(255,255,255,0.07); '

@@ -39,7 +39,7 @@ def get_last_successful_refresh():
         conn.close()
     if not row:
         return None
-    return datetime.fromtimestamp(row[0], ZoneInfo("America/Chicago")).date()
+    return datetime.fromtimestamp(row[0], ZoneInfo("America/Chicago"))
 
 @st.cache_data(ttl=3600)
 def get_league_stats(season: int) -> dict:
