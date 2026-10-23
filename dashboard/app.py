@@ -1,6 +1,6 @@
 import streamlit as st
 
-from dashboard.utils.db import get_last_successful_refresh
+from utils.db import get_last_successful_refresh
 
 st.set_page_config(
     page_title="NHL Shot Analytics",
