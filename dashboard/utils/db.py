@@ -1,7 +1,10 @@
 import os
+from datetime import datetime
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
 import duckdb
 import streamlit as st
-from pathlib import Path
 
 LOCAL_DB = str(Path(__file__).parent.parent.parent / "data" / "nhl.duckdb")
 
@@ -22,6 +25,21 @@ def connect() -> duckdb.DuckDBPyConnection:
         os.environ.setdefault("motherduck_token", token)
         return duckdb.connect("md:nhl", read_only=True)
     return duckdb.connect(LOCAL_DB, read_only=True)
+
+@st.cache_data(ttl=3600)
+def get_last_successful_refresh():
+    conn = connect()
+    try:
+        row = conn.execute(
+            "SELECT epoch(completed_at) FROM main.pipeline_status WHERE id = 1"
+        ).fetchone()
+    except duckdb.CatalogException:
+        return None
+    finally:
+        conn.close()
+    if not row:
+        return None
+    return datetime.fromtimestamp(row[0], ZoneInfo("America/Chicago"))
 
 @st.cache_data(ttl=3600)
 def get_league_stats(season: int) -> dict:

@@ -1,8 +1,10 @@
 import logging
 import os
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
+from extract.connection import get_connection
 from extract.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,24 @@ def run_dbt(command):
         raise RuntimeError(f"dbt {command} failed (exit {result.returncode})")
 
 
+def record_successful_refresh():
+    con = get_connection()
+    try:
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS main.pipeline_status (
+                id INTEGER PRIMARY KEY,
+                completed_at TIMESTAMPTZ NOT NULL
+            )
+        """)
+        con.execute("""
+            INSERT INTO main.pipeline_status (id, completed_at)
+            VALUES (1, ?)
+            ON CONFLICT (id) DO UPDATE SET completed_at = EXCLUDED.completed_at
+        """, [datetime.now(timezone.utc)])
+    finally:
+        con.close()
+
+
 def main():
     logger.info("NHL Shot Intelligence Pipeline Starting")
 
@@ -56,6 +76,7 @@ def main():
     run_dbt("run")
     run_dbt("test")
 
+    record_successful_refresh()
     logger.info("Pipeline complete")
 
 
