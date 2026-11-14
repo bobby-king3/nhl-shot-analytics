@@ -305,7 +305,7 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
     return wheel
 
 
-def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n_teams):
+def build_team_rank_profile(categories, ranks, primary, n_teams):
     def ordinal(value):
         if 10 < value % 100 < 14:
             suffix = "th"
@@ -351,7 +351,6 @@ def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n
             layer="below",
         )
 
-    customdata = np.column_stack((categories, actuals, explanations))
     fig.add_trace(go.Scatter(
         x=ranks,
         y=y_positions,
@@ -364,13 +363,7 @@ def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n
         text=rank_labels,
         textposition=text_positions,
         textfont=dict(color="white", size=12, family="monospace"),
-        customdata=customdata,
-        hovertemplate=(
-            "<b>%{customdata[0]}</b><br>"
-            "%{customdata[2]}<br>"
-            "Value: %{customdata[1]}<br>"
-            "League rank: %{text}<extra></extra>"
-        ),
+        hoverinfo="skip",
         showlegend=False,
     ))
 
@@ -395,8 +388,7 @@ def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n
         tickfont=dict(color="rgba(255,255,255,0.65)", size=11),
     )
     fig.update_layout(
-        **get_dark_layout(height=max(300, 32 * len(categories) + 52), margin_l=110, margin_r=54, margin_t=8, margin_b=44),
-        hoverlabel=dict(bgcolor="rgba(15,20,35,0.97)", font_color="white"),
+        **get_dark_layout(height=max(300, 28 * len(categories) + 52), margin_l=110, margin_r=54, margin_t=8, margin_b=44),
     )
 
     return fig

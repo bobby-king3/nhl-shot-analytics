@@ -56,53 +56,6 @@ st.markdown("""
   .chart-card--compact .section-header {
     margin-bottom: 0;
   }
-  .info-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 14px;
-    height: 14px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.5);
-    font: italic 700 9px/14px serif;
-    cursor: help;
-    position: relative;
-  }
-  .info-tooltip {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 300px;
-    padding: 7px 11px;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 6px;
-    background: rgba(15,20,35,0.97);
-    color: rgba(255,255,255,0.85);
-    font: 400 11px/1.4 sans-serif;
-    letter-spacing: 0;
-    text-align: left;
-    text-transform: none;
-    pointer-events: none;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.15s, visibility 0.15s;
-    z-index: 9999;
-  }
-  .info-icon:hover,
-  .info-icon:focus-visible {
-    background: var(--team-primary, #C8102E);
-    color: white;
-    outline: none;
-  }
-  .info-icon:hover .info-tooltip,
-  .info-icon:focus-visible .info-tooltip {
-    opacity: 1;
-    visibility: visible;
-  }
   .team-metrics {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -289,22 +242,16 @@ def format_stat(value, spec, suffix=""):
 
 
 team_profile = [
-    ("xGF%", "xg_pct", ".1f", True, False, "Share of expected goals."),
-    ("GF%", "gf_pct", ".1f", True, False, "Share of actual goals."),
-    ("Fenwick %", "fenwick_pct", ".1f", True, False, "Share of unblocked shot attempts."),
-    ("xGF/GP", "xg_for_per_game", ".2f", False, False, "Expected goals for per game with xG data."),
-    ("xGA/GP", "xg_against_per_game", ".2f", False, True, "Expected goals against per game with xG data."),
-    ("xG Diff/GP", "xg_diff_per_game", "+.2f", False, False, "Expected goal differential per game with xG data."),
-    ("GF/GP", "gf_per_game", ".2f", False, False, "Goals scored per game."),
-    ("GA/GP", "ga_per_game", ".2f", False, True, "Goals allowed per game."),
-    ("Sh%", "sh_pct", ".1f", True, False, "Goals divided by shots on goal."),
-    ("Standings Pts%", "points_pct", ".1f", True, False, "Share of available regular-season standings points earned."),
+    ("xGF%", "xg_pct", False),
+    ("GF%", "gf_pct", False),
+    ("Fenwick %", "fenwick_pct", False),
+    ("xGF/GP", "xg_for_per_game", False),
+    ("xGA/GP", "xg_against_per_game", True),
 ]
-team_profile_ranks = [get_rank(col, ascending) for _, col, _, _, ascending, _ in team_profile]
-team_profile_actuals = [
-    format_stat(stats.get(col), spec, "%" if percent else "")
-    for _, col, spec, percent, _, _ in team_profile
-]
+team_profile_ranks = [get_rank(col, ascending) for _, col, ascending in team_profile]
+xg_share = format_stat(stats.get("xg_pct"), ".1f", "%")
+goal_share = format_stat(stats.get("gf_pct"), ".1f", "%")
+fenwick_share = format_stat(stats.get("fenwick_pct"), ".1f", "%")
 
 def rank_badge(rank):
     if not isinstance(rank, int):
@@ -363,17 +310,17 @@ st.markdown(f"""
                 letter-spacing:0.8px;">{season_short} · {situation}</div>
     <div class="team-metrics">
       <div class="team-metric">
-        <div class="team-metric-value" style="color:{primary};">{team_profile_actuals[0]}</div>
+        <div class="team-metric-value" style="color:{primary};">{xg_share}</div>
         <div class="team-metric-label">xGF%{rank_badge(team_profile_ranks[0])}</div>
         <div class="team-metric-context">{xgf} for · {xga} against</div>
       </div>
       <div class="team-metric">
-        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{team_profile_actuals[1]}</div>
+        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{goal_share}</div>
         <div class="team-metric-label">GF%{rank_badge(team_profile_ranks[1])}</div>
         <div class="team-metric-context">{goals_for} for · {goals_against} against</div>
       </div>
       <div class="team-metric">
-        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{team_profile_actuals[2]}</div>
+        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{fenwick_share}</div>
         <div class="team-metric-label">Fenwick %{rank_badge(team_profile_ranks[2])}</div>
         <div class="team-metric-context">{attempts_for} for · {attempts_against} against</div>
       </div>
@@ -520,19 +467,13 @@ if team_stats.empty:
 else:
     st.markdown(
         "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
-        f"<div class='section-header'>League Ranks · {situation}"
-        "<button type='button' class='info-icon' aria-label='League ranks help'>i"
-        "<span class='info-tooltip' role='tooltip'>"
-        "Hover over a marker for the definition and value. Teams with available data are ranked for each stat."
-        "</span></button></div></div>",
+        f"<div class='section-header'>League Ranks · {situation}</div></div>",
         unsafe_allow_html=True,
     )
 
     team_rank_profile = build_team_rank_profile(
         [label for label, *_ in team_profile],
         team_profile_ranks,
-        team_profile_actuals,
-        [explanation for *_, explanation in team_profile],
         primary,
         n_teams,
     )
