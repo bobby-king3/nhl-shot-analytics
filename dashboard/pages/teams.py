@@ -3,11 +3,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+import pandas as pd
 import streamlit as st
 
 from dashboard.utils.db import (
     get_available_seasons, get_teams,
-    get_team_stats, get_team_game_log, get_team_roster, get_all_team_stats,
+    get_team_game_log, get_team_roster, get_all_team_stats,
 )
 from dashboard.utils.styling import hex_to_rgb
 from dashboard.utils.chart_builders import (
@@ -104,7 +105,7 @@ st.markdown("""
   }
   .team-metrics {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     margin-top: 14px;
     padding-top: 12px;
     border-top: 1px solid rgba(255,255,255,0.08);
@@ -143,6 +144,29 @@ st.markdown("""
     line-height: 1.35;
     white-space: nowrap;
   }
+  .recent-game-header {
+    display: grid;
+    grid-template-columns: 32px 1fr 48px 32px 32px 42px;
+    column-gap: 10px;
+    row-gap: 3px;
+    padding-bottom: 6px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    font-size: 10px;
+    text-align: right;
+  }
+  .recent-game-strength {
+    grid-column: 4 / span 2;
+    grid-row: 1;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .recent-game-header > div:not(.recent-game-strength) {
+    grid-row: 2;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
   .roster-section {
     background: transparent;
     border: 0;
@@ -177,6 +201,17 @@ st.markdown("""
       padding-top: 8px;
     }
   }
+  @media (max-width: 600px) {
+    .team-metric {
+      padding: 0 8px;
+    }
+    .team-metric-label {
+      flex-wrap: wrap;
+    }
+    .team-metric-context {
+      white-space: normal;
+    }
+  }
 </style>
 """, unsafe_allow_html=True)
 
@@ -201,6 +236,8 @@ selected_team = st.sidebar.selectbox(
     index=all_teams.index(url_team) if url_team in all_teams else 0,
     key="t_team"
 )
+situation = st.sidebar.radio("Strength", ["5-on-5", "All situations"], key="t_situation")
+five_on_five = situation == "5-on-5"
 
 st.query_params["team"]   = selected_team
 st.query_params["season"] = str(selected_season)
@@ -232,55 +269,42 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-stats       = get_team_stats(selected_team, selected_season)
-game_log_df = get_team_game_log(selected_team, selected_season)
+game_log_df = get_team_game_log(selected_team, selected_season, five_on_five)
 roster_df   = get_team_roster(selected_team, selected_season)
 
-all_stats_df = get_all_team_stats(selected_season).copy()
+all_stats_df = get_all_team_stats(selected_season, five_on_five)
 n_teams = len(all_stats_df)
-selected_team_stats_df = all_stats_df[all_stats_df["team_abbrev"] == selected_team]
+team_stats = all_stats_df.loc[all_stats_df["team_abbrev"] == selected_team]
+stats = team_stats.iloc[0].to_dict() if not team_stats.empty else {}
+
 
 def get_rank(col, ascending=False):
     ranked = all_stats_df[col].rank(ascending=ascending, method="min")
-    if selected_team_stats_df.empty:
-        return "—"
-    return int(ranked[selected_team_stats_df.index[0]])
+    rank = ranked.get(team_stats.index[0]) if stats else None
+    return int(rank) if pd.notna(rank) else None
 
-gf_rank      = get_rank("gf_per_game")
-ga_rank      = get_rank("ga_per_game", ascending=True)
-xg_diff_rank = get_rank("xg_diff_per_game")
-sh_pct_rank  = get_rank("sh_pct_sog")
 
-team_profile_categories = ["Points %", "GF/GP", "xGF/GP", "xG%", "xGA/GP", "GA/GP"]
-team_profile_explanations = [
-    "Share of available standings points earned.",
-    "Goals scored per game.",
-    "Expected goals created per game from shot volume and quality.",
-    "Share of expected goals. Above 50% means creating more than allowing.",
-    "Expected goals allowed per game from opponent shot volume and quality.",
-    "Goals allowed per game.",
+def format_stat(value, spec, suffix=""):
+    return f"{value:{spec}}{suffix}" if pd.notna(value) else "—"
+
+
+team_profile = [
+    ("xGF%", "xg_pct", ".1f", True, False, "Share of expected goals."),
+    ("GF%", "gf_pct", ".1f", True, False, "Share of actual goals."),
+    ("Fenwick %", "fenwick_pct", ".1f", True, False, "Share of unblocked shot attempts."),
+    ("xGF/GP", "xg_for_per_game", ".2f", False, False, "Expected goals for per game with xG data."),
+    ("xGA/GP", "xg_against_per_game", ".2f", False, True, "Expected goals against per game with xG data."),
+    ("xG Diff/GP", "xg_diff_per_game", "+.2f", False, False, "Expected goal differential per game with xG data."),
+    ("GF/GP", "gf_per_game", ".2f", False, False, "Goals scored per game."),
+    ("GA/GP", "ga_per_game", ".2f", False, True, "Goals allowed per game."),
+    ("Sh%", "sh_pct", ".1f", True, False, "Goals divided by shots on goal."),
+    ("Standings Pts%", "points_pct", ".1f", True, False, "Share of available regular-season standings points earned."),
 ]
-team_profile_ranks = []
-team_profile_actuals = []
-if not selected_team_stats_df.empty:
-    team_profile_ranks = [
-        get_rank("points_pct"),
-        get_rank("gf_per_game"),
-        get_rank("xg_for_per_game"),
-        get_rank("xg_pct"),
-        get_rank("xg_against_per_game", ascending=True),
-        get_rank("ga_per_game", ascending=True),
-    ]
-
-    selected_team_stats = selected_team_stats_df.iloc[0]
-    team_profile_actuals = [
-        f"{selected_team_stats['points_pct']:.1f}%",
-        f"{selected_team_stats['gf_per_game']:.2f}",
-        f"{selected_team_stats['xg_for_per_game']:.2f}",
-        f"{selected_team_stats['xg_pct']:.1f}%",
-        f"{selected_team_stats['xg_against_per_game']:.2f}",
-        f"{selected_team_stats['ga_per_game']:.2f}",
-    ]
+team_profile_ranks = [get_rank(col, ascending) for _, col, _, _, ascending, _ in team_profile]
+team_profile_actuals = [
+    format_stat(stats.get(col), spec, "%" if percent else "")
+    for _, col, spec, percent, _, _ in team_profile
+]
 
 def rank_badge(rank):
     if not isinstance(rank, int):
@@ -298,26 +322,20 @@ def rank_badge(rank):
             f"vertical-align:middle;'>{rank}{suffix}</span>")
 
 team_name  = TEAM_NAMES.get(selected_team, selected_team)
+season_short = f"{str(selected_season)[:4]}–{str(selected_season)[-2:]}"
 wins       = stats.get("wins", 0) or 0
 losses     = stats.get("losses", 0) or 0
 otl        = stats.get("otl", 0) or 0
 points     = stats.get("points", 0) or 0
-goals_for  = stats.get("goals_for", "—")
-goals_ag   = stats.get("goals_against", "—")
-xg_for     = stats.get("xg_for", "—")
-xg_ag      = stats.get("xg_against", "—")
-xg_diff    = stats.get("xg_differential", 0) or 0
-sh_pct     = stats.get("sh_pct_sog", "—")
-diff_sign  = "+" if xg_diff >= 0 else ""
-diff_color = primary if xg_diff >= 0 else "#e05555"
+xgf, xga = (format_stat(stats.get(key), ".1f") for key in ("xg_for", "xg_against"))
+goals_for = format_stat(stats.get("goals_for"), ".0f")
+goals_against = format_stat(stats.get("goals_against"), ".0f")
+attempts_for = format_stat(stats.get("unblocked_attempts_for"), ",.0f")
+attempts_against = format_stat(stats.get("unblocked_attempts_against"), ",.0f")
 
 team_logo_url = roster_df.iloc[0]["team_logo_url"] if not roster_df.empty else ""
 
 # MAIN HEADER
-gp = stats.get("games_played") or 1
-gf_pg  = round(goals_for  / gp, 2) if isinstance(goals_for, (int, float)) else "—"
-ga_pg  = round(goals_ag   / gp, 2) if isinstance(goals_ag,  (int, float)) else "—"
-
 st.markdown(f"""
 <div class="team-hero" style="
   background: linear-gradient(90deg, #11151d 0%, rgba({r},{g},{b},0.10) 100%);
@@ -342,27 +360,22 @@ st.markdown(f"""
     <div style="font-size:36px; font-weight:700; color:#FAFAFA; line-height:1.1;
                 letter-spacing:-0.5px;">{team_name}</div>
     <div style="font-size:13px; color:rgba(255,255,255,0.4); margin-top:4px;
-                letter-spacing:0.8px;">{season_labels[selected_season]}</div>
+                letter-spacing:0.8px;">{season_short} · {situation}</div>
     <div class="team-metrics">
       <div class="team-metric">
-        <div class="team-metric-value" style="color:{primary};">{goals_for}</div>
-        <div class="team-metric-label">GF{rank_badge(gf_rank)}</div>
-        <div class="team-metric-context">{xg_for} xG · {gf_pg}/GP</div>
+        <div class="team-metric-value" style="color:{primary};">{team_profile_actuals[0]}</div>
+        <div class="team-metric-label">xGF%{rank_badge(team_profile_ranks[0])}</div>
+        <div class="team-metric-context">{xgf} for · {xga} against</div>
       </div>
       <div class="team-metric">
-        <div class="team-metric-value" style="color:rgba(255,255,255,0.65);">{goals_ag}</div>
-        <div class="team-metric-label">GA{rank_badge(ga_rank)}</div>
-        <div class="team-metric-context">{xg_ag} xG · {ga_pg}/GP</div>
+        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{team_profile_actuals[1]}</div>
+        <div class="team-metric-label">GF%{rank_badge(team_profile_ranks[1])}</div>
+        <div class="team-metric-context">{goals_for} for · {goals_against} against</div>
       </div>
       <div class="team-metric">
-        <div class="team-metric-value" style="color:{diff_color};">{diff_sign}{xg_diff}</div>
-        <div class="team-metric-label">xG Diff{rank_badge(xg_diff_rank)}</div>
-        <div class="team-metric-context">xGF − xGA</div>
-      </div>
-      <div class="team-metric">
-        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{sh_pct}%</div>
-        <div class="team-metric-label">Sh%{rank_badge(sh_pct_rank)}</div>
-        <div class="team-metric-context">Goals/Shots on Goal</div>
+        <div class="team-metric-value" style="color:rgba(255,255,255,0.75);">{team_profile_actuals[2]}</div>
+        <div class="team-metric-label">Fenwick %{rank_badge(team_profile_ranks[2])}</div>
+        <div class="team-metric-context">{attempts_for} for · {attempts_against} against</div>
       </div>
     </div>
   </div>
@@ -458,22 +471,19 @@ with form_col:
         fig_xg = build_team_rolling_xgpct(game_log_df, r, g, b, primary)
         st.markdown(
             "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
-            "<div class='section-header'>Rolling xG% (10-game avg)</div>",
+            f"<div class='section-header'>Rolling 10-game xGF% · {situation}</div></div>",
             unsafe_allow_html=True,
         )
-        st.plotly_chart(fig_xg, use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(fig_xg, width="stretch", config={"displayModeBar": False})
 
 with games_col:
     result_colors = {"W": "#4CAF50", "OTL": "rgba(255,200,50,0.9)", "L": "#e05555"}
     col_header = (
-        "<div style='display:flex; align-items:center; gap:10px; padding-bottom:6px;"
-        "border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:2px;'>"
-        "<div style='width:32px;'></div>"
-        "<div style='flex:1; font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px;'>Opponent</div>"
-        "<div style='font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; width:48px; text-align:right;'>Score</div>"
-        "<div style='font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; width:32px; text-align:right;'>xGF</div>"
-        "<div style='font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; width:32px; text-align:right;'>xGA</div>"
-        "<div style='font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1px; width:42px; text-align:right;'>Date</div>"
+        "<div class='recent-game-header'>"
+        f"<div class='recent-game-strength'>{situation}</div>"
+        "<div></div>"
+        "<div style='text-align:left;'>Opponent</div>"
+        "<div>Final</div><div>xGF</div><div>xGA</div><div>Date</div>"
         "</div>"
     )
     rows_html = ""
@@ -482,10 +492,10 @@ with games_col:
             res_color   = result_colors.get(row.result, "grey")
             home_away   = "vs" if row.is_home else "at"
             date_str    = row.game_date.strftime("%b %d") if row.game_date is not None else "—"
-            xgf_val     = round(row.xg_for, 1)
-            xga_val     = round(row.xg_against, 1)
-            xgf_color   = primary if xgf_val >= xga_val else "rgba(255,255,255,0.45)"
-            xga_color   = "rgba(160,60,60,0.9)" if xga_val > xgf_val else "rgba(255,255,255,0.45)"
+            xgf_val     = format_stat(row.xg_for, ".1f")
+            xga_val     = format_stat(row.xg_against, ".1f")
+            xgf_color   = primary if pd.notna(row.xg_for) and row.xg_for >= row.xg_against else "rgba(255,255,255,0.45)"
+            xga_color   = "rgba(160,60,60,0.9)" if pd.notna(row.xg_against) and row.xg_against > row.xg_for else "rgba(255,255,255,0.45)"
             rows_html += (
                 f"<div style='display:flex; align-items:center; gap:10px; padding:9px 0;"
                 f"border-bottom:1px solid rgba(255,255,255,0.05);'>"
@@ -505,30 +515,30 @@ with games_col:
         unsafe_allow_html=True,
     )
 
-if selected_team_stats_df.empty:
+if team_stats.empty:
     st.info("League ranks are unavailable for this team and season.")
 else:
     st.markdown(
         "<div class='chart-card chart-card--compact' style='margin-top:14px;'>"
-        "<div class='section-header'>League Ranks"
+        f"<div class='section-header'>League Ranks · {situation}"
         "<button type='button' class='info-icon' aria-label='League ranks help'>i"
         "<span class='info-tooltip' role='tooltip'>"
-        "Hover over a marker for definition and actual value. Rankings run from 1st (best) team to 32nd (worst) team."
+        "Hover over a marker for the definition and value. Teams with available data are ranked for each stat."
         "</span></button></div></div>",
         unsafe_allow_html=True,
     )
 
     team_rank_profile = build_team_rank_profile(
-        team_profile_categories,
+        [label for label, *_ in team_profile],
         team_profile_ranks,
         team_profile_actuals,
-        team_profile_explanations,
+        [explanation for *_, explanation in team_profile],
         primary,
         n_teams,
     )
     st.plotly_chart(
         team_rank_profile,
-        use_container_width=True,
+        width="stretch",
         config={"displayModeBar": False},
     )
 
@@ -570,7 +580,7 @@ for row in roster_df.itertuples():
     )
 
 st.markdown(
-    "<div class='roster-section'><div class='section-header'>Roster</div>"
+    "<div class='roster-section'><div class='section-header'>Roster · Player season totals</div>"
     "<div style='display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:14px;'>"
     + "".join(cards)
     + "</div></div>",
