@@ -521,7 +521,7 @@ for row in roster_df.itertuples():
     )
 
 st.markdown(
-    "<div class='roster-section'><div class='section-header'>Roster · Player Season Totals</div>"
+    "<div class='roster-section'><div class='section-header'>Roster</div>"
     "<div style='display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:14px;'>"
     + "".join(cards)
     + "</div></div>",
