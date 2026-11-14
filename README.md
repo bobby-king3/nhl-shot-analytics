@@ -58,7 +58,7 @@ The modeled shot table covers the 2023-24 through 2026-27 NHL seasons. Each shot
 
 The Streamlit app has two main views:
 
-- **Teams** - season record, goals for and against, xG for and against, rolling xG plot, recent game results, and roster details
+- **Teams** - season record, goals for and against, xG for and against, rolling xG plot, recent game results, roster details, and a Strength filter (5-on-5 by default)
 - **Players** - player cards, league percentile rankings, shot type breakdowns, game logs, career season tables, interactive shot map, and goal videos
 
 **Team View**
