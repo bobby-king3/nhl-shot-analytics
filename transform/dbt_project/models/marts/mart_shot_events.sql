@@ -27,11 +27,13 @@ select
     -- game context
     g.game_date,
     s.period,
+    s.period_type,
     s.time_in_period,
     s.seconds_in_period,
     s.away_score,
     s.home_score,
     s.strength,
+    s.is_5v5,
     s.home_defending_side,
 
     -- shot details

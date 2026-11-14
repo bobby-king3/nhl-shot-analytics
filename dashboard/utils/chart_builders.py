@@ -305,7 +305,7 @@ def build_percentile_wheel(categories, values, r, g, b, primary):
     return wheel
 
 
-def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n_teams):
+def build_team_rank_profile(categories, ranks, primary, n_teams):
     def ordinal(value):
         if 10 < value % 100 < 14:
             suffix = "th"
@@ -314,9 +314,9 @@ def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n
         return f"{value}{suffix}"
 
     y_positions = list(range(len(categories)))
-    rank_labels = [ordinal(rank) for rank in ranks]
+    rank_labels = [ordinal(rank) if rank is not None else "" for rank in ranks]
     text_positions = [
-        "middle left" if rank >= n_teams - 3 else "middle right"
+        "middle left" if rank is not None and rank >= n_teams - 3 else "middle right"
         for rank in ranks
     ]
 
@@ -351,7 +351,6 @@ def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n
             layer="below",
         )
 
-    customdata = np.column_stack((categories, actuals, explanations))
     fig.add_trace(go.Scatter(
         x=ranks,
         y=y_positions,
@@ -364,13 +363,7 @@ def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n
         text=rank_labels,
         textposition=text_positions,
         textfont=dict(color="white", size=12, family="monospace"),
-        customdata=customdata,
-        hovertemplate=(
-            "<b>%{customdata[0]}</b><br>"
-            "%{customdata[2]}<br>"
-            "Value: %{customdata[1]}<br>"
-            f"League rank: %{{text}} of {n_teams}<extra></extra>"
-        ),
+        hoverinfo="skip",
         showlegend=False,
     ))
 
@@ -395,8 +388,7 @@ def build_team_rank_profile(categories, ranks, actuals, explanations, primary, n
         tickfont=dict(color="rgba(255,255,255,0.65)", size=11),
     )
     fig.update_layout(
-        **get_dark_layout(height=300, margin_l=82, margin_r=54, margin_t=8, margin_b=44),
-        hoverlabel=dict(bgcolor="rgba(15,20,35,0.97)", font_color="white"),
+        **get_dark_layout(height=max(300, 28 * len(categories) + 52), margin_l=110, margin_r=54, margin_t=8, margin_b=44),
     )
 
     return fig
@@ -441,12 +433,13 @@ def build_shot_type_breakdown(type_df, selected_shot_type, r, g, b):
 
 
 def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
-    xg_total = game_log_df["xg_for"] + game_log_df["xg_against"]
-    xg_pct = (game_log_df["xg_for"] / xg_total.replace(0, np.nan) * 100).fillna(50)
-    rolling = xg_pct.rolling(10, min_periods=1).mean().round(1)
+    has_xg = game_log_df[["xg_for", "xg_against"]].notna().all(axis=1)
+    window = game_log_df[["xg_for", "xg_against"]].where(has_xg).rolling(10, min_periods=1).sum()
+    window_total = window["xg_for"] + window["xg_against"]
+    rolling = (window["xg_for"] / window_total.replace(0, np.nan) * 100).where(has_xg)
     game_num = game_log_df["game_num"].values
 
-    ref = np.full(len(game_num), 50.0)
+    ref = np.where(rolling.notna(), 50.0, np.nan)
     above_50 = np.maximum(rolling.values, 50.0)
     below_50 = np.minimum(rolling.values, 50.0)
 
@@ -458,9 +451,10 @@ def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
     fig.add_trace(go.Scatter(x=game_num, y=below_50, fill="tonexty", fillcolor="rgba(200,60,60,0.18)", mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
     fig.add_trace(go.Scatter(
         x=game_num, y=rolling,
-        mode="lines",
+        mode="lines+markers",
         line=dict(color=primary, width=2.5),
-        hovertemplate="Game %{x}<br>10-game xG%: %{y:.1f}%<extra></extra>",
+        marker=dict(size=4),
+        hovertemplate="Game %{x}<br>Rolling xGF%: %{y:.1f}%<extra></extra>",
         showlegend=False,
     ))
     fig.add_hline(y=50, line=dict(color="rgba(255,255,255,0.35)", width=1, dash="dot"))
@@ -474,10 +468,8 @@ def build_team_rolling_xgpct(game_log_df, r, g, b, primary):
 
     fig.update_xaxes(**get_dark_xaxes(title="Game"))
     fig.update_yaxes(
-        **get_dark_yaxes(title="xG%"),
-        range=[35, 65],
-        tickvals=[40, 50, 60],
-        ticktext=["40%", "50%", "60%"],
+        **get_dark_yaxes(title="xGF%"),
+        ticksuffix="%",
     )
     layout = get_dark_layout(height=200, margin_l=50, margin_r=36, margin_t=10, margin_b=30)
     fig.update_layout(**layout)

@@ -16,6 +16,10 @@ if _env_file.exists():
             os.environ.setdefault(_k.strip(), _v.strip())
 
 def connect() -> duckdb.DuckDBPyConnection:
+    local_db = os.environ.get("NHL_LOCAL_DB")
+    if local_db:
+        return duckdb.connect(local_db, read_only=True)
+
     try:
         token = st.secrets.get("MOTHERDUCK_TOKEN")
     except Exception:
@@ -252,81 +256,60 @@ def get_available_seasons():
     return [r[0] for r in rows]
 
 @st.cache_data(ttl=3600)
-def get_team_stats(team_abbrev: str, season: int) -> dict:
-    conn = connect()
-    row = conn.execute("""
-        select
-            games_played,
-            wins,
-            losses,
-            otl,
-            points,
-            goals_for,
-            xg_for,
-            sh_pct,
-            goals_against,
-            xg_against,
-            xg_differential,
-            sh_pct_sog,
-            sv_pct
-        from main.mart_team_season
-        where team_abbrev = ? and season = ?
-    """, [team_abbrev, season]).fetchone()
-    conn.close()
-    if row is None:
-        return {}
-    keys = ["games_played", "wins", "losses", "otl", "points", "goals_for", "xg_for",
-            "sh_pct", "goals_against", "xg_against", "xg_differential",
-            "sh_pct_sog", "sv_pct"]
-    return dict(zip(keys, row))
+def get_team_game_log(team_abbrev: str, season: int, five_on_five: bool):
+    suffix = "_5v5" if five_on_five else ""
+    with connect() as conn:
+        return conn.execute(f"""
+            select
+                game_id,
+                row_number() over (order by game_date, game_id) as game_num,
+                game_date,
+                opponent_abbrev as opponent,
+                is_home,
+                gf,
+                ga,
+                xg_for{suffix} as xg_for,
+                xg_against{suffix} as xg_against,
+                result
+            from main.mart_team_games
+            where team_abbrev = ? and season = ? and game_type = 2
+            order by game_date, game_id
+        """, [team_abbrev, season]).df()
 
 
 @st.cache_data(ttl=3600)
-def get_team_game_log(team_abbrev: str, season: int):
-    conn = connect()
-    df = conn.execute("""
-        select
-            game_id,
-            row_number() over (order by game_id) as game_num,
-            game_date,
-            opponent_abbrev as opponent,
-            is_home,
-            gf,
-            ga,
-            round(xg_for, 2)     as xg_for,
-            round(xg_against, 2) as xg_against,
-            result
-        from main.mart_team_games
-        where team_abbrev = ? and season = ?
-        order by game_id
-    """, [team_abbrev, season]).df()
-    conn.close()
-    return df
-
-
-@st.cache_data(ttl=3600)
-def get_all_team_stats(season: int):
-    conn = connect()
-    df = conn.execute("""
-        select
-            team_abbrev,
-            games_played,
-            round(points * 100.0 / nullif(games_played * 2, 0), 1) as points_pct,
-            gf_per_game,
-            ga_per_game,
-            xg_for_per_game,
-            xg_against_per_game,
-            round(xg_for * 100.0 / nullif(xg_for + xg_against, 0), 1) as xg_pct,
-            xg_diff_per_game,
-            sh_pct,
-            sh_pct_sog,
-            sv_pct
-        from main.mart_team_season
-        where season = ?
-        order by xg_for_per_game desc
-    """, [season]).df()
-    conn.close()
-    return df
+def get_all_team_stats(season: int, five_on_five: bool):
+    suffix = "_5v5" if five_on_five else ""
+    with connect() as conn:
+        return conn.execute(f"""
+            with situation_stats as (
+                select
+                    team_abbrev, games_played, wins, losses, otl, points,
+                    goals_for{suffix} as goals_for,
+                    goals_against{suffix} as goals_against,
+                    sog_for{suffix} as sog_for,
+                    unblocked_attempts_for{suffix} as unblocked_attempts_for,
+                    unblocked_attempts_against{suffix} as unblocked_attempts_against,
+                    xg_for{suffix} as xg_for,
+                    xg_against{suffix} as xg_against,
+                    games_with_xg{suffix} as games_with_xg
+                from main.mart_team_season
+                where season = ?
+            )
+            select *,
+                points * 50.0 / nullif(games_played, 0) as points_pct,
+                goals_for * 100.0 / nullif(goals_for + goals_against, 0) as gf_pct,
+                goals_for * 100.0 / nullif(sog_for, 0) as sh_pct,
+                goals_for * 1.0 / nullif(games_played, 0) as gf_per_game,
+                goals_against * 1.0 / nullif(games_played, 0) as ga_per_game,
+                unblocked_attempts_for * 100.0
+                    / nullif(unblocked_attempts_for + unblocked_attempts_against, 0) as fenwick_pct,
+                xg_for * 100.0 / nullif(xg_for + xg_against, 0) as xg_pct,
+                xg_for / nullif(games_with_xg, 0) as xg_for_per_game,
+                xg_against / nullif(games_with_xg, 0) as xg_against_per_game,
+                (xg_for - xg_against) / nullif(games_with_xg, 0) as xg_diff_per_game
+            from situation_stats
+        """, [season]).df()
 
 
 @st.cache_data(ttl=3600)
