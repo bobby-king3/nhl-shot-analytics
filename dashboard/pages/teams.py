@@ -490,7 +490,7 @@ st.markdown(
 
 # ROSTER CARD GRID
 SORT_OPTIONS = {"Points": "points", "Goals": "goals", "xG": "total_xg", "Position": "position", "Name": "last_name"}
-sort_label = st.selectbox("Sort roster by", options=list(SORT_OPTIONS.keys()), key="roster_sort")
+sort_label = st.selectbox("Sort Roster:", options=list(SORT_OPTIONS.keys()), key="roster_sort")
 sort_col = SORT_OPTIONS[sort_label]
 ascending = sort_col in ("position", "last_name")
 roster_df = roster_df.sort_values(sort_col, ascending=ascending)
@@ -521,7 +521,7 @@ for row in roster_df.itertuples():
     )
 
 st.markdown(
-    "<div class='roster-section'><div class='section-header'>Roster · Player season totals</div>"
+    "<div class='roster-section'><div class='section-header'>Roster · Player Season Totals</div>"
     "<div style='display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:14px;'>"
     + "".join(cards)
     + "</div></div>",
