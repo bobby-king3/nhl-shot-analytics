@@ -20,7 +20,13 @@ models:
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "between 1 and 5"
+              expression: ">= 1"
+      - name: period_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['REG', 'OT', 'SO']
       - name: event_type
         tests:
           - accepted_values:

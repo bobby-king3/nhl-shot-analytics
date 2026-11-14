@@ -24,7 +24,7 @@ models:
       - name: period
         tests:
           - dbt_utils.expression_is_true:
-              expression: "between 1 and 5"
+              expression: ">= 1"
       - name: event_type
         tests:
           - accepted_values:
@@ -33,6 +33,10 @@ models:
         tests:
           - accepted_values:
               values: ['5v5', 'PP/SH', '4v4', '3v3', 'EN', 'other']
+      - name: is_5v5
+        description: True when each team has five skaters and one goalie on the ice
+        tests:
+          - not_null
       - name: x_goal
         tests:
           - dbt_utils.expression_is_true:

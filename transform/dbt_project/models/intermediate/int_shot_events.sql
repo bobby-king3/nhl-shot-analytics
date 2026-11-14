@@ -6,6 +6,7 @@ games as (
     -- excludes game types 19/20 (4 Nations), credited to national teams
     select
         game_id,
+        game_type,
         home_team_id,
         away_team_id
     from {{ ref('stg_games') }}
@@ -44,6 +45,7 @@ parsed as (
 joined as (
     select
         parsed.*,
+        g.game_type,
         g.home_team_id,
         g.away_team_id,
         case when parsed.event_type != 'blocked-shot' then mp.x_goal end as x_goal,
@@ -82,6 +84,14 @@ final as (
         event_id,
         season,
         period,
+        coalesce(
+            nullif(json_extract_string(try_cast(raw as json), '$.periodDescriptor.periodType'), ''),
+            case
+                when period between 1 and 3 then 'REG'
+                when period = 4 or (game_type = 3 and period > 4) then 'OT'
+                when game_type = 2 and period = 5 then 'SO'
+            end
+        ) as period_type,
         time_in_period,
         seconds_in_period,
         event_type,
@@ -110,6 +120,11 @@ final as (
             when team_id = away_team_id and home_goalie = 0 then true
             else false
         end as is_empty_net,
+
+        coalesce(
+            home_skaters = 5 and away_skaters = 5 and home_goalie = 1 and away_goalie = 1,
+            false
+        ) as is_5v5,
 
         case
             when team_id = home_team_id and away_goalie = 0                       then 'EN'
