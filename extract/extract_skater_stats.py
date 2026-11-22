@@ -49,27 +49,32 @@ def is_season_complete(season_id):
     return (season_id % 10000) < datetime.now(timezone.utc).year
 
 
-def extract_season(con, season_id):
-    if is_season_complete(season_id):
-        existing, missing_playoff_stats = con.execute(
-            """SELECT COUNT(*), COUNT(*) FILTER (
-                   WHERE playoff_games_played IS NULL
-                      OR playoff_assists IS NULL
-                      OR playoff_points IS NULL
-               )
-               FROM raw_player_stats WHERE season_id = ?""",
-            [season_id],
-        ).fetchone()
-        if existing > 0 and missing_playoff_stats == 0:
-            logger.info("Season %d: skipped (%d skaters cached)", season_id, existing)
-            return None
+def fetch_season_stats(season_id, game_type):
+    rows = []
+    while True:
+        response = get_stats(
+            f"/skater/summary?limit=100&start={len(rows)}&isAggregate=true"
+            f'&sort=[{{"property":"playerId","direction":"ASC"}}]'
+            f"&cayenneExp=seasonId={season_id}%20and%20gameTypeId={game_type}"
+        )
+        page = response["data"]
+        total = response["total"]
+        if not page:
+            if len(rows) < total:
+                raise RuntimeError("Incomplete NHL skater stats response")
+            break
+        rows.extend(page)
+        if len(rows) >= total:
+            break
+    if len({row["playerId"] for row in rows}) != len(rows):
+        raise RuntimeError("Duplicate players in NHL skater stats response")
+    return rows
 
-    regular = get_stats(
-        f"/skater/summary?limit=-1&isAggregate=true&cayenneExp=seasonId={season_id}%20and%20gameTypeId=2"
-    ).get("data", [])
-    playoffs = get_stats(
-        f"/skater/summary?limit=-1&isAggregate=true&cayenneExp=seasonId={season_id}%20and%20gameTypeId=3"
-    ).get("data", [])
+
+def extract_season(con, season_id):
+    # Refresh historical seasons too, repairing previously truncated imports.
+    regular = fetch_season_stats(season_id, 2)
+    playoffs = fetch_season_stats(season_id, 3)
     regular_by_id = {s["playerId"]: s for s in regular}
     playoff_by_id = {s["playerId"]: s for s in playoffs}
 
