@@ -35,7 +35,7 @@ TEAM_NAMES = {
 
 COUNTRY_FLAGS = {
     "CAN": "🇨🇦", "USA": "🇺🇸", "SWE": "🇸🇪", "FIN": "🇫🇮",
-    "RUS": "🇷🇺", "CZE": "🇨🇿", "SVK": "🇸🇰", "GER": "🇩🇪",
+    "RUS": "🇷🇺", "CZE": "🇨🇿", "SVK": "🇸🇰", "DEU": "🇩🇪",
     "AUT": "🇦🇹", "SUI": "🇨🇭", "LVA": "🇱🇻", "BLR": "🇧🇾",
     "DNK": "🇩🇰", "NOR": "🇳🇴", "FRA": "🇫🇷", "CHE": "🇨🇭",
 }
