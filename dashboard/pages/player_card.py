@@ -611,7 +611,7 @@ with highlight_col:
             (shots_df["highlight_clip_url"] != "")
         ]
         .merge(game_log_df[["game_id", "game_num", "opponent", "is_home"]], on="game_id", how="left")
-        .sort_values(["game_num", "period", "time_in_period"])
+        .sort_values(["game_date", "game_num", "period", "time_in_period"], ascending=False)
         .reset_index(drop=True)
     )
 
